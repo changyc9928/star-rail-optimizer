@@ -6,10 +6,7 @@ use rand::{
     seq::{IteratorRandom, SliceRandom},
     thread_rng, Rng,
 };
-use std::{
-    cmp::{min, Reverse},
-    collections::HashMap,
-};
+use std::{cmp::min, collections::HashMap};
 use strum::IntoEnumIterator;
 
 pub struct Optimizer {
@@ -23,7 +20,6 @@ pub struct Optimizer {
 impl Optimizer {
     pub fn optimize(&self) -> Result<Vec<Relic>> {
         let mut population: Vec<Vec<Relic>> = (0..self.population_size)
-            .into_iter()
             .map(|_| self.generate_random_relic_set())
             .collect();
         let mut rng = thread_rng();
@@ -66,7 +62,7 @@ impl Optimizer {
         }
 
         population.sort_by(evaluation);
-        Ok(population.iter().next().unwrap().clone())
+        Ok(population.first().unwrap().clone())
     }
 
     fn generate_random_relic_set(&self) -> Vec<Relic> {
@@ -119,9 +115,9 @@ impl Optimizer {
         let mut mutated_child = child.clone();
         let mut rng = thread_rng();
 
-        for i in 0..mutated_child.len() {
+        for relic in &mut mutated_child {
             if rng.gen::<f64>() < self.mutation_rate {
-                let slot = &mutated_child[i].slot;
+                let slot = &relic.slot;
                 let candidates = self
                     .relic_pool
                     .get(slot)
@@ -129,7 +125,7 @@ impl Optimizer {
                 let new_relic = candidates
                     .choose(&mut rng)
                     .ok_or(eyre::eyre!("The pool of {:?} is empty", slot))?;
-                mutated_child[i] = new_relic.clone();
+                *relic = new_relic.clone();
             }
         }
 

@@ -21,6 +21,7 @@ pub struct Evaluator {
 }
 
 impl Evaluator {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         character: Character,
         light_cone: LightCone,
