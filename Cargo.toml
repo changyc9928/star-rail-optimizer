@@ -6,10 +6,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+eval = "0"
 eyre = "0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 reqwest = "0"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1.40", features = ["full"] }
 futures = "0"
 kdam = "0"
+itertools = "0"
+strum_macros = "0"
+strum = "0"
+rand = "0"
+enum-as-inner = "0"

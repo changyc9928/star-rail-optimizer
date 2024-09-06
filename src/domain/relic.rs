@@ -1,8 +1,9 @@
 use crate::domain::CharacterName;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use strum_macros::EnumIter;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, EnumIter, Hash)]
 pub enum Slot {
     Head,
     Feet,
@@ -16,7 +17,7 @@ pub enum Slot {
     Dummy,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, Hash, EnumIter)]
 pub enum Stats {
     #[serde(alias = "ATK")]
     Atk,
@@ -66,7 +67,7 @@ pub enum Stats {
     Dummy,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default, EnumIter)]
 pub enum RelicSetName {
     #[serde(alias = "Passerby of Wandering Cloud")]
     PasserbyOfWanderingCloud,
