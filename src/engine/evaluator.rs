@@ -1,4 +1,4 @@
-use crate::domain::{Character, LightCone, Relic, RelicSetName, Stats};
+use crate::domain::{Character, CombatTypes, LightCone, Relic, RelicSetName, Stats};
 use eval::Expr;
 use eyre::Result;
 use itertools::Itertools;
@@ -13,9 +13,7 @@ pub struct Evaluator {
     pub set_bonus: HashMap<RelicSetName, HashMap<u8, (Stats, f64)>>,
     pub conditional_set_bonus_by_value: HashMap<RelicSetName, HashMap<u8, (Stats, Stats, f64)>>,
     pub other_bonus: HashMap<Stats, f64>,
-    // For HP:
-    // Base_HP = Character_HP + LightCone_HP
-    // Total_HP = Base_HP × (1 + Percentage_HP_Bonus) + Additive_HP_Bonus
+    pub base_stats_formulas: HashMap<Stats, String>,
     pub target_formula: String,
     pub target_name: String,
 }
@@ -29,6 +27,7 @@ impl Evaluator {
         set_bonus: HashMap<RelicSetName, HashMap<u8, (Stats, f64)>>,
         conditional_set_bonus_by_value: HashMap<RelicSetName, HashMap<u8, (Stats, Stats, f64)>>,
         other_bonus: HashMap<Stats, f64>,
+        base_stats_formulas: HashMap<Stats, String>,
         target_formula: &str,
         target_name: &str,
     ) -> Self {
@@ -39,6 +38,7 @@ impl Evaluator {
             set_bonus,
             conditional_set_bonus_by_value,
             other_bonus,
+            base_stats_formulas,
             target_formula: target_formula.to_owned(),
             target_name: target_name.to_owned(),
         }
@@ -83,7 +83,66 @@ impl Evaluator {
 
     pub fn evaluate(&self, relics: Vec<Relic>) -> Result<f64> {
         let totals = self.calculate_total(relics)?;
-        // TODO: apply set conditional bonus
+        let base_stats: HashMap<Stats, f64> = self
+            .base_stats_formulas
+            .iter()
+            .map(|(base_stats, formula)| {
+                Ok::<(Stats, f64), eyre::Report>((
+                    base_stats.clone(),
+                    serde_json::from_value(
+                        Expr::new(formula)
+                            .value("Character_HP", self.character.base_hp)
+                            .value("Character_ATK", self.character.base_atk)
+                            .value("Character_DEF", self.character.base_def)
+                            .value("Character_SPD", self.character.base_spd)
+                            .value("LightCone_HP", self.light_cone.light_cone_stats.hp)
+                            .value("LightCone_ATK", self.light_cone.light_cone_stats.atk)
+                            .value("LightCone_DEF", self.light_cone.light_cone_stats.def)
+                            .value("Additive_HP_Bonus", totals.get(&Stats::Hp))
+                            .value("Percentage_HP_Bonus", totals.get(&Stats::Hp_))
+                            .value("Additive_ATK_Bonus", totals.get(&Stats::Atk))
+                            .value("Percentage_ATK_Bonus", totals.get(&Stats::Atk_))
+                            .value("Additive_DEF_Bonus", totals.get(&Stats::Def))
+                            .value("Percentage_DEF_Bonus", totals.get(&Stats::Def_))
+                            .value(
+                                "Percentage_DEF_Reduction",
+                                totals.get(&Stats::DefReduction_),
+                            )
+                            .value("Additive_SPD_Bonus", totals.get(&Stats::Spd))
+                            .value("Percentage_SPD_Bonus", totals.get(&Stats::Spd_))
+                            .value(
+                                "DMG_Boost",
+                                totals
+                                    .get(match self.character.combat_type {
+                                        Some(CombatTypes::Fire) => &Stats::FireDMGBoost_,
+                                        Some(CombatTypes::Wind) => &Stats::WindDMGBoost_,
+                                        Some(CombatTypes::Ice) => &Stats::IceDMGBoost_,
+                                        Some(CombatTypes::Lightning) => &Stats::LightningDMGBoost_,
+                                        Some(CombatTypes::Physical) => &Stats::PhysicalDMGBoost_,
+                                        Some(CombatTypes::Quantum) => &Stats::QuantumDMGBoost_,
+                                        Some(CombatTypes::Imaginary) => &Stats::ImaginaryDMGBoost_,
+                                        None => eyre::bail!("A character must have combat type"),
+                                    })
+                                    .and_then(|total| {
+                                        totals
+                                            .get(&Stats::CommonDMGBoost_)
+                                            .map(|common| common + total)
+                                    }),
+                            )
+                            .value("CRIT_Rate", totals.get(&Stats::CritRate_))
+                            .value("CRIT_DMG", totals.get(&Stats::CritDmg_))
+                            .value("Break_Effect", totals.get(&Stats::BreakEffect_))
+                            .value("Effect_Hit_Rate", totals.get(&Stats::EffectHitRate_))
+                            .value("Effect_RES", totals.get(&Stats::EffectRES_))
+                            .value(
+                                "Energy_Regeneration_Rate",
+                                totals.get(&Stats::EnergyRegenerationRate_),
+                            )
+                            .exec()?,
+                    )?,
+                ))
+            })
+            .collect::<Result<_>>()?;
         let expression = Expr::new(self.target_formula.clone())
             .value("Character_HP", self.character.base_hp)
             .value("LightCone_HP", self.light_cone.light_cone_stats.hp)
@@ -339,6 +398,10 @@ mod tests {
 
         let hp_formula =
             "(Character_HP + LightCone_HP) * (1 + Percentage_HP_Bonus / 100) + Additive_HP_Bonus";
+        let atk_formula =
+            "(Character_ATK + LightCone_ATK) * (1 + Percentage_ATK_Bonus / 100) + Additive_ATK_Bonus";
+        let def_formula =
+            "(Character_DEF + LightCone_DEF) * (1 + (Percentage_DEF_Bonus - Percentage_DEF_Reduction) / 100) + Additive_DEF_Bonus";
 
         let evaluator = Evaluator::new(
             fu_xuan,
@@ -347,6 +410,11 @@ mod tests {
             set_bonus,
             HashMap::new(),
             trace_bonus,
+            HashMap::from([
+                (Stats::Hp, hp_formula.to_owned()),
+                (Stats::Atk, atk_formula.to_owned()),
+                (Stats::Def, def_formula.to_owned()),
+            ]),
             hp_formula,
             "Maximum HP",
         );

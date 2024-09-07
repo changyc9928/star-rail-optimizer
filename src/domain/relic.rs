@@ -63,6 +63,10 @@ pub enum Stats {
     ImaginaryDMGBoost_,
     #[serde(alias = "Physical DMG Boost")]
     PhysicalDMGBoost_,
+    #[serde(alias = "Common DMG Boost")]
+    CommonDMGBoost_,
+    #[serde(alias = "DEF Reduction")]
+    DefReduction_,
     #[default]
     Dummy,
 }

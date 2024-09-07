@@ -318,6 +318,7 @@ impl ScannerInput {
                             }
                         }
                         Stats::Dummy => todo!(),
+                        _ => (),
                     });
                 Ok(if flag { Some(character.clone()) } else { None })
             })
