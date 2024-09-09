@@ -1,2 +1,2 @@
-mod optimizer;
-mod evaluator;
+pub mod optimizer;
+pub mod evaluator;

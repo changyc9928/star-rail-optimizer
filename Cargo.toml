@@ -12,6 +12,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
 reqwest = "0"
 tracing = "0"
+tracing-subscriber = "0.3"
 tokio = { version = "1.40", features = ["full"] }
 futures = "0"
 kdam = "0"
