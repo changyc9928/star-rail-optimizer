@@ -1,7 +1,7 @@
 // Import necessary modules and crates
 use crate::domain::{Character, LightCone, Relic, RelicSetName, Stats};
 use eval::Expr;
-use eyre::Result;
+use eyre::{OptionExt, Result};
 use itertools::Itertools;
 use std::collections::HashMap;
 use strum::IntoEnumIterator;
@@ -416,58 +416,175 @@ impl Evaluator {
         expr
     }
 
-    /// Evaluates the final stat value after applying all bonuses and constraints.
+    /// Applies constraints to the given result based on the base statistics.
     ///
-    /// This function performs a series of steps to compute the final stat value:
-    /// 1. Calculates the total stat values from the relics.
-    /// 2. Evaluates base stats.
-    /// 3. Recalculates the total stats after considering base stats.
-    /// 4. Builds an expression using the target formula and the recalculated totals.
-    /// 5. Executes the expression and parses the result.
+    /// This function checks if the values in `base_stats` meet the constraints defined in `self.constraint`.
+    /// If any constraint is not met (i.e., the current stat is less than the required value), the result is penalized by negating it.
     ///
-    /// # Parameters
+    /// # Arguments
     ///
-    /// - `relics`: A vector of `Relic` objects representing the relics to be used in the calculation.
+    /// * `result`: The current result to be adjusted based on constraints. This is the value that might be penalized.
+    /// * `base_stats`: A map of base statistics where the key is a statistic identifier (`Stats`), and the value is the statistic's value.
     ///
     /// # Returns
     ///
-    /// - `Result<f64>`: The computed final stat value, wrapped in a `Result` to handle potential errors.
+    /// Returns a `Result<f64>` where:
+    /// * `Ok(f64)` contains the adjusted result if constraints are met or penalized.
+    /// * `Err` if there's a missing statistic in `base_stats` that is required by `self.constraint`.
     ///
     /// # Errors
     ///
-    /// - May return errors from the calculation or expression execution.
-    /// - The result parsing may fail if the JSON value cannot be converted to `f64`.
+    /// Returns an error if a statistic required by the constraints is missing in `base_stats`. The error contains a message indicating which statistic is missing.
     ///
-    /// # Notes
+    /// # Example
     ///
-    /// - The function includes a placeholder for checking constraints, which should be implemented as needed.
+    /// ```rust
+    /// let constraints = HashMap::new();
+    /// constraints.insert(Stats::Health, 100.0);
+    /// let result = 50.0;
+    /// let base_stats = HashMap::new();
+    /// base_stats.insert(Stats::Health, 90.0);
+    ///
+    /// let adjusted_result = apply_constraints(result, &base_stats);
+    /// // adjusted_result would be -50.0 because Health is below the constraint
+    /// ```
+    ///
+    fn apply_constraints(&self, result: f64, base_stats: &HashMap<Stats, f64>) -> Result<f64> {
+        // Initialize the adjusted result with the original result.
+        let mut adjusted_result = result;
+        trace!("Applying constraints. Initial result: {}", result);
+
+        // Iterate over each constraint defined in `self.constraint`.
+        for (stat, required_value) in &self.constraint {
+            // Retrieve the current value of the statistic from `base_stats`.
+            let current_stat = base_stats
+                .get(stat)
+                .ok_or_eyre(format!("Missing stat {:?}", stat))?;
+
+            // Log the current stat and the required value for debugging purposes.
+            trace!(
+                "Checking constraint for stat {:?}. Current value: {}, Required value: {}",
+                stat,
+                current_stat,
+                required_value
+            );
+
+            // Check if the current statistic value is below the required value.
+            if current_stat < required_value {
+                // Penalize the result by negating it if the constraint is not met.
+                adjusted_result = -adjusted_result;
+                trace!(
+                    "Constraint not met. Penalizing result. New result: {}",
+                    adjusted_result
+                );
+            }
+        }
+
+        // Return the potentially adjusted result.
+        Ok(adjusted_result)
+    }
+
+    /// Builds and evaluates the final expression to obtain the result based on provided totals.
+    ///
+    /// This function constructs an expression using the target formula and the provided `totals`. It then executes
+    /// the expression and parses the result from its output. This result is returned as the final evaluated value.
+    ///
+    /// # Arguments
+    ///
+    /// * `totals`: A map of statistics where the key is a statistic identifier (`Stats`), and the value is the statistic's value.
+    ///   This map is used to build the final expression by substituting these values into the formula.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<f64>` where:
+    /// * `Ok(f64)` contains the evaluated result of the final expression.
+    /// * `Err` if there is an issue building or executing the expression, or parsing the result.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the expression cannot be built, executed, or if the result cannot be parsed from the expression's output.
+    fn calculate_final_result(&self, totals: &HashMap<Stats, f64>) -> Result<f64> {
+        // Log the totals used to build the expression.
+        trace!("Building final expression with totals: {:?}", totals);
+
+        // Build the final expression using the target formula and the provided totals.
+        let final_expr = self.build_expr(&self.target_formula, totals);
+        debug!("Built final expression: {:?}", final_expr);
+
+        // Execute the expression and obtain the result in JSON format.
+        let result_value = final_expr.exec()?;
+        debug!("Expression executed. Result JSON: {:?}", result_value);
+
+        // Convert the JSON result to a floating-point number.
+        let result: f64 = serde_json::from_value(result_value)?;
+        debug!("Final result obtained: {}", result);
+
+        // Return the evaluated result.
+        Ok(result)
+    }
+
+    /// Evaluates the final result based on a list of relics and constraints.
+    ///
+    /// This function performs a multi-step evaluation process:
+    /// 1. Calculates initial totals based on the provided relics.
+    /// 2. Evaluates base statistics from the initial totals.
+    /// 3. Recalculates totals considering the base statistics.
+    /// 4. Evaluates base statistics again from the updated totals.
+    /// 5. Builds and executes a final expression based on the updated totals.
+    /// 6. Applies constraints to the final result and adjusts it if necessary.
+    ///
+    /// # Arguments
+    ///
+    /// * `relics`: A vector of `Relic` objects that are used to calculate initial and updated totals.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<f64>` where:
+    /// * `Ok(f64)` contains the final evaluated and constrained result.
+    /// * `Err` if any step of the evaluation process fails, such as calculation errors, missing data, or constraint violations.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any of the following occurs:
+    /// * Calculation of totals fails.
+    /// * Evaluation of base statistics fails.
+    /// * Final expression cannot be built, executed, or parsed.
+    /// * Constraints cannot be applied due to missing or invalid data.
     pub fn evaluate(&self, relics: Vec<Relic>) -> Result<f64> {
         trace!("Starting evaluation with relics: {:?}", relics);
 
-        // Calculate initial totals from relics
-        let totals = self.calculate_total(&relics, None)?;
-        debug!("Initial totals calculated: {:?}", totals);
+        // Calculate initial totals from the provided relics.
+        let initial_totals = self.calculate_totals(&relics, None)?;
+        trace!("Initial totals calculated: {:?}", initial_totals);
 
-        // Evaluate base stats based on the initial totals
-        let base_stats = self.evaluate_base_stats(&totals)?;
-        debug!("Base stats evaluated: {:?}", base_stats);
+        // Evaluate base statistics based on the initial totals.
+        let initial_base_stats = self.evaluate_base_stats(&initial_totals)?;
+        trace!("Initial base stats evaluated: {:?}", initial_base_stats);
 
-        // Recalculate totals considering the base stats
-        let totals = self.calculate_total(&relics, Some(base_stats))?;
-        debug!("Totals recalculated with base stats: {:?}", totals);
+        // Recalculate totals considering the evaluated base statistics.
+        let updated_totals = self.calculate_totals(&relics, Some(initial_base_stats))?;
+        trace!(
+            "Updated totals recalculated with base stats: {:?}",
+            updated_totals
+        );
 
-        // Build the final expression
-        let final_expr = self.build_expr(&self.target_formula, &totals);
-        debug!("Built final expression: {:?}", final_expr);
+        // Evaluate base statistics again based on the updated totals.
+        let updated_base_stats = self.evaluate_base_stats(&updated_totals)?;
+        trace!("Updated base stats evaluated: {:?}", updated_base_stats);
 
-        // Execute the expression and parse the result
-        let result = serde_json::from_value(final_expr.exec()?)?;
-        debug!("Final result obtained: {}", result);
+        // Build and execute the final expression using the updated totals.
+        let final_result = self.calculate_final_result(&updated_totals)?;
+        trace!("Final result obtained from expression: {}", final_result);
 
-        // TODO: Implement constraints checking here
-        // e.g., check if the result meets any predefined constraints
+        // Apply constraints to the final result and adjust if necessary.
+        let constrained_result = self.apply_constraints(final_result, &updated_base_stats)?;
+        trace!(
+            "Constrained result after applying constraints: {}",
+            constrained_result
+        );
 
-        Ok(result)
+        // Return the final constrained result.
+        Ok(constrained_result)
     }
 
     /// Evaluates base stats using predefined formulas and total stat values.
@@ -540,7 +657,7 @@ impl Evaluator {
     ///
     /// - The function first calculates stat totals from relics.
     /// - It then applies set bonuses and adds these bonuses to the totals.
-    pub fn calculate_total(
+    pub fn calculate_totals(
         &self,
         relics: &[Relic],
         first_round_stats: Option<HashMap<Stats, f64>>,
@@ -575,11 +692,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_evaluation() -> Result<()> {
+        // Create a new character instance with specific attributes.
         let mut fu_xuan = Character::new(
             CharacterName::FuXuan,
-            80,
-            6,
-            0,
+            80, // Level
+            6,  // Ascension
+            0,  // Eidolon
             CharacterSkills {
                 basic: 1,
                 skill: 9,
@@ -606,6 +724,8 @@ mod tests {
             vec![],
         )
         .await?;
+
+        // Create a new LightCone instance with specific attributes.
         let mut we_are_wild_fire = LightCone {
             key: LightConeName::WeAreWildfire,
             level: 50,
@@ -618,6 +738,8 @@ mod tests {
             },
             _id: "lightcone_100".to_string(),
         };
+
+        // Create Relic instances for different slots.
         let head = Relic {
             set: RelicSetName::KnightOfPurityPalace,
             slot: Slot::Head,
@@ -646,6 +768,7 @@ mod tests {
             lock: false,
             _id: "relic_1".to_string(),
         };
+
         let hands = Relic {
             set: RelicSetName::LongevousDisciple,
             slot: Slot::Hands,
@@ -674,6 +797,7 @@ mod tests {
             lock: false,
             _id: "relic_2".to_string(),
         };
+
         let body = Relic {
             set: RelicSetName::LongevousDisciple,
             slot: Slot::Body,
@@ -702,6 +826,7 @@ mod tests {
             lock: false,
             _id: "relic_3".to_string(),
         };
+
         let feet = Relic {
             set: RelicSetName::KnightOfPurityPalace,
             slot: Slot::Feet,
@@ -730,6 +855,7 @@ mod tests {
             lock: false,
             _id: "relic_4".to_string(),
         };
+
         let sphere = Relic {
             set: RelicSetName::FleetOfTheAgeless,
             slot: Slot::PlanarSphere,
@@ -758,6 +884,7 @@ mod tests {
             lock: false,
             _id: "relic_5".to_string(),
         };
+
         let rope = Relic {
             set: RelicSetName::FleetOfTheAgeless,
             slot: Slot::LinkRope,
@@ -787,11 +914,17 @@ mod tests {
             _id: "relic_6".to_string(),
         };
 
+        // Combine all relics into a vector for evaluation.
         let relics = vec![head, hands, body, feet, sphere, rope];
+
+        // Add base stats to the character and fetch the main stat of the light cone.
         fu_xuan.add_base_stats().await?;
         we_are_wild_fire.get_main_stat().await?;
 
+        // Clone the trace bonuses from the character.
         let trace_bonus = fu_xuan.traces.total_bonus.clone();
+
+        // Define set bonuses for relic sets.
         let set_bonus = HashMap::from([
             (
                 RelicSetName::KnightOfPurityPalace,
@@ -807,6 +940,7 @@ mod tests {
             ),
         ]);
 
+        // Define the formulas used for calculations.
         let hp_formula =
             "(Character_HP + LightCone_HP) * (1 + Percentage_HP_Bonus / 100) + Additive_HP_Bonus";
         let atk_formula =
@@ -821,10 +955,41 @@ mod tests {
         let effect_res_formula = "Effect_RES";
         let break_effect_formula = "Break_Effect";
 
+        // Create an Evaluator instance with the defined attributes and formulas.
+        let evaluator = Evaluator::new(
+            fu_xuan.clone(),
+            we_are_wild_fire.clone(),
+            HashMap::new(),
+            set_bonus.clone(),
+            trace_bonus.clone(),
+            HashMap::from([
+                (Stats::Hp, hp_formula.to_owned()),
+                (Stats::Atk, atk_formula.to_owned()),
+                (Stats::Def, def_formula.to_owned()),
+                (Stats::Spd, spd_formula.to_owned()),
+                (Stats::CritRate_, crit_rate_formula.to_owned()),
+                (Stats::CritDmg_, crit_dmg_formula.to_owned()),
+                (
+                    Stats::EnergyRegenerationRate_,
+                    energy_regen_rate_formula.to_owned(),
+                ),
+                (Stats::EffectHitRate_, effect_hit_rate_formula.to_owned()),
+                (Stats::EffectRES_, effect_res_formula.to_owned()),
+                (Stats::BreakEffect_, break_effect_formula.to_owned()),
+            ]),
+            hp_formula,
+            "Maximum HP",
+        );
+
+        // Evaluate the result with the current relics setup and check if it matches the expected value.
+        let result = evaluator.evaluate(relics.clone())?;
+        assert_eq!(result, 6512.039936000001);
+
+        // Create a new Evaluator instance with a constraint on EnergyRegenerationRate_.
         let evaluator = Evaluator::new(
             fu_xuan,
             we_are_wild_fire,
-            HashMap::new(),
+            HashMap::from([(Stats::EnergyRegenerationRate_, 160.0)]), // Expecting no more than 160 energy regeneration rate
             set_bonus,
             trace_bonus,
             HashMap::from([
@@ -846,8 +1011,10 @@ mod tests {
             "Maximum HP",
         );
 
+        // Evaluate the result with the new setup and check if it matches the expected penalized value.
         let result = evaluator.evaluate(relics)?;
-        assert_eq!(result, 6512.039936000001);
+        assert_eq!(result, -6512.039936000001);
+
         Ok(())
     }
 }
