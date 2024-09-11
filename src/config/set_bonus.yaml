@@ -1,0 +1,266 @@
+PASSERBY_OF_WANDERING_CLOUD:
+  2:
+    - - OUTGOING_HEALING_BOOST_
+      - 10
+      - null
+
+MUSKETEER_OF_WILD_WHEAT:
+  2:
+    - - ATK_
+      - 12
+      - null
+  4:
+    - - SPD_
+      - 6
+      - null
+    - - BASIC_ATK_DMG_BOOST_
+      - 10
+      - null
+
+KNIGHT_OF_PURITY_PALACE:
+  2:
+    - - DEF_
+      - 15
+      - null
+  4:
+    - - SHIELD_DMG_ABSORPTION_
+      - 20
+      - null
+
+HUNTER_OF_GLACIAL_FOREST:
+  2:
+    - - ICE_DMG_BOOST_
+      - 10
+      - null
+  # for 4 pieces: After the wearer uses their Ultimate, their CRIT DMG increases by 25% for 2 turn(s).
+
+CHAMPION_OF_STREETWISE_BOXING:
+  2:
+    - - PHYSICAL_DMG_BOOST_
+      - 10
+      - null
+  # for 4 pieces: After the wearer attacks or is hit, their ATK increases by 5% for the rest of the battle. This effect can stack up to 5 time(s).
+
+GUARD_OF_WUTHERING_SNOW:
+  2:
+    - - DMG_REDUCTION_
+      - 8
+      - null
+FIRESMITH_OF_LAVA_FORGING:
+  2:
+    - - FIRE_DMG_BOOST_
+      - 10
+      - null
+  4:
+    - - SKILL_DMG_BOOST_
+      - 12
+      - null
+    # After unleashing Ultimate, increases the wearer's Fire DMG by 12% for the next attack.
+
+GENIUS_OF_BRILLIANT_STARS:
+  2:
+    - - QUANTUM_DMG_BOOST_
+      - 10
+      - null
+  # for 4 pieces: When the wearer deals DMG to the target enemy, ignores 10% DEF. If the target enemy has Quantum Weakness, the wearer additionally ignores 10% DEF.
+
+BAND_OF_SIZZLING_THUNDER:
+  2:
+    - - LIGHTNING_DMG_BOOST_
+      - 10
+      - null
+  # for 4 pieces: When the wearer uses their Skill, increases the wearer's ATK by 20% for 1 turn(s).
+
+EAGLE_OF_TWILIGHT_LINE:
+  2:
+    - - WIND_DMG_BOOST_
+      - 10
+      - null
+
+THIEF_OF_SHOOTING_METEOR:
+  2:
+    - - BREAK_EFFECT_
+      - 16
+      - null
+  4:
+    - - BREAK_EFFECT_
+      - 16
+      - null
+
+WASTELANDER_OF_BANDITRY_DESERT:
+  2:
+    - - IMAGINARY_DMG_BOOST_
+      - 10
+      - null
+  # for 4 pieces: When attacking debuffed enemies, the wearer's CRIT Rate increases by 10%, and their CRIT DMG increases by 20% against Imprisoned enemies.
+
+LONGEVOUS_DISCIPLE:
+  2:
+    - - HP_
+      - 12
+      - null
+  # for 4 pieces: When the wearer is hit or has their HP consumed by an ally or themselves, their CRIT Rate increases by 8% for 2 turn(s) and up to 2 stacks.
+
+MESSENGER_TRAVERSING_HACKERSPACE:
+  2:
+    - - SPD_
+      - 6
+      - null
+  
+THE_ASHBLAZING_GRAND_DUKE:
+  2:
+    - - FOLLOW_UP_ATK_DMG_BOOST_
+      - 20
+      - null
+  # for 4 pieces: When the wearer uses a follow-up attack, increases the wearer's ATK by 6% for every time the follow-up attack deals DMG. This effect can stack up to 8 time(s) and lasts for 3 turn(s). This effect is removed the next time the wearer uses a follow-up attack.
+
+PRISONER_IN_DEEP_CONFINEMENT:
+  2:
+    - - ATK_
+      - 20
+      - null
+  # for 4 pieces: For every DoT the target enemy is afflicted with, the wearer will ignore 6% of its DEF when dealing DMG to it. This effect is valid for a max of 3 DoTs.
+
+PIONEER_DIVER_OF_DEAD_WATERS:
+  # for 2 pieces: Increases DMG dealt to enemies with debuffs by 12%.
+  4:
+    - - CRIT_RATE_
+      - 4
+      - null
+  # for 4 pieces: The wearer deals 8%/12% increased CRIT DMG to enemies with at least 2/3 debuffs. After the wearer inflicts a debuff on enemy targets, the aforementioned effects increase by 100%, lasting for 1 turn(s).
+
+WATCHMAKER_MASTER_OF_DREAM_MACHINATIONS:
+  2:
+    - - BREAK_EFFECT_
+      - 16
+      - null
+
+IRON_CAVALRY_AGAINST_THE_SCOURGE:
+  2:
+    - - BREAK_EFFECT_
+      - 16
+      - null
+  4:
+    - - BREAK_DMG_DEF_IGNORE_
+      - 10
+      - - BREAK_EFFECT_
+        - 150
+    - - SUPER_BREAK_DMG_DEF_IGNORE_
+      - 15
+      - - BREAK_EFFECT_
+        - 250
+
+THE_WIND_SOARING_VALOROUS:
+  2:
+    - - ATK_
+      - 12
+      - null
+  4:
+    - - CRIT_RATE_
+      - 6
+      - null
+    # After the wearer uses a follow-up attack, increases DMG dealt by Ultimate by 36%, lasting for 1 turn(s).
+
+SPACE_SEALING_STATION:
+  2:
+    - - ATK_
+      - 12
+      - null
+    - - ATK_
+      - 12
+      - - SPD
+        - 120
+
+FLEET_OF_THE_AGELESS:
+  2:
+    - - HP_
+      - 12
+      - null
+
+PAN_COSMIC_COMMERCIAL_ENTERPRISE:
+  2:
+    - - EFFECT_HIT_RATE_
+      - 10
+      - null
+    # Meanwhile, the wearer's ATK increases by an amount that is equal to 25% of the current Effect Hit Rate, up to a maximum of 25%.
+
+BELOBOG_OF_THE_ARCHITECTS:
+  2:
+    - - DEF_
+      - 15
+      - null
+    - - DEF_
+      - 15
+      - - EFFECT_HIT_RATE_
+        - 50
+
+CELESTIAL_DIFFERENTIATOR:
+  2:
+    - - CRIT_DMG_
+      - 16
+      - null
+    # When the wearer's current CRIT DMG reaches 120% or higher, after entering battle, the wearer's CRIT Rate increases by 60% until the end of their first attack.
+
+INERT_SALSOTTO:
+  2:
+    - - CRIT_RATE_
+      - 8
+      - null
+    - - FOLLOW_UP_ATK_DMG_BOOST_
+      - 15
+      - - CRIT_RATE_
+        - 50
+    - - ULTIMATE_DMG_BOOST_
+      - 15
+      - - CRIT_RATE_
+        - 50
+  
+TALIA_KINGDOM_OF_BANDITRY:
+  2:
+    - - BREAK_EFFECT_
+      - 16
+      - null
+    - - BREAK_EFFECT_
+      - 20
+      - - SPD
+        - 145
+
+SPRIGHTLY_VONWACQ:
+  2:
+    - - ENERGY_REGENERATION_RATE_
+      - 5
+      - null
+    
+RUTILANT_ARENA:
+  2:
+    - - CRIT_RATE_
+      - 8
+      - null
+    - - BASIC_ATK_DMG_BOOST_
+      - 20
+      - - CRIT_RATE_
+        - 70
+    - - SKILL_DMG_BOOST_
+      - 20
+      - - CRIT_RATE_
+        - 70
+
+BROKEN_KEEL:
+  2:
+    - - EFFECT_RES_
+      - 10
+      - null
+
+FIRMAMENT_FRONTLINE_GLAMOTH:
+  2:
+    - - ATK_
+      - 12
+      - null
+    - - DMG_BOOST_
+      - 12
+      - - SPD
+        - 135
+    - - DMG_BOOST_
+      - 18
+      - - SPD
+        - 160

@@ -361,13 +361,13 @@ impl From<&str> for CombatTypes {
 impl From<crate::domain::character::CombatTypes> for Stats {
     fn from(types: crate::domain::character::CombatTypes) -> Self {
         match types {
-            CombatTypes::Quantum => Stats::QuantumDMGBoost_,
-            CombatTypes::Lightning => Stats::LightningDMGBoost_,
-            CombatTypes::Fire => Stats::FireDMGBoost_,
-            CombatTypes::Ice => Stats::IceDMGBoost_,
-            CombatTypes::Physical => Stats::PhysicalDMGBoost_,
-            CombatTypes::Wind => Stats::WindDMGBoost_,
-            CombatTypes::Imaginary => Stats::ImaginaryDMGBoost_,
+            CombatTypes::Quantum => Stats::QuantumDmgBoost_,
+            CombatTypes::Lightning => Stats::LightningDmgBoost_,
+            CombatTypes::Fire => Stats::FireDmgBoost_,
+            CombatTypes::Ice => Stats::IceDmgBoost_,
+            CombatTypes::Physical => Stats::PhysicalDmgBoost_,
+            CombatTypes::Wind => Stats::WindDmgBoost_,
+            CombatTypes::Imaginary => Stats::ImaginaryDmgBoost_,
         }
     }
 }
@@ -483,7 +483,7 @@ impl StatDetails {
         );
         let effect_res = calculate_stat(
             0.0,
-            Some(Stats::EffectRES_),
+            Some(Stats::EffectRes_),
             None,
             &relics,
             &set_bonus,
@@ -670,7 +670,7 @@ impl Character {
                 let key = match name.as_str() {
                     "HP Boost" => Stats::Hp_,
                     "CRIT Rate Boost" => Stats::CritRate_,
-                    "Effect RES Boost" => Stats::EffectRES_,
+                    "Effect RES Boost" => Stats::EffectRes_,
                     key if key.starts_with("DMG Boost") => self
                         .combat_type
                         .clone()

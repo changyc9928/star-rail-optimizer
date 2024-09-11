@@ -1,6 +1,8 @@
 use crate::domain::{ScannerInput, Stats};
-use domain::RelicSetName;
-use engine::{evaluator::Evaluator, optimizer::Optimizer};
+use engine::{
+    evaluator::{Evaluator, SetBonusMap},
+    optimizer::Optimizer,
+};
 use eyre::Result;
 use std::{collections::HashMap, fs};
 use tracing_subscriber;
@@ -10,10 +12,12 @@ mod engine;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // tracing_subscriber::fmt()
-    //     .with_max_level(tracing::Level::INFO) // You can set this to INFO, DEBUG, etc.
-    //     .init();
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO) // You can set this to INFO, DEBUG, etc.
+        .init();
     let file = fs::File::open("scanned_data/HSRScanData_20231126_122032.json")?;
+    // Read the YAML file into a string
+    let yaml_content = fs::read_to_string("src/config/set_bonus.yaml")?;
     let json: serde_json::Value = serde_json::from_reader(file)?;
     let mut input: ScannerInput = serde_json::from_value(json)?;
     input.update().await?;
@@ -46,20 +50,23 @@ async fn main() -> Result<()> {
     let effect_hit_rate_formula = "Effect_Hit_Rate";
     let effect_res_formula = "Effect_RES";
     let break_effect_formula = "Break_Effect";
-    let set_bonus = HashMap::from([
-        (
-            RelicSetName::KnightOfPurityPalace,
-            HashMap::from([(2, vec![(Stats::Def_, 15.0, None)])]),
-        ),
-        (
-            RelicSetName::LongevousDisciple,
-            HashMap::from([(2, vec![(Stats::Hp_, 12.0, None)])]),
-        ),
-        (
-            RelicSetName::FleetOfTheAgeless,
-            HashMap::from([(2, vec![(Stats::Hp_, 12.0, None)])]),
-        ),
-    ]);
+    // Deserialize the YAML content into the HashMap structure
+    let set_bonus: SetBonusMap = serde_yaml::from_str(&yaml_content)?;
+    println!("Set bonus: {:#?}", set_bonus);
+    // let set_bonus = HashMap::from([
+    //     (
+    //         RelicSetName::KnightOfPurityPalace,
+    //         HashMap::from([(2, vec![(Stats::Def_, 15.0, None)])]),
+    //     ),
+    //     (
+    //         RelicSetName::LongevousDisciple,
+    //         HashMap::from([(2, vec![(Stats::Hp_, 12.0, None)])]),
+    //     ),
+    //     (
+    //         RelicSetName::FleetOfTheAgeless,
+    //         HashMap::from([(2, vec![(Stats::Hp_, 12.0, None)])]),
+    //     ),
+    // ]);
     let evaluator = Evaluator::new(
         fuxuan.clone(),
         light_cone,
@@ -78,7 +85,7 @@ async fn main() -> Result<()> {
                 energy_regen_rate_formula.to_owned(),
             ),
             (Stats::EffectHitRate_, effect_hit_rate_formula.to_owned()),
-            (Stats::EffectRES_, effect_res_formula.to_owned()),
+            (Stats::EffectRes_, effect_res_formula.to_owned()),
             (Stats::BreakEffect_, break_effect_formula.to_owned()),
         ]),
         hp_formula,
@@ -87,8 +94,8 @@ async fn main() -> Result<()> {
     let optimizer = Optimizer {
         relic_pool,
         generation: 400,
-        population_size: 200,
-        mutation_rate: 0.005,
+        population_size: 1200,
+        mutation_rate: 0.02,
         evaluator,
     };
 

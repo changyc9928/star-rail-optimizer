@@ -18,7 +18,7 @@ type SetBonus = HashMap<u8, Vec<(Stats, f64, Option<(Stats, f64)>)>>;
 // - `f64`: The value of the bonus.
 // - `Option<(Stats, f64)>`: Optional condition bonus (stat and value).
 
-type SetBonusMap = HashMap<RelicSetName, SetBonus>;
+pub type SetBonusMap = HashMap<RelicSetName, SetBonus>;
 // `SetBonusMap` maps `RelicSetName` to `SetBonus`, representing set bonuses for different relic sets.
 
 type StatBonusMap = HashMap<Stats, f64>;
@@ -386,19 +386,19 @@ impl Evaluator {
                 Stats::DefReduction_ => "Percentage_DEF_Reduction",
                 Stats::Spd => "Additive_SPD_Bonus",
                 Stats::Spd_ => "Percentage_SPD_Bonus",
-                Stats::FireDMGBoost_ => "Fire DMG_Boost",
-                Stats::WindDMGBoost_ => "Wind_DMG_Boost",
-                Stats::IceDMGBoost_ => "Ice_DMG_Boost",
-                Stats::LightningDMGBoost_ => "Lightning_DMG_Boost",
-                Stats::PhysicalDMGBoost_ => "Physical_DMG_Boost",
-                Stats::QuantumDMGBoost_ => "Quantum_DMG_Boost",
-                Stats::ImaginaryDMGBoost_ => "Imaginary_DMG_Boost",
-                Stats::CommonDMGBoost_ => "Common_DMG_Boost",
+                Stats::FireDmgBoost_ => "Fire DMG_Boost",
+                Stats::WindDmgBoost_ => "Wind_DMG_Boost",
+                Stats::IceDmgBoost_ => "Ice_DMG_Boost",
+                Stats::LightningDmgBoost_ => "Lightning_DMG_Boost",
+                Stats::PhysicalDmgBoost_ => "Physical_DMG_Boost",
+                Stats::QuantumDmgBoost_ => "Quantum_DMG_Boost",
+                Stats::ImaginaryDmgBoost_ => "Imaginary_DMG_Boost",
+                Stats::DmgBoost_ => "Common_DMG_Boost",
                 Stats::CritRate_ => "CRIT_Rate",
                 Stats::CritDmg_ => "CRIT_DMG",
                 Stats::BreakEffect_ => "Break_Effect",
                 Stats::EffectHitRate_ => "Effect_Hit_Rate",
-                Stats::EffectRES_ => "Effect_RES",
+                Stats::EffectRes_ => "Effect_RES",
                 Stats::EnergyRegenerationRate_ => "Energy_Regeneration_Rate",
                 _ => continue,
             };
@@ -872,7 +872,7 @@ mod tests {
                     value: 7.7,
                 },
                 SubStats {
-                    key: Stats::EffectRES_,
+                    key: Stats::EffectRes_,
                     value: 12.0,
                 },
                 SubStats {
@@ -974,7 +974,7 @@ mod tests {
                     energy_regen_rate_formula.to_owned(),
                 ),
                 (Stats::EffectHitRate_, effect_hit_rate_formula.to_owned()),
-                (Stats::EffectRES_, effect_res_formula.to_owned()),
+                (Stats::EffectRes_, effect_res_formula.to_owned()),
                 (Stats::BreakEffect_, break_effect_formula.to_owned()),
             ]),
             hp_formula,
@@ -1004,7 +1004,7 @@ mod tests {
                     energy_regen_rate_formula.to_owned(),
                 ),
                 (Stats::EffectHitRate_, effect_hit_rate_formula.to_owned()),
-                (Stats::EffectRES_, effect_res_formula.to_owned()),
+                (Stats::EffectRes_, effect_res_formula.to_owned()),
                 (Stats::BreakEffect_, break_effect_formula.to_owned()),
             ]),
             hp_formula,

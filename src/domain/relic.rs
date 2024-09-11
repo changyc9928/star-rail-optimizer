@@ -18,6 +18,7 @@ pub enum Slot {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, Hash, EnumIter)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Stats {
     #[serde(alias = "ATK")]
     Atk,
@@ -44,34 +45,53 @@ pub enum Stats {
     #[serde(alias = "Effect Hit Rate_", alias = "Effect Hit Rate")]
     EffectHitRate_,
     #[serde(alias = "Effect RES_")]
-    EffectRES_,
+    EffectRes_,
     #[serde(alias = "Break Effect_", alias = "Break Effect")]
     BreakEffect_,
     #[serde(alias = "Outgoing Healing Boost")]
     OutgoingHealingBoost_,
     #[serde(alias = "Fire DMG Boost")]
-    FireDMGBoost_,
+    FireDmgBoost_,
     #[serde(alias = "Ice DMG Boost")]
-    IceDMGBoost_,
+    IceDmgBoost_,
     #[serde(alias = "Wind DMG Boost")]
-    WindDMGBoost_,
+    WindDmgBoost_,
     #[serde(alias = "Lightning DMG Boost")]
-    LightningDMGBoost_,
+    LightningDmgBoost_,
     #[serde(alias = "Quantum DMG Boost")]
-    QuantumDMGBoost_,
+    QuantumDmgBoost_,
     #[serde(alias = "Imaginary DMG Boost")]
-    ImaginaryDMGBoost_,
+    ImaginaryDmgBoost_,
     #[serde(alias = "Physical DMG Boost")]
-    PhysicalDMGBoost_,
-    #[serde(alias = "Common DMG Boost")]
-    CommonDMGBoost_,
+    PhysicalDmgBoost_,
+    #[serde(alias = "DMG Boost")]
+    DmgBoost_,
+    #[serde(alias = "Basic ATK DMG Boost")]
+    BasicAtkDmgBoost_,
+    #[serde(alias = "Skill DMG Boost")]
+    SkillDmgBoost_,
+    #[serde(alias = "Ultimate DMG Boost")]
+    UltimateDmgBoost_,
+    #[serde(alias = "Follow-up ATK DMG Boost")]
+    FollowUpAtkDmgBoost_,
+    #[serde(alias = "Shield DMG Absorption")]
+    ShieldDmgAbsorption_,
+    #[serde(alias = "DMG Reduction")]
+    DmgReduction_,
     #[serde(alias = "DEF Reduction")]
     DefReduction_,
+    #[serde(alias = "DEF Ignore")]
+    DefIgnore_,
+    #[serde(alias = "Break DMG DEF Ignore")]
+    BreakDmgDefIgnore_,
+    #[serde(alias = "Super Break DMG DEF Ignore")]
+    SuperBreakDmgDefIgnore_,
     #[default]
     Dummy,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default, EnumIter)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum RelicSetName {
     #[serde(alias = "Passerby of Wandering Cloud")]
     PasserbyOfWanderingCloud,
@@ -129,6 +149,14 @@ pub enum RelicSetName {
     FirmamentFrontlineGlamoth,
     #[serde(alias = "Penacony, Land of the Dreams")]
     PenaconyLandOfTheDreams,
+    #[serde(alias = "Pioneer Diver of Dead Waters")]
+    PioneerDiverOfDeadWaters,
+    #[serde(alias = "Watchmaker, Master of Dream Machinations")]
+    WatchmakerMasterOfDreamMachinations,
+    #[serde(alias = "Iron Cavalry Against the Scourge")]
+    IronCavalryAgainstTheScourge,
+    #[serde(alias = "The Wind-Soaring Valorous")]
+    TheWindSoaringValorous,
     #[default]
     Dummy,
 }
@@ -170,13 +198,13 @@ impl Relic {
             (5, Stats::BreakEffect_) => 10.3680 + 3.6277 * self.level as f64,
             (5, Stats::EnergyRegenerationRate_) => 3.1104 + 1.0886 * self.level as f64,
             (5, Stats::OutgoingHealingBoost_) => 5.5296 + 1.9354 * self.level as f64,
-            (5, Stats::PhysicalDMGBoost_)
-            | (5, Stats::FireDMGBoost_)
-            | (5, Stats::IceDMGBoost_)
-            | (5, Stats::WindDMGBoost_)
-            | (5, Stats::LightningDMGBoost_)
-            | (5, Stats::QuantumDMGBoost_)
-            | (5, Stats::ImaginaryDMGBoost_) => 6.2208 + 2.1773 * self.level as f64,
+            (5, Stats::PhysicalDmgBoost_)
+            | (5, Stats::FireDmgBoost_)
+            | (5, Stats::IceDmgBoost_)
+            | (5, Stats::WindDmgBoost_)
+            | (5, Stats::LightningDmgBoost_)
+            | (5, Stats::QuantumDmgBoost_)
+            | (5, Stats::ImaginaryDmgBoost_) => 6.2208 + 2.1773 * self.level as f64,
             (5, Stats::CritRate_) => 5.184 + 1.8144 * self.level as f64,
             (5, Stats::CritDmg_) => 10.368 + 3.6288 * self.level as f64,
             (4, Stats::Spd) => 3.2256 + 1.1 * self.level as f64,
@@ -189,13 +217,13 @@ impl Relic {
             (4, Stats::BreakEffect_) => 8.2944 + 2.9030 * self.level as f64,
             (4, Stats::EnergyRegenerationRate_) => 2.4883 + 0.8709 * self.level as f64,
             (4, Stats::OutgoingHealingBoost_) => 4.4237 + 1.5483 * self.level as f64,
-            (4, Stats::PhysicalDMGBoost_)
-            | (4, Stats::FireDMGBoost_)
-            | (4, Stats::IceDMGBoost_)
-            | (4, Stats::WindDMGBoost_)
-            | (4, Stats::LightningDMGBoost_)
-            | (4, Stats::QuantumDMGBoost_)
-            | (4, Stats::ImaginaryDMGBoost_) => 4.9766 + 1.7418 * self.level as f64,
+            (4, Stats::PhysicalDmgBoost_)
+            | (4, Stats::FireDmgBoost_)
+            | (4, Stats::IceDmgBoost_)
+            | (4, Stats::WindDmgBoost_)
+            | (4, Stats::LightningDmgBoost_)
+            | (4, Stats::QuantumDmgBoost_)
+            | (4, Stats::ImaginaryDmgBoost_) => 4.9766 + 1.7418 * self.level as f64,
             (4, Stats::CritRate_) => 4.1472 + 1.4515 * self.level as f64,
             (4, Stats::CritDmg_) => 8.2944 + 2.9030 * self.level as f64,
             _ => 0.0, // TODO
@@ -393,11 +421,11 @@ impl Relics {
                 RelicSetName::HunterOfGlacialForest => {
                     if v >= &2 {
                         if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::IceDMGBoost_)
+                            ret.entry(Stats::IceDmgBoost_)
                         {
                             e.insert(10.0);
                         } else {
-                            *ret.get_mut(&Stats::IceDMGBoost_)
+                            *ret.get_mut(&Stats::IceDmgBoost_)
                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
                         }
                     }
@@ -405,11 +433,11 @@ impl Relics {
                 RelicSetName::ChampionOfStreetwiseBoxing => {
                     if v >= &2 {
                         if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::PhysicalDMGBoost_)
+                            ret.entry(Stats::PhysicalDmgBoost_)
                         {
                             e.insert(10.0);
                         } else {
-                            *ret.get_mut(&Stats::PhysicalDMGBoost_)
+                            *ret.get_mut(&Stats::PhysicalDmgBoost_)
                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
                         }
                     }
@@ -418,11 +446,11 @@ impl Relics {
                 RelicSetName::FiresmithOfLavaForging => {
                     if v >= &2 {
                         if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::FireDMGBoost_)
+                            ret.entry(Stats::FireDmgBoost_)
                         {
                             e.insert(10.0);
                         } else {
-                            *ret.get_mut(&Stats::FireDMGBoost_)
+                            *ret.get_mut(&Stats::FireDmgBoost_)
                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
                         }
                     }
@@ -430,11 +458,11 @@ impl Relics {
                 RelicSetName::GeniusOfBrilliantStars => {
                     if v >= &2 {
                         if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::QuantumDMGBoost_)
+                            ret.entry(Stats::QuantumDmgBoost_)
                         {
                             e.insert(10.0);
                         } else {
-                            *ret.get_mut(&Stats::QuantumDMGBoost_)
+                            *ret.get_mut(&Stats::QuantumDmgBoost_)
                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
                         }
                     }
@@ -442,11 +470,11 @@ impl Relics {
                 RelicSetName::BandOfSizzlingThunder => {
                     if v >= &2 {
                         if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::LightningDMGBoost_)
+                            ret.entry(Stats::LightningDmgBoost_)
                         {
                             e.insert(10.0);
                         } else {
-                            *ret.get_mut(&Stats::LightningDMGBoost_)
+                            *ret.get_mut(&Stats::LightningDmgBoost_)
                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
                         }
                     }
@@ -454,11 +482,11 @@ impl Relics {
                 RelicSetName::EagleOfTwilightLine => {
                     if v >= &2 {
                         if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::WindDMGBoost_)
+                            ret.entry(Stats::WindDmgBoost_)
                         {
                             e.insert(10.0);
                         } else {
-                            *ret.get_mut(&Stats::WindDMGBoost_)
+                            *ret.get_mut(&Stats::WindDmgBoost_)
                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
                         }
                     }
@@ -478,11 +506,11 @@ impl Relics {
                 RelicSetName::WastelanderOfBanditryDesert => {
                     if v >= &2 {
                         if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::ImaginaryDMGBoost_)
+                            ret.entry(Stats::ImaginaryDmgBoost_)
                         {
                             e.insert(10.0);
                         } else {
-                            *ret.get_mut(&Stats::ImaginaryDMGBoost_)
+                            *ret.get_mut(&Stats::ImaginaryDmgBoost_)
                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
                         }
                     }
@@ -608,11 +636,11 @@ impl Relics {
                 RelicSetName::BrokenKeel => {
                     if v >= &2 {
                         if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::EffectRES_)
+                            ret.entry(Stats::EffectRes_)
                         {
                             e.insert(10.0);
                         } else {
-                            *ret.get_mut(&Stats::EffectRES_)
+                            *ret.get_mut(&Stats::EffectRes_)
                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
                         }
                     }
@@ -641,6 +669,10 @@ impl Relics {
                     }
                 }
                 RelicSetName::Dummy => todo!(),
+                RelicSetName::PioneerDiverOfDeadWaters => todo!(),
+                RelicSetName::WatchmakerMasterOfDreamMachinations => todo!(),
+                RelicSetName::IronCavalryAgainstTheScourge => todo!(),
+                RelicSetName::TheWindSoaringValorous => todo!(),
             }
         }
         for (k, v) in set {
@@ -777,11 +809,11 @@ impl Relics {
                 RelicSetName::BrokenKeel => {
                     let effect_res = self
                         .total
-                        .get(&Stats::EffectRES_)
+                        .get(&Stats::EffectRes_)
                         .cloned()
                         .unwrap_or_default()
-                        + bonus.get(&Stats::EffectRES_).cloned().unwrap_or_default()
-                        + ret.get(&Stats::EffectRES_).cloned().unwrap_or_default();
+                        + bonus.get(&Stats::EffectRes_).cloned().unwrap_or_default()
+                        + ret.get(&Stats::EffectRes_).cloned().unwrap_or_default();
                     if effect_res >= 30.0 && v >= 2 {
                         if let std::collections::hash_map::Entry::Vacant(e) =
                             ret.entry(Stats::CritDmg_)

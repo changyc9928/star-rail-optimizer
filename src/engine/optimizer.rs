@@ -101,7 +101,7 @@ impl Optimizer {
                 .ok_or(eyre::eyre!("Best combination not found"))?;
             match self.evaluator.evaluate(best_combination.clone()) {
                 Ok(result) => {
-                    println!(
+                    info!(
                         "Generation {} Highest {}: {}",
                         generation + 1,
                         self.evaluator.target_name,

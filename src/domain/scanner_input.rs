@@ -291,7 +291,7 @@ impl ScannerInput {
                                 flag = false
                             }
                         }
-                        Stats::EffectRES_ => {
+                        Stats::EffectRes_ => {
                             if character.stats_panel.effect_res < *value {
                                 flag = false
                             }
@@ -306,13 +306,13 @@ impl ScannerInput {
                                 flag = false
                             }
                         }
-                        Stats::FireDMGBoost_
-                        | Stats::IceDMGBoost_
-                        | Stats::WindDMGBoost_
-                        | Stats::LightningDMGBoost_
-                        | Stats::QuantumDMGBoost_
-                        | Stats::ImaginaryDMGBoost_
-                        | Stats::PhysicalDMGBoost_ => {
+                        Stats::FireDmgBoost_
+                        | Stats::IceDmgBoost_
+                        | Stats::WindDmgBoost_
+                        | Stats::LightningDmgBoost_
+                        | Stats::QuantumDmgBoost_
+                        | Stats::ImaginaryDmgBoost_
+                        | Stats::PhysicalDmgBoost_ => {
                             if character.stats_panel.dmg_bonus < *value {
                                 flag = false
                             }
