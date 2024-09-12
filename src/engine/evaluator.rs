@@ -4,10 +4,7 @@ use eval::Expr;
 use eyre::{OptionExt, Result};
 use itertools::Itertools;
 use rayon::prelude::*;
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::collections::HashMap;
 use strum::IntoEnumIterator;
 
 // Constants for base critical rate and damage
@@ -111,27 +108,26 @@ impl Evaluator {
     /// its total calculated value based on the relics. If an error occurs during calculation, the
     /// function returns an `Err`.
     fn calculate_stat_total_from_relics(&self, relics: &[Relic]) -> Result<HashMap<Stats, f64>> {
-        // Initialize the shared HashMap with Arc and Mutex
-        let totals = Arc::new(Mutex::new(HashMap::new()));
-
         // Convert the iterator to a vector
         let stats: Vec<Stats> = Stats::iter().collect();
 
         // Use rayon's parallel iterator to process each stat in parallel
-        stats.into_par_iter().for_each(|stat| {
-            // Calculate the total value for the current stat
-            let total = relics
-                .par_iter()
-                .map(|relic| self.relic_stat_value(relic, stat.clone()))
-                .sum::<f64>();
+        let maps: Vec<HashMap<Stats, f64>> = stats
+            .into_par_iter()
+            .map(|stat| {
+                // Calculate the total value for the current stat
+                let total = relics
+                    .par_iter()
+                    .map(|relic| self.relic_stat_value(relic, stat.clone()))
+                    .sum::<f64>();
 
-            // Lock the mutex and update the HashMap
-            let mut totals = totals.lock().unwrap();
-            totals.insert(stat, total);
-        });
+                // Lock the mutex and update the HashMap
+                HashMap::from([(stat, total)])
+            })
+            .collect();
 
         // Retrieve the final HashMap from the Arc<Mutex<_>>
-        let totals = Arc::try_unwrap(totals).unwrap().into_inner().unwrap();
+        let totals = maps.into_par_iter().flatten().collect();
 
         Ok(totals)
     }
@@ -194,27 +190,33 @@ impl Evaluator {
         first_round_stats: Option<&HashMap<Stats, f64>>,
     ) -> Result<HashMap<Stats, f64>> {
         // Create a thread-safe HashMap to store totals
-        let totals = Arc::new(Mutex::new(HashMap::new()));
+        let mut totals = HashMap::new();
 
         // Count the number of relics in each set
         let counts: HashMap<RelicSetName, usize> =
             relics.iter().counts_by(|relic| relic.set.clone());
 
         // Use Rayon to process each set in parallel
-        counts.into_par_iter().try_for_each(|(set, count)| {
-            if let Some(bonuses) = self.set_bonus.get(&set).and_then(|s| s.get(&(count as u8))) {
-                // Apply bonuses in a thread-safe manner
-                let mut totals = totals.lock().unwrap();
-                self.apply_bonuses(&mut totals, bonuses, first_round_stats)
-            } else {
-                Ok(())
-            }
-        })?;
+        let partial_totals: Vec<HashMap<Stats, f64>> = counts
+            .into_par_iter()
+            .map(|(set, count)| {
+                Ok::<HashMap<Stats, f64>, eyre::Report>(
+                    if let Some(bonuses) =
+                        self.set_bonus.get(&set).and_then(|s| s.get(&(count as u8)))
+                    {
+                        self.apply_bonuses(bonuses, first_round_stats)?
+                    } else {
+                        HashMap::new()
+                    },
+                )
+            })
+            .collect::<Result<Vec<HashMap<Stats, f64>>>>()?;
 
-        // Apply other bonuses (e.g., from character or external sources)
-        // Ensure the mutex is not locked by parallel tasks while performing this operation
-        let mut totals = totals.lock().unwrap();
-        self.apply_other_bonuses(&mut totals);
+        for total in partial_totals {
+            for (key, val) in total {
+                *totals.entry(key).or_default() += val;
+            }
+        }
 
         Ok(totals.clone()) // Return the final results
     }
@@ -243,22 +245,14 @@ impl Evaluator {
     /// if any condition is not met.
     fn apply_bonuses(
         &self,
-        totals: &mut HashMap<Stats, f64>,
         bonuses: &[Bonus],
         first_round_stats: Option<&HashMap<Stats, f64>>,
-    ) -> Result<()> {
-        // Create a thread-safe HashMap for totals
-        let totals_guarded = Arc::new(Mutex::new(totals.clone()));
-
+    ) -> Result<HashMap<Stats, f64>> {
         // Process bonuses in parallel
-        bonuses
+        let partial_totals: Vec<HashMap<Stats, f64>> = bonuses
             .par_iter()
-            .try_for_each(|(stat, bonus_value, condition_bonus)| {
-                // Clone the Arc to move into the closure
-                let totals = Arc::clone(&totals_guarded);
-
-                // Lock the Mutex to safely update the totals
-                let mut totals = totals.lock().unwrap();
+            .map(|(stat, bonus_value, condition_bonus)| {
+                let mut totals = HashMap::new();
 
                 // Apply unconditional bonus
                 *totals.entry(stat.clone()).or_default() += bonus_value;
@@ -266,59 +260,25 @@ impl Evaluator {
                 // Check and apply conditional bonus if applicable
                 if let Some((cond_stat, cond_bonus)) = condition_bonus {
                     let stat_value = first_round_stats
-                        .and_then(|fs| fs.get(cond_stat))
-                        .ok_or_eyre(format!(
-                            "Missing base stat {:?} in the first round calculation",
-                            cond_stat,
-                        ))?;
-                    if *stat_value > *cond_bonus {
+                        .and_then(|fs| fs.get(cond_stat).cloned())
+                        .unwrap_or_default();
+                    if stat_value > *cond_bonus {
                         *totals.entry(stat.clone()).or_default() += cond_bonus;
                     }
                 }
-                Ok::<(), eyre::Report>(())
-            })?;
+                Ok::<HashMap<Stats, f64>, eyre::Report>(totals)
+            })
+            .collect::<Result<Vec<HashMap<Stats, f64>>>>()?;
 
         // Update the original totals with the results from the parallel processing
-        *totals = Arc::try_unwrap(totals_guarded)
-            .unwrap()
-            .into_inner()
-            .unwrap();
+        let mut totals = HashMap::new();
+        for total in partial_totals {
+            for (key, val) in total {
+                *totals.entry(key).or_default() += val;
+            }
+        }
 
-        Ok(())
-    }
-
-    /// Applies additional bonuses to the total stats from the `other_bonus` map.
-    ///
-    /// This function updates the `totals` by adding each bonus from `other_bonus` to the corresponding stat.
-    ///
-    /// # Parameters
-    ///
-    /// - `totals`: A mutable reference to a `HashMap` where the additional bonuses will be applied.
-    ///
-    /// # Notes
-    ///
-    /// - The function assumes that `other_bonus` contains bonuses that are not tied to specific relic sets or conditions.
-    fn apply_other_bonuses(&self, totals: &mut HashMap<Stats, f64>) {
-        // Create a thread-safe HashMap for totals
-        let totals_guarded = Arc::new(Mutex::new(totals.clone()));
-
-        // Process other bonuses in parallel
-        self.other_bonus.par_iter().for_each(|(stat, bonus)| {
-            // Clone the Arc to move into the closure
-            let totals = Arc::clone(&totals_guarded);
-
-            // Lock the Mutex to safely update the totals
-            let mut totals = totals.lock().unwrap();
-
-            // Add the bonus to the corresponding stat in totals
-            *totals.entry(stat.clone()).or_default() += bonus;
-        });
-
-        // Update the original totals with the results from the parallel processing
-        *totals = Arc::try_unwrap(totals_guarded)
-            .unwrap()
-            .into_inner()
-            .unwrap();
+        Ok(totals)
     }
 
     /// Builds an expression by substituting values from the `formula` string and `totals` map.
@@ -646,6 +606,11 @@ impl Evaluator {
         // Add set bonuses to the total stats
         for (stat, bonus) in set_bonus_totals {
             *totals.entry(stat).or_default() += bonus;
+        }
+
+        // Add set bonuses to the total stats
+        for (stat, bonus) in &self.other_bonus {
+            *totals.entry(stat.clone()).or_default() += bonus;
         }
 
         Ok(totals)
