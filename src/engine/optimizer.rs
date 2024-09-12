@@ -3,6 +3,7 @@ use crate::domain::{Relic, Slot};
 use core::f64;
 use eyre::{OptionExt, Result};
 use rand::{
+    rngs::ThreadRng,
     seq::{IteratorRandom, SliceRandom},
     thread_rng, Rng,
 };
@@ -29,6 +30,47 @@ pub struct Optimizer {
 }
 
 impl Optimizer {
+    // Helper method to calculate fitness sum
+    fn total_fitness(&self, population: &[Vec<Relic>]) -> Result<f64> {
+        let mut total = 0.0;
+        for individual in population {
+            let fitness = self.evaluator.evaluate(individual.clone())?;
+            total += fitness;
+        }
+        Ok(total)
+    }
+
+    // Roulette Wheel Selection method
+    fn roulette_wheel_selection(
+        &self,
+        population: &[Vec<Relic>],
+        rng: &mut ThreadRng,
+    ) -> Result<Vec<Vec<Relic>>> {
+        let total_fitness = self.total_fitness(population)?;
+        let mut cumulative_probabilities = Vec::with_capacity(population.len());
+        let mut cumulative_sum = 0.0;
+
+        // Calculate cumulative probabilities
+        for individual in population {
+            let fitness = self.evaluator.evaluate(individual.clone())?;
+            cumulative_sum += fitness / total_fitness;
+            cumulative_probabilities.push(cumulative_sum);
+        }
+
+        let mut selected_population = Vec::with_capacity(population.len());
+        while selected_population.len() < population.len() / 2 {
+            let r = rng.gen::<f64>();
+            for (i, &prob) in cumulative_probabilities.iter().enumerate() {
+                if r < prob {
+                    selected_population.push(population[i].clone());
+                    break;
+                }
+            }
+        }
+
+        Ok(selected_population)
+    }
+
     /// Starts the optimization process and returns the best relic set found.
     ///
     /// # Returns
@@ -53,16 +95,13 @@ impl Optimizer {
 
         // Run the optimization process over a number of generations.
         for generation in 0..self.generation {
-            // Sort the population based on the evaluation function in parallel.
-            population.par_sort_unstable_by(evaluation);
-
-            // Keep the top half of the population for the next generation.
-            let mut next_generation = population[..self.population_size / 2].to_vec();
+            // Use Roulette Wheel Selection to select parents
+            let mut selected_population = self.roulette_wheel_selection(&population, &mut rng)?;
 
             // Generate new individuals through crossover and mutation in parallel.
-            while next_generation.len() < self.population_size {
-                // Randomly select two parents from the top population.
-                let parents = next_generation
+            while selected_population.len() < self.population_size {
+                // Randomly select two parents from the selected population
+                let parents = selected_population
                     .clone()
                     .into_iter()
                     .choose_multiple(&mut rng, 2);
@@ -75,11 +114,11 @@ impl Optimizer {
                     .map(|child| self.mutate(child))
                     .collect::<Result<_>>()?;
 
-                next_generation.append(&mut mutated_children);
+                selected_population.append(&mut mutated_children);
             }
 
             // Update the population for the next generation.
-            population = next_generation;
+            population = selected_population;
 
             // Find and print the best relic set of the current generation in parallel.
             let best_combination = population
