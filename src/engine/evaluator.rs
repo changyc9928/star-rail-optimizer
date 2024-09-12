@@ -3,9 +3,12 @@ use crate::domain::{Character, LightCone, Relic, RelicSetName, Stats};
 use eval::Expr;
 use eyre::{OptionExt, Result};
 use itertools::Itertools;
-use std::collections::HashMap;
+use rayon::prelude::*;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 use strum::IntoEnumIterator;
-use tracing::{debug, info, trace};
 
 // Constants for base critical rate and damage
 const BASE_CRIT_RATE: f64 = 5.0; // Base critical rate in percentage
@@ -108,37 +111,28 @@ impl Evaluator {
     /// its total calculated value based on the relics. If an error occurs during calculation, the
     /// function returns an `Err`.
     fn calculate_stat_total_from_relics(&self, relics: &[Relic]) -> Result<HashMap<Stats, f64>> {
-        trace!("Starting calculation of stat totals from relics");
+        // Initialize the shared HashMap with Arc and Mutex
+        let totals = Arc::new(Mutex::new(HashMap::new()));
 
-        let mut totals = HashMap::new();
-        for stat in Stats::iter() {
-            // Log the stat being processed
-            trace!("Processing stat: {:?}", stat);
+        // Convert the iterator to a vector
+        let stats: Vec<Stats> = Stats::iter().collect();
 
+        // Use rayon's parallel iterator to process each stat in parallel
+        stats.into_par_iter().for_each(|stat| {
             // Calculate the total value for the current stat
             let total = relics
-                .iter()
-                .map(|relic| {
-                    let value = self.relic_stat_value(relic, stat.clone());
-                    // Log the individual relic's contribution to the stat
-                    trace!(
-                        "Relic ID: {}, Stat: {:?}, Value: {}",
-                        relic._id,
-                        stat,
-                        value
-                    );
-                    value
-                })
+                .par_iter()
+                .map(|relic| self.relic_stat_value(relic, stat.clone()))
                 .sum::<f64>();
 
-            // Log the total value for the stat
-            info!("Total value for stat {:?}: {}", stat, total);
-
-            // Insert the total value into the hashmap
+            // Lock the mutex and update the HashMap
+            let mut totals = totals.lock().unwrap();
             totals.insert(stat, total);
-        }
+        });
 
-        trace!("Finished calculation of stat totals from relics");
+        // Retrieve the final HashMap from the Arc<Mutex<_>>
+        let totals = Arc::try_unwrap(totals).unwrap().into_inner().unwrap();
+
         Ok(totals)
     }
 
@@ -157,42 +151,22 @@ impl Evaluator {
     ///
     /// Returns a `f64` value representing the total value of the specified stat for the given relic.
     fn relic_stat_value(&self, relic: &Relic, stat: Stats) -> f64 {
-        trace!(
-            "Calculating stat value for relic ID: {} and stat: {:?}",
-            relic._id,
-            stat
-        );
-
         // Calculate the main stat value
         let mainstat_value = if relic.mainstat == stat {
-            let value = relic.get_mainstat();
-            trace!("Main stat matches. Value: {}", value);
-            value
+            relic.get_mainstat()
         } else {
-            trace!("Main stat does not match. Value: 0.0");
-            0.0
+            f64::default()
         };
 
-        // Calculate the sum of substat values for the specified stat
+        // Calculate the sum of substat values for the specified stat in parallel
         let substat_values: f64 = relic
             .substats
-            .iter()
-            .filter_map(|s| {
-                if s.key == stat {
-                    trace!("Found substat with key: {:?}, value: {}", s.key, s.value);
-                    Some(s.value)
-                } else {
-                    None
-                }
-            })
+            .par_iter() // Use parallel iterator
+            .filter_map(|s| if s.key == stat { Some(s.value) } else { None })
             .sum();
 
-        // Log the total value including both main stat and substats
+        // Calculate the total value including both main stat and substats
         let total_value = mainstat_value + substat_values;
-        debug!(
-            "Total value for stat {:?} from relic ID {}: {}",
-            stat, relic._id, total_value
-        );
 
         total_value
     }
@@ -219,30 +193,30 @@ impl Evaluator {
         relics: &[Relic],
         first_round_stats: Option<&HashMap<Stats, f64>>,
     ) -> Result<HashMap<Stats, f64>> {
-        trace!("Applying set bonuses for relics");
-
-        let mut totals = HashMap::new();
+        // Create a thread-safe HashMap to store totals
+        let totals = Arc::new(Mutex::new(HashMap::new()));
 
         // Count the number of relics in each set
-        let counts = relics.iter().counts_by(|relic| relic.set.clone());
-        trace!("Relic set counts: {:?}", counts);
+        let counts: HashMap<RelicSetName, usize> =
+            relics.iter().counts_by(|relic| relic.set.clone());
 
-        for (set, count) in counts {
-            trace!("Processing set: {:?} with count: {}", set, count);
-
+        // Use Rayon to process each set in parallel
+        counts.into_par_iter().try_for_each(|(set, count)| {
             if let Some(bonuses) = self.set_bonus.get(&set).and_then(|s| s.get(&(count as u8))) {
-                trace!("Found bonuses for set {:?}: {:?}", set, bonuses);
-                self.apply_bonuses(&mut totals, bonuses, first_round_stats)?;
+                // Apply bonuses in a thread-safe manner
+                let mut totals = totals.lock().unwrap();
+                self.apply_bonuses(&mut totals, bonuses, first_round_stats)
             } else {
-                trace!("No bonuses found for set {:?}", set);
+                Ok(())
             }
-        }
+        })?;
 
         // Apply other bonuses (e.g., from character or external sources)
+        // Ensure the mutex is not locked by parallel tasks while performing this operation
+        let mut totals = totals.lock().unwrap();
         self.apply_other_bonuses(&mut totals);
-        debug!("Total stats after applying set bonuses: {:?}", totals);
 
-        Ok(totals)
+        Ok(totals.clone()) // Return the final results
     }
 
     /// Applies bonuses to the total stats, considering conditional bonuses.
@@ -273,42 +247,43 @@ impl Evaluator {
         bonuses: &[Bonus],
         first_round_stats: Option<&HashMap<Stats, f64>>,
     ) -> Result<()> {
-        trace!("Applying bonuses");
+        // Create a thread-safe HashMap for totals
+        let totals_guarded = Arc::new(Mutex::new(totals.clone()));
 
-        for (stat, bonus_value, condition_bonus) in bonuses {
-            trace!(
-                "Applying bonus: stat = {:?}, bonus_value = {}",
-                stat,
-                bonus_value
-            );
+        // Process bonuses in parallel
+        bonuses
+            .par_iter()
+            .try_for_each(|(stat, bonus_value, condition_bonus)| {
+                // Clone the Arc to move into the closure
+                let totals = Arc::clone(&totals_guarded);
 
-            // Apply unconditional bonus
-            *totals.entry(stat.clone()).or_default() += bonus_value;
+                // Lock the Mutex to safely update the totals
+                let mut totals = totals.lock().unwrap();
 
-            // Check and apply conditional bonus if applicable
-            if let Some((cond_stat, cond_bonus)) = condition_bonus {
-                if let Some(&stat_value) = first_round_stats.and_then(|fs| fs.get(cond_stat)) {
-                    trace!(
-                        "Checking condition for stat {:?}: value = {}, condition_bonus = {}",
-                        cond_stat,
-                        stat_value,
-                        cond_bonus
-                    );
+                // Apply unconditional bonus
+                *totals.entry(stat.clone()).or_default() += bonus_value;
 
-                    if stat_value > *cond_bonus {
-                        trace!("Condition met. Applying additional bonus: {}", cond_bonus);
+                // Check and apply conditional bonus if applicable
+                if let Some((cond_stat, cond_bonus)) = condition_bonus {
+                    let stat_value = first_round_stats
+                        .and_then(|fs| fs.get(cond_stat))
+                        .ok_or_eyre(format!(
+                            "Missing base stat {:?} in the first round calculation",
+                            cond_stat,
+                        ))?;
+                    if *stat_value > *cond_bonus {
                         *totals.entry(stat.clone()).or_default() += cond_bonus;
                     }
-                } else {
-                    return Err(eyre::eyre!(
-                        "Missing base stat {:?} in the first round calculation",
-                        cond_stat
-                    ));
                 }
-            }
-        }
+                Ok::<(), eyre::Report>(())
+            })?;
 
-        debug!("Totals after applying bonuses: {:?}", totals);
+        // Update the original totals with the results from the parallel processing
+        *totals = Arc::try_unwrap(totals_guarded)
+            .unwrap()
+            .into_inner()
+            .unwrap();
+
         Ok(())
     }
 
@@ -324,16 +299,26 @@ impl Evaluator {
     ///
     /// - The function assumes that `other_bonus` contains bonuses that are not tied to specific relic sets or conditions.
     fn apply_other_bonuses(&self, totals: &mut HashMap<Stats, f64>) {
-        trace!("Applying other bonuses");
+        // Create a thread-safe HashMap for totals
+        let totals_guarded = Arc::new(Mutex::new(totals.clone()));
 
-        for (stat, bonus) in &self.other_bonus {
-            trace!("Applying bonus: stat = {:?}, bonus = {}", stat, bonus);
+        // Process other bonuses in parallel
+        self.other_bonus.par_iter().for_each(|(stat, bonus)| {
+            // Clone the Arc to move into the closure
+            let totals = Arc::clone(&totals_guarded);
+
+            // Lock the Mutex to safely update the totals
+            let mut totals = totals.lock().unwrap();
 
             // Add the bonus to the corresponding stat in totals
             *totals.entry(stat.clone()).or_default() += bonus;
-        }
+        });
 
-        debug!("Totals after applying other bonuses: {:?}", totals);
+        // Update the original totals with the results from the parallel processing
+        *totals = Arc::try_unwrap(totals_guarded)
+            .unwrap()
+            .into_inner()
+            .unwrap();
     }
 
     /// Builds an expression by substituting values from the `formula` string and `totals` map.
@@ -356,8 +341,6 @@ impl Evaluator {
     ///   format required by the expression evaluation library.
     /// - Default values for base crit rate and crit damage are included.
     fn build_expr(&self, formula: &str, totals: &HashMap<Stats, f64>) -> Expr {
-        trace!("Building expression with formula: {}", formula);
-
         // Create a new expression from the given formula
         let mut expr = Expr::new(formula);
 
@@ -374,44 +357,59 @@ impl Evaluator {
             .value("LightCone_ATK", self.light_cone.light_cone_stats.atk)
             .value("LightCone_DEF", self.light_cone.light_cone_stats.def);
 
-        // Substitute values for additional stats from totals
-        for (stat, value) in totals {
-            let key = match stat {
-                Stats::Hp => "Additive_HP_Bonus",
-                Stats::Hp_ => "Percentage_HP_Bonus",
-                Stats::Atk => "Additive_ATK_Bonus",
-                Stats::Atk_ => "Percentage_ATK_Bonus",
-                Stats::Def => "Additive_DEF_Bonus",
-                Stats::Def_ => "Percentage_DEF_Bonus",
-                Stats::DefReduction_ => "Percentage_DEF_Reduction",
-                Stats::Spd => "Additive_SPD_Bonus",
-                Stats::Spd_ => "Percentage_SPD_Bonus",
-                Stats::FireDmgBoost_ => "Fire DMG_Boost",
-                Stats::WindDmgBoost_ => "Wind_DMG_Boost",
-                Stats::IceDmgBoost_ => "Ice_DMG_Boost",
-                Stats::LightningDmgBoost_ => "Lightning_DMG_Boost",
-                Stats::PhysicalDmgBoost_ => "Physical_DMG_Boost",
-                Stats::QuantumDmgBoost_ => "Quantum_DMG_Boost",
-                Stats::ImaginaryDmgBoost_ => "Imaginary_DMG_Boost",
-                Stats::DmgBoost_ => "Common_DMG_Boost",
-                Stats::CritRate_ => "CRIT_Rate",
-                Stats::CritDmg_ => "CRIT_DMG",
-                Stats::BreakEffect_ => "Break_Effect",
-                Stats::EffectHitRate_ => "Effect_Hit_Rate",
-                Stats::EffectRes_ => "Effect_RES",
-                Stats::EnergyRegenerationRate_ => "Energy_Regeneration_Rate",
-                _ => continue,
-            };
-            trace!("Substituting value: key = {}, value = {}", key, value);
-            expr = expr.value(key, *value);
+        // Use Rayon to process totals in parallel
+        let results: Vec<(String, f64)> = totals
+            .par_iter()
+            .filter_map(|(stat, value)| {
+                let key = match stat {
+                    Stats::Hp => "Additive_HP_Bonus",
+                    Stats::Hp_ => "Percentage_HP_Bonus",
+                    Stats::Atk => "Additive_ATK_Bonus",
+                    Stats::Atk_ => "Percentage_ATK_Bonus",
+                    Stats::Def => "Additive_DEF_Bonus",
+                    Stats::Def_ => "Percentage_DEF_Bonus",
+                    Stats::DefReduction_ => "Percentage_DEF_Reduction",
+                    Stats::Spd => "Additive_SPD_Bonus",
+                    Stats::Spd_ => "Percentage_SPD_Bonus",
+                    Stats::FireDmgBoost_ => "Fire DMG_Boost",
+                    Stats::WindDmgBoost_ => "Wind_DMG_Boost",
+                    Stats::IceDmgBoost_ => "Ice_DMG_Boost",
+                    Stats::LightningDmgBoost_ => "Lightning_DMG_Boost",
+                    Stats::PhysicalDmgBoost_ => "Physical_DMG_Boost",
+                    Stats::QuantumDmgBoost_ => "Quantum_DMG_Boost",
+                    Stats::ImaginaryDmgBoost_ => "Imaginary_DMG_Boost",
+                    Stats::DmgBoost_ => "Common_DMG_Boost",
+                    Stats::CritRate_ => "CRIT_Rate",
+                    Stats::CritDmg_ => "CRIT_DMG",
+                    Stats::BreakEffect_ => "Break_Effect",
+                    Stats::EffectHitRate_ => "Effect_Hit_Rate",
+                    Stats::EffectRes_ => "Effect_RES",
+                    Stats::EnergyRegenerationRate_ => "Energy_Regeneration_Rate",
+                    Stats::OutgoingHealingBoost_ => "Outgoing_Healing_Boost",
+                    Stats::BasicAtkDmgBoost_ => "Basic_ATK_DMG_Boost",
+                    Stats::SkillDmgBoost_ => "Skill_DMG_Boost",
+                    Stats::UltimateDmgBoost_ => "Ultimate_DMG_Boost",
+                    Stats::FollowUpAtkDmgBoost_ => "Follow_Up_ATK_DMG_Boost",
+                    Stats::ShieldDmgAbsorption_ => "Shield_DMG_Absorption",
+                    Stats::DmgReduction_ => "DMG_Reduction",
+                    Stats::DefIgnore_ => "DEF_Ignore",
+                    Stats::BreakDmgDefIgnore_ => "Break_DMG_DEF_Ignore",
+                    Stats::SuperBreakDmgDefIgnore_ => "Super_Break_DMG_DEF_Ignore",
+                    Stats::Dummy => return None,
+                };
+                Some((key.to_string(), *value))
+            })
+            .collect();
+
+        // Apply results to the expression
+        for (key, value) in results {
+            expr = expr.value(&key, value);
         }
 
         // Substitute default values for base crit rate and crit damage
         expr = expr
             .value("Character_Base_CRIT_Rate", BASE_CRIT_RATE)
             .value("Character_Base_CRIT_DMG", BASE_CRIT_DMG);
-
-        debug!("Expression after substitutions: {:?}", expr);
 
         expr
     }
@@ -452,32 +450,30 @@ impl Evaluator {
     fn apply_constraints(&self, result: f64, base_stats: &HashMap<Stats, f64>) -> Result<f64> {
         // Initialize the adjusted result with the original result.
         let mut adjusted_result = result;
-        trace!("Applying constraints. Initial result: {}", result);
 
-        // Iterate over each constraint defined in `self.constraint`.
-        for (stat, required_value) in &self.constraint {
-            // Retrieve the current value of the statistic from `base_stats`.
-            let current_stat = base_stats
-                .get(stat)
-                .ok_or_eyre(format!("Missing stat {:?}", stat))?;
+        // Process each constraint in parallel.
+        let constraints_satisfied: Vec<bool> = self
+            .constraint
+            .par_iter()
+            .map(|(stat, required_value)| {
+                // Retrieve the current value of the statistic from `base_stats`.
+                let current_stat = base_stats
+                    .get(stat)
+                    .ok_or_eyre(format!("Missing stat {:?}", stat))
+                    .unwrap(); // Handle the error appropriately
 
-            // Log the current stat and the required value for debugging purposes.
-            trace!(
-                "Checking constraint for stat {:?}. Current value: {}, Required value: {}",
-                stat,
-                current_stat,
-                required_value
-            );
+                // Check if the current statistic value is below the required value.
+                current_stat < required_value
+            })
+            .collect();
 
-            // Check if the current statistic value is below the required value.
-            if current_stat < required_value {
-                // Penalize the result by negating it if the constraint is not met.
-                adjusted_result = -adjusted_result;
-                trace!(
-                    "Constraint not met. Penalizing result. New result: {}",
-                    adjusted_result
-                );
-            }
+        // Penalize the result if any constraints were not satisfied.
+        let constraints_not_satisfied = constraints_satisfied
+            .par_iter()
+            .any(|&constraint_not_met| constraint_not_met);
+
+        if constraints_not_satisfied {
+            adjusted_result = -adjusted_result;
         }
 
         // Return the potentially adjusted result.
@@ -504,20 +500,14 @@ impl Evaluator {
     ///
     /// Returns an error if the expression cannot be built, executed, or if the result cannot be parsed from the expression's output.
     fn calculate_final_result(&self, totals: &HashMap<Stats, f64>) -> Result<f64> {
-        // Log the totals used to build the expression.
-        trace!("Building final expression with totals: {:?}", totals);
-
         // Build the final expression using the target formula and the provided totals.
         let final_expr = self.build_expr(&self.target_formula, totals);
-        debug!("Built final expression: {:?}", final_expr);
 
         // Execute the expression and obtain the result in JSON format.
         let result_value = final_expr.exec()?;
-        debug!("Expression executed. Result JSON: {:?}", result_value);
 
         // Convert the JSON result to a floating-point number.
         let result: f64 = serde_json::from_value(result_value)?;
-        debug!("Final result obtained: {}", result);
 
         // Return the evaluated result.
         Ok(result)
@@ -551,37 +541,23 @@ impl Evaluator {
     /// * Final expression cannot be built, executed, or parsed.
     /// * Constraints cannot be applied due to missing or invalid data.
     pub fn evaluate(&self, relics: Vec<Relic>) -> Result<f64> {
-        trace!("Starting evaluation with relics: {:?}", relics);
-
         // Calculate initial totals from the provided relics.
         let initial_totals = self.calculate_totals(&relics, None)?;
-        trace!("Initial totals calculated: {:?}", initial_totals);
 
         // Evaluate base statistics based on the initial totals.
         let initial_base_stats = self.evaluate_base_stats(&initial_totals)?;
-        trace!("Initial base stats evaluated: {:?}", initial_base_stats);
 
         // Recalculate totals considering the evaluated base statistics.
         let updated_totals = self.calculate_totals(&relics, Some(initial_base_stats))?;
-        trace!(
-            "Updated totals recalculated with base stats: {:?}",
-            updated_totals
-        );
 
         // Evaluate base statistics again based on the updated totals.
         let updated_base_stats = self.evaluate_base_stats(&updated_totals)?;
-        trace!("Updated base stats evaluated: {:?}", updated_base_stats);
 
         // Build and execute the final expression using the updated totals.
         let final_result = self.calculate_final_result(&updated_totals)?;
-        trace!("Final result obtained from expression: {}", final_result);
 
         // Apply constraints to the final result and adjust if necessary.
         let constrained_result = self.apply_constraints(final_result, &updated_base_stats)?;
-        trace!(
-            "Constrained result after applying constraints: {}",
-            constrained_result
-        );
 
         // Return the final constrained result.
         Ok(constrained_result)
@@ -613,21 +589,16 @@ impl Evaluator {
     /// - Each formula is evaluated using the `build_expr` method, and results are parsed
     ///   from JSON using `serde_json`.
     pub fn evaluate_base_stats(&self, totals: &HashMap<Stats, f64>) -> Result<HashMap<Stats, f64>> {
-        trace!("Evaluating base stats with totals: {:?}", totals);
-
-        let result = self
+        let result: Result<HashMap<Stats, f64>, _> = self
             .base_stats_formulas
-            .iter()
+            .par_iter() // Convert to a parallel iterator
             .map(|(stat, formula)| {
-                trace!("Processing formula for stat {:?}: {}", stat, formula);
                 let expr = self.build_expr(formula, totals);
                 let value = serde_json::from_value(expr.exec()?)?;
-                debug!("Computed value for stat {:?}: {}", stat, value);
                 Ok((stat.clone(), value))
             })
-            .collect();
+            .collect(); // Collect results into a HashMap
 
-        debug!("Base stats evaluation completed with result: {:?}", result);
         result
     }
 
@@ -662,22 +633,21 @@ impl Evaluator {
         relics: &[Relic],
         first_round_stats: Option<HashMap<Stats, f64>>,
     ) -> Result<HashMap<Stats, f64>> {
-        trace!("Calculating total stats for relics: {:?}", relics);
+        // Use a thread pool to handle tasks in parallel
+        let (base_stats_result, set_bonus_result) = rayon::join(
+            || self.calculate_stat_total_from_relics(relics),
+            || self.apply_set_bonus(relics, first_round_stats.as_ref()),
+        );
 
-        // Calculate base stats from relics
-        let mut totals = self.calculate_stat_total_from_relics(relics)?;
-        debug!("Base stat totals from relics: {:?}", totals);
-
-        // Apply set bonuses to the calculated totals
-        let set_bonus_totals = self.apply_set_bonus(relics, first_round_stats.as_ref())?;
-        debug!("Set bonus totals: {:?}", set_bonus_totals);
+        // Handle the results from the parallel tasks
+        let mut totals = base_stats_result?;
+        let set_bonus_totals = set_bonus_result?;
 
         // Add set bonuses to the total stats
         for (stat, bonus) in set_bonus_totals {
             *totals.entry(stat).or_default() += bonus;
         }
 
-        debug!("Final total stats after applying set bonuses: {:?}", totals);
         Ok(totals)
     }
 }
