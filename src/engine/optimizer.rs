@@ -93,29 +93,62 @@ impl Optimizer {
             _ => f64::MIN.partial_cmp(&f64::MIN).unwrap(),
         };
 
+        // Function for tournament selection
+        let tournament_selection = |population: &[Vec<Relic>],
+                                    _rng: &mut ThreadRng,
+                                    tournament_size: usize|
+         -> Result<Vec<Vec<Relic>>> {
+            let selected = (0..self.population_size / 2)
+                .into_par_iter()
+                .map(|_| {
+                    let mut rng = thread_rng();
+                    let tournament: Vec<_> = (0..tournament_size)
+                        .map(|_| population.choose(&mut rng).unwrap().clone())
+                        .collect();
+                    let winner = tournament
+                        .par_iter()
+                        .max_by(|arg0, arg1| evaluation(arg0, arg1))
+                        .ok_or_else(|| eyre::eyre!("No winner found in tournament"))?;
+                    Ok::<_, eyre::Report>(winner.clone())
+                })
+                .collect::<Result<Vec<Vec<Relic>>>>()?;
+            Ok(selected)
+        };
+
         // Run the optimization process over a number of generations.
         for generation in 0..self.generation {
             // Use Roulette Wheel Selection to select parents
-            let mut selected_population = self.roulette_wheel_selection(&population, &mut rng)?;
+            let mut selected_population = tournament_selection(&population, &mut rng, 5)?; // 5 is the tournament size
+
+            let difference = (self.population_size - selected_population.len()) / 2;
 
             // Generate new individuals through crossover and mutation in parallel.
-            while selected_population.len() < self.population_size {
-                // Randomly select two parents from the selected population
-                let parents = selected_population
-                    .clone()
-                    .into_iter()
-                    .choose_multiple(&mut rng, 2);
+            let mut new_gen: Vec<Vec<Relic>> = (0..difference)
+                .into_par_iter()
+                .map(|_| {
+                    let mut rng = thread_rng();
+                    // Randomly select two parents from the selected population
+                    let parents = selected_population
+                        .clone()
+                        .into_iter()
+                        .choose_multiple(&mut rng, 2);
 
-                let children = self.crossover(parents)?;
+                    let children = self.crossover(parents)?;
 
-                // Apply mutation to the children and add them to the next generation.
-                let mut mutated_children: Vec<_> = children
-                    .into_par_iter()
-                    .map(|child| self.mutate(child))
-                    .collect::<Result<_>>()?;
+                    // Apply mutation to the children and add them to the next generation.
+                    let mutated_children: Vec<_> = children
+                        .into_iter()
+                        .map(|child| self.mutate(child))
+                        .collect::<Result<_>>()?;
 
-                selected_population.append(&mut mutated_children);
-            }
+                    Ok::<Vec<_>, eyre::Report>(mutated_children)
+                })
+                .collect::<Result<Vec<_>>>()?
+                .into_par_iter()
+                .flatten()
+                .collect();
+
+            selected_population.append(&mut new_gen);
 
             // Update the population for the next generation.
             population = selected_population;
@@ -152,7 +185,7 @@ impl Optimizer {
 
         // Generate relics in parallel
         let relics: Vec<Relic> = slots
-            .par_iter()
+            .iter()
             .filter_map(|slot| {
                 let mut rng = thread_rng(); // Create a new RNG instance for each thread
                 if let Some(relics_for_slot) = self.relic_pool.get(slot) {
@@ -223,7 +256,7 @@ impl Optimizer {
         let mut mutated_child = child;
 
         // Parallelize the mutation of relics
-        mutated_child.par_iter_mut().for_each(|relic| {
+        mutated_child.iter_mut().for_each(|relic| {
             let mut rng = rand::thread_rng(); // Create a new RNG for each thread
             if rng.gen::<f64>() < self.mutation_rate {
                 let slot = &relic.slot;

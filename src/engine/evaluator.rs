@@ -3,7 +3,7 @@ use crate::domain::{Character, LightCone, Relic, RelicSetName, Stats};
 use eval::Expr;
 use eyre::{OptionExt, Result};
 use itertools::Itertools;
-use rayon::prelude::*;
+use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::collections::HashMap;
 use strum::IntoEnumIterator;
 
@@ -117,7 +117,7 @@ impl Evaluator {
             .map(|stat| {
                 // Calculate the total value for the current stat
                 let total = relics
-                    .par_iter()
+                    .iter()
                     .map(|relic| self.relic_stat_value(relic, stat.clone()))
                     .sum::<f64>();
 
@@ -157,7 +157,7 @@ impl Evaluator {
         // Calculate the sum of substat values for the specified stat in parallel
         let substat_values: f64 = relic
             .substats
-            .par_iter() // Use parallel iterator
+            .iter() // Use parallel iterator
             .filter_map(|s| if s.key == stat { Some(s.value) } else { None })
             .sum();
 
@@ -198,7 +198,7 @@ impl Evaluator {
 
         // Use Rayon to process each set in parallel
         let partial_totals: Vec<HashMap<Stats, f64>> = counts
-            .into_par_iter()
+            .into_iter()
             .map(|(set, count)| {
                 Ok::<HashMap<Stats, f64>, eyre::Report>(
                     if let Some(bonuses) =
@@ -250,7 +250,7 @@ impl Evaluator {
     ) -> Result<HashMap<Stats, f64>> {
         // Process bonuses in parallel
         let partial_totals: Vec<HashMap<Stats, f64>> = bonuses
-            .par_iter()
+            .iter()
             .map(|(stat, bonus_value, condition_bonus)| {
                 let mut totals = HashMap::new();
 
@@ -319,7 +319,7 @@ impl Evaluator {
 
         // Use Rayon to process totals in parallel
         let results: Vec<(String, f64)> = totals
-            .par_iter()
+            .iter()
             .filter_map(|(stat, value)| {
                 let key = match stat {
                     Stats::Hp => "Additive_HP_Bonus",
@@ -414,7 +414,7 @@ impl Evaluator {
         // Process each constraint in parallel.
         let constraints_satisfied: Vec<bool> = self
             .constraint
-            .par_iter()
+            .iter()
             .map(|(stat, required_value)| {
                 // Retrieve the current value of the statistic from `base_stats`.
                 let current_stat = base_stats
@@ -429,7 +429,7 @@ impl Evaluator {
 
         // Penalize the result if any constraints were not satisfied.
         let constraints_not_satisfied = constraints_satisfied
-            .par_iter()
+            .iter()
             .any(|&constraint_not_met| constraint_not_met);
 
         if constraints_not_satisfied {
