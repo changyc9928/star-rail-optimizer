@@ -8,7 +8,10 @@ use rand::{
     thread_rng, Rng,
 };
 use rayon::prelude::*;
-use std::{cmp::min, collections::HashMap};
+use std::{
+    cmp::{min, Ordering},
+    collections::HashMap,
+};
 use strum::IntoEnumIterator;
 use tracing::info;
 
@@ -71,6 +74,38 @@ impl Optimizer {
         Ok(selected_population)
     }
 
+    fn evaluation(&self, x: &Vec<Relic>, y: &Vec<Relic>) -> Ordering {
+        match (
+            self.evaluator.evaluate(y.clone()),
+            self.evaluator.evaluate(x.clone()),
+        ) {
+            (Ok(x_val), Ok(y_val)) => y_val.partial_cmp(&x_val).unwrap(),
+            _ => f64::MIN.partial_cmp(&f64::MIN).unwrap(),
+        }
+    }
+
+    fn tournament_selection(
+        &self,
+        population: &[Vec<Relic>],
+        tournament_size: usize,
+    ) -> Result<Vec<Vec<Relic>>> {
+        let selected = (0..self.population_size / 2)
+            .into_par_iter()
+            .map(|_| {
+                let mut rng = thread_rng();
+                let tournament: Vec<_> = (0..tournament_size)
+                    .map(|_| population.choose(&mut rng).unwrap().clone())
+                    .collect();
+                let winner = tournament
+                    .par_iter()
+                    .max_by(|arg0, arg1| self.evaluation(arg0, arg1))
+                    .ok_or_else(|| eyre::eyre!("No winner found in tournament"))?;
+                Ok::<_, eyre::Report>(winner.clone())
+            })
+            .collect::<Result<Vec<Vec<Relic>>>>()?;
+        Ok(selected)
+    }
+
     /// Starts the optimization process and returns the best relic set found.
     ///
     /// # Returns
@@ -82,43 +117,11 @@ impl Optimizer {
         let mut population: Vec<Vec<Relic>> = (0..self.population_size)
             .map(|_| self.generate_random_relic_set())
             .collect();
-        let mut rng = thread_rng();
-
-        // Define an evaluation function for comparing two relic sets.
-        let evaluation = |x: &Vec<Relic>, y: &Vec<Relic>| match (
-            self.evaluator.evaluate(y.clone()),
-            self.evaluator.evaluate(x.clone()),
-        ) {
-            (Ok(y_val), Ok(x_val)) => y_val.partial_cmp(&x_val).unwrap(),
-            _ => f64::MIN.partial_cmp(&f64::MIN).unwrap(),
-        };
-
-        // Function for tournament selection
-        let tournament_selection = |population: &[Vec<Relic>],
-                                    _rng: &mut ThreadRng,
-                                    tournament_size: usize|
-         -> Result<Vec<Vec<Relic>>> {
-            let selected = (0..self.population_size / 2)
-                .into_par_iter()
-                .map(|_| {
-                    let mut rng = thread_rng();
-                    let tournament: Vec<_> = (0..tournament_size)
-                        .map(|_| population.choose(&mut rng).unwrap().clone())
-                        .collect();
-                    let winner = tournament
-                        .par_iter()
-                        .max_by(|arg0, arg1| evaluation(arg0, arg1))
-                        .ok_or_else(|| eyre::eyre!("No winner found in tournament"))?;
-                    Ok::<_, eyre::Report>(winner.clone())
-                })
-                .collect::<Result<Vec<Vec<Relic>>>>()?;
-            Ok(selected)
-        };
 
         // Run the optimization process over a number of generations.
         for generation in 0..self.generation {
             // Use Roulette Wheel Selection to select parents
-            let mut selected_population = tournament_selection(&population, &mut rng, 5)?; // 5 is the tournament size
+            let mut selected_population = self.tournament_selection(&population, 5)?; // 5 is the tournament size
 
             let difference = (self.population_size - selected_population.len()) / 2;
 
@@ -156,7 +159,7 @@ impl Optimizer {
             // Find and print the best relic set of the current generation in parallel.
             let best_combination = population
                 .par_iter()
-                .max_by(|arg0: &&Vec<Relic>, arg1: &&Vec<Relic>| evaluation(*arg0, *arg1))
+                .max_by(|arg0: &&Vec<Relic>, arg1: &&Vec<Relic>| self.evaluation(*arg0, *arg1))
                 .ok_or_eyre("Best combination not found")?;
 
             let result = self.evaluator.evaluate(best_combination.clone())?;
@@ -169,7 +172,7 @@ impl Optimizer {
         }
 
         // Sort the final population and return the best relic set.
-        population.par_sort_by(evaluation);
+        population.par_sort_by(|x, y| self.evaluation(x, y));
         let best_relic_set = population.first().unwrap().clone();
         Ok(best_relic_set)
     }

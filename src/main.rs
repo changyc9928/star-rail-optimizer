@@ -22,7 +22,7 @@ async fn main() -> Result<()> {
         relic_pool,
         generation: 10000,
         population_size: 2000,
-        mutation_rate: 0.5,
+        mutation_rate: 0.1,
         crossover_rate: 0.7,
         evaluator,
     };
