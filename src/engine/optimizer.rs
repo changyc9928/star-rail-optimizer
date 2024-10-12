@@ -1,4 +1,4 @@
-use super::evaluator::Evaluator;
+use super::{evaluator::Evaluator, simulated_annealing::SimulatedAnnealing};
 use crate::domain::{Relic, Slot};
 use core::f64;
 use eyre::{OptionExt, Result};
@@ -30,10 +30,13 @@ pub struct Optimizer {
     pub crossover_rate: f64,
     /// An `Evaluator` instance used to evaluate the fitness of relic sets.
     pub evaluator: Evaluator,
+    pub enable_sa: bool,
+    pub simulated_annealing: SimulatedAnnealing,
 }
 
 impl Optimizer {
     // Helper method to calculate fitness sum
+    #[allow(dead_code)]
     fn total_fitness(&self, population: &[Vec<Relic>]) -> Result<f64> {
         let mut total = 0.0;
         for individual in population {
@@ -44,6 +47,7 @@ impl Optimizer {
     }
 
     // Roulette Wheel Selection method
+    #[allow(dead_code)]
     fn roulette_wheel_selection(
         &self,
         population: &[Vec<Relic>],
@@ -76,10 +80,10 @@ impl Optimizer {
 
     fn evaluation(&self, x: &Vec<Relic>, y: &Vec<Relic>) -> Ordering {
         match (
-            self.evaluator.evaluate(y.clone()),
             self.evaluator.evaluate(x.clone()),
+            self.evaluator.evaluate(y.clone()),
         ) {
-            (Ok(x_val), Ok(y_val)) => y_val.partial_cmp(&x_val).unwrap(),
+            (Ok(x_val), Ok(y_val)) => x_val.partial_cmp(&y_val).unwrap(),
             _ => f64::MIN.partial_cmp(&f64::MIN).unwrap(),
         }
     }
@@ -155,6 +159,37 @@ impl Optimizer {
 
             // Update the population for the next generation.
             population = selected_population;
+
+            if self.enable_sa {
+                // Apply Simulated Annealing to the best solution found every few generations
+                if generation % 10 == 0 {
+                    // Find the best individual in the current population
+                    let mut best_individual = population
+                        .par_iter()
+                        .max_by(|arg0: &&Vec<Relic>, arg1: &&Vec<Relic>| {
+                            self.evaluation(*arg0, *arg1)
+                        })
+                        .ok_or_eyre("Best combination not found")?
+                        .clone();
+                    let best_fit = self.evaluator.evaluate(best_individual.clone())?;
+                    info!(
+                        "Generation {generation}, before SA, Highest {}: {}",
+                        self.evaluator.target_name, best_fit
+                    );
+
+                    // Apply aggresive SA
+                    best_individual = self
+                        .simulated_annealing
+                        .simulated_annealing(&best_individual)?;
+                    let best_fit = self.evaluator.evaluate(best_individual.clone())?;
+                    info!(
+                        "Generation {generation}, after SA, Highest {}: {}",
+                        self.evaluator.target_name, best_fit
+                    );
+                    let random_index = thread_rng().gen_range(0..population.len() - 1);
+                    population[random_index] = best_individual;
+                }
+            }
 
             // Find and print the best relic set of the current generation in parallel.
             let best_combination = population

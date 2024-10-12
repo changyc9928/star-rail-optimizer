@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{Character, CharacterName, LightCone, Relic, StatDetails, Stats};
+use super::{Character, CharacterName, LightCone, Relic, Slot, StatDetails, Stats};
 use kdam::BarExt;
 use serde::{Deserialize, Serialize};
 
@@ -29,6 +29,16 @@ impl ScannerInput {
                 .collect();
             character.add_base_stats().await?;
             character.update(relics, light_cone).await?;
+        }
+        for relic in &mut self.relics {
+            if ![Slot::Head, Slot::Hands].contains(&relic.slot) {
+                relic.mainstat = match &relic.mainstat {
+                    Stats::Atk => Stats::Atk_,
+                    Stats::Def => Stats::Def_,
+                    Stats::Hp => Stats::Hp_,
+                    other => other.clone(),
+                }
+            }
         }
         Ok(())
     }

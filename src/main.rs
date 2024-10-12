@@ -2,6 +2,7 @@ use crate::domain::{ScannerInput, Stats};
 use engine::{
     evaluator::{Evaluator, SetBonusMap},
     optimizer::Optimizer,
+    simulated_annealing::SimulatedAnnealing,
 };
 use eyre::Result;
 use std::{collections::HashMap, fs};
@@ -13,18 +14,29 @@ mod engine;
 #[tokio::main]
 async fn main() -> Result<()> {
     setup_logging();
-    
+
     let input = load_input_data("scanned_data/HSRScanData_20231126_122032.json").await?;
     let relic_pool = build_relic_pool(&input);
     let evaluator = create_evaluator(&input).await?;
-    
+
+    let simulated_annealing = SimulatedAnnealing {
+        initial_temp: 1000.0,
+        cooling_rate: 0.99,
+        min_temp: 0.1,
+        aggresive_factor: 0.9,
+        relic_pool: relic_pool.clone(),
+        evaluator: evaluator.clone(),
+    };
+
     let optimizer = Optimizer {
         relic_pool,
-        generation: 10000,
-        population_size: 2000,
+        generation: 100,
+        population_size: 100,
         mutation_rate: 0.1,
         crossover_rate: 0.7,
         evaluator,
+        enable_sa: false,
+        simulated_annealing,
     };
 
     println!("----------------- Optimizing Fu Xuan's HP -----------------");
@@ -36,7 +48,7 @@ async fn main() -> Result<()> {
     println!("Current stats: {:#?}", fuxuan.stats_panel);
 
     let res = optimizer.optimize()?;
-    println!("Optimized relics: {:?}", res);
+    println!("Optimized relics: {:#?}", res);
 
     Ok(())
 }
@@ -80,8 +92,10 @@ async fn create_evaluator(input: &ScannerInput) -> Result<Evaluator> {
     let yaml_content = fs::read_to_string("src/config/set_bonus.yaml")?;
     let set_bonus: SetBonusMap = serde_yaml::from_str(&yaml_content)?;
 
-    let hp_formula = "(Character_HP + LightCone_HP) * (1 + Percentage_HP_Bonus / 100) + Additive_HP_Bonus";
-    let atk_formula = "(Character_ATK + LightCone_ATK) * (1 + Percentage_ATK_Bonus / 100) + Additive_ATK_Bonus";
+    let hp_formula =
+        "(Character_HP + LightCone_HP) * (1 + Percentage_HP_Bonus / 100) + Additive_HP_Bonus";
+    let atk_formula =
+        "(Character_ATK + LightCone_ATK) * (1 + Percentage_ATK_Bonus / 100) + Additive_ATK_Bonus";
     let def_formula = "(Character_DEF + LightCone_DEF) * (1 + (Percentage_DEF_Bonus - Percentage_DEF_Reduction) / 100) + Additive_DEF_Bonus";
     let spd_formula = "Character_SPD * (1 + Percentage_SPD_Bonus / 100) + Additive_SPD_Bonus";
     let crit_rate_formula = "Character_Base_CRIT_Rate + CRIT_Rate";
@@ -104,7 +118,10 @@ async fn create_evaluator(input: &ScannerInput) -> Result<Evaluator> {
             (Stats::Spd, spd_formula.to_owned()),
             (Stats::CritRate_, crit_rate_formula.to_owned()),
             (Stats::CritDmg_, crit_dmg_formula.to_owned()),
-            (Stats::EnergyRegenerationRate_, energy_regen_rate_formula.to_owned()),
+            (
+                Stats::EnergyRegenerationRate_,
+                energy_regen_rate_formula.to_owned(),
+            ),
             (Stats::EffectHitRate_, effect_hit_rate_formula.to_owned()),
             (Stats::EffectRes_, effect_res_formula.to_owned()),
             (Stats::BreakEffect_, break_effect_formula.to_owned()),
