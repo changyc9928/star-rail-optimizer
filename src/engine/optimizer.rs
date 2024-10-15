@@ -208,7 +208,7 @@ impl Optimizer {
 
         // Sort the final population and return the best relic set.
         population.par_sort_by(|x, y| self.evaluation(x, y));
-        let best_relic_set = population.first().unwrap().clone();
+        let best_relic_set = population.last().unwrap().clone();
         Ok(best_relic_set)
     }
 
