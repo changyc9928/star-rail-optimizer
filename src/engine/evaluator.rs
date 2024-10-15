@@ -1,5 +1,8 @@
 // Import necessary modules and crates
-use crate::domain::{Character, LightCone, Relic, RelicSetName, Stats};
+use crate::{
+    domain::{Relic, Stats},
+    service::data_fetcher::{CharacterEntity, LightConeEntity},
+};
 use eval::Expr;
 use eyre::{OptionExt, Result};
 use itertools::Itertools;
@@ -18,10 +21,10 @@ type SetBonus = HashMap<u8, Vec<(Stats, f64, Option<(Stats, f64)>)>>;
 // - `f64`: The value of the bonus.
 // - `Option<(Stats, f64)>`: Optional condition bonus (stat and value).
 
-pub type SetBonusMap = HashMap<RelicSetName, SetBonus>;
+pub type SetBonusMap = HashMap<String, SetBonus>;
 // `SetBonusMap` maps `RelicSetName` to `SetBonus`, representing set bonuses for different relic sets.
 
-type StatBonusMap = HashMap<Stats, f64>;
+pub type StatBonusMap = HashMap<Stats, f64>;
 // `StatBonusMap` maps `Stats` to `f64`, representing various stat bonuses.
 
 type Bonus = (Stats, f64, Option<ConditionBonus>);
@@ -40,8 +43,8 @@ type ConditionBonus = (Stats, f64);
 /// required for evaluating and calculating the target stat based on equipped relics and other factors.
 #[derive(Clone)]
 pub struct Evaluator {
-    pub character: Character, // The character being evaluated, containing base stats and other attributes.
-    pub light_cone: LightCone, // The light cone equipped by the character, affecting stats and bonuses.
+    pub character: CharacterEntity, // The character being evaluated, containing base stats and other attributes.
+    pub light_cone: LightConeEntity, // The light cone equipped by the character, affecting stats and bonuses.
     pub constraint: StatBonusMap, // A map of constraints for stat bonuses to be considered during evaluation.
     pub set_bonus: SetBonusMap, // A map of bonuses from relic sets, indicating bonuses applied based on equipped sets.
     pub other_bonus: StatBonusMap, // A map of additional stat bonuses not related to relic sets.
@@ -69,8 +72,8 @@ impl Evaluator {
     /// Returns a new `Evaluator` instance initialized with the provided parameters.
     #[allow(clippy::too_many_arguments)] // Suppresses the warning for having too many arguments in the constructor
     pub fn new(
-        character: Character,
-        light_cone: LightCone,
+        character: CharacterEntity,
+        light_cone: LightConeEntity,
         constraint: StatBonusMap,
         set_bonus: SetBonusMap,
         other_bonus: StatBonusMap,
@@ -193,8 +196,7 @@ impl Evaluator {
         let mut totals = HashMap::new();
 
         // Count the number of relics in each set
-        let counts: HashMap<RelicSetName, usize> =
-            relics.iter().counts_by(|relic| relic.set.clone());
+        let counts: HashMap<String, usize> = relics.iter().counts_by(|relic| relic.set_id.clone());
 
         // Use Rayon to process each set in parallel
         let partial_totals: Vec<HashMap<Stats, f64>> = counts
@@ -313,9 +315,9 @@ impl Evaluator {
 
         // Substitute values for light cone stats
         expr = expr
-            .value("LightCone_HP", self.light_cone.light_cone_stats.hp)
-            .value("LightCone_ATK", self.light_cone.light_cone_stats.atk)
-            .value("LightCone_DEF", self.light_cone.light_cone_stats.def);
+            .value("LightCone_HP", self.light_cone.base_hp)
+            .value("LightCone_ATK", self.light_cone.base_atk)
+            .value("LightCone_DEF", self.light_cone.base_def);
 
         // Use Rayon to process totals in parallel
         let results: Vec<(String, f64)> = totals
@@ -620,26 +622,36 @@ impl Evaluator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::{
-        CharacterName, CharacterSkills, CharacterTraces, LightConeName, LightConeStats, Slot,
-        SubStats,
+    use crate::{
+        client::hoyowiki_client::HoyowikiClient,
+        domain::{Character, CharacterSkills, CharacterTraces, LightCone, Slot, SubStats},
+        service::data_fetcher::DataFetcherService,
     };
 
     #[tokio::test]
     async fn test_evaluation() -> Result<()> {
+        let fetcher = DataFetcherService {
+            client: HoyowikiClient {
+                base_url: "https://sg-wiki-api-static.hoyolab.com/hoyowiki/hsr/wapi".to_string(),
+                language: "en-us".to_string(),
+                wiki_app: "hsr".to_string(),
+            },
+        };
         // Create a new character instance with specific attributes.
-        let mut fu_xuan = Character::new(
-            CharacterName::FuXuan,
-            80, // Level
-            6,  // Ascension
-            0,  // Eidolon
-            CharacterSkills {
+        let fu_xuan = Character {
+            id: "1208".to_string(),
+            name: "Fu Xuan".to_string(),
+            path: crate::domain::Path::Preservation,
+            level: 80,
+            ascension: 6,
+            eidolon: 0,
+            skills: CharacterSkills {
                 basic: 1,
                 skill: 9,
                 ult: 9,
                 talent: 9,
             },
-            CharacterTraces {
+            traces: CharacterTraces {
                 ability_1: true,
                 ability_2: true,
                 ability_3: true,
@@ -653,30 +665,25 @@ mod tests {
                 stat_8: true,
                 stat_9: true,
                 stat_10: false,
-                total_bonus: HashMap::new(),
             },
-            None,
-            vec![],
-        )
-        .await?;
+        };
 
         // Create a new LightCone instance with specific attributes.
-        let mut we_are_wild_fire = LightCone {
-            key: LightConeName::WeAreWildfire,
+        let we_are_wild_fire = LightCone {
+            id: "21023".to_string(),
+            name: "We Are Wildfire".to_string(),
             level: 50,
             ascension: 3,
             superimposition: 0,
             location: None,
             lock: false,
-            light_cone_stats: LightConeStats {
-                ..Default::default()
-            },
-            _id: "lightcone_100".to_string(),
+            _uid: "lightcone_100".to_string(),
         };
 
         // Create Relic instances for different slots.
         let head = Relic {
-            set: RelicSetName::KnightOfPurityPalace,
+            set_id: "103".to_string(),
+            name: "Knight's Forgiving Casque".to_string(),
             slot: Slot::Head,
             rarity: 5,
             level: 15,
@@ -701,11 +708,13 @@ mod tests {
             ],
             location: None,
             lock: false,
-            _id: "relic_1".to_string(),
+            discard: false,
+            _uid: "relic_1".to_string(),
         };
 
         let hands = Relic {
-            set: RelicSetName::LongevousDisciple,
+            set_id: "113".to_string(),
+            name: "Disciple's Ingenium Hand".to_string(),
             slot: Slot::Hands,
             rarity: 5,
             level: 15,
@@ -730,11 +739,13 @@ mod tests {
             ],
             location: None,
             lock: false,
-            _id: "relic_2".to_string(),
+            discard: false,
+            _uid: "relic_2".to_string(),
         };
 
         let body = Relic {
-            set: RelicSetName::LongevousDisciple,
+            set_id: "113".to_string(),
+            name: "Disciple's Dewy Feather Garb".to_string(),
             slot: Slot::Body,
             rarity: 5,
             level: 15,
@@ -759,11 +770,13 @@ mod tests {
             ],
             location: None,
             lock: false,
-            _id: "relic_3".to_string(),
+            discard: false,
+            _uid: "relic_3".to_string(),
         };
 
         let feet = Relic {
-            set: RelicSetName::KnightOfPurityPalace,
+            set_id: "103".to_string(),
+            name: "Knight's Iron Boots of Order".to_string(),
             slot: Slot::Feet,
             rarity: 5,
             level: 15,
@@ -788,11 +801,13 @@ mod tests {
             ],
             location: None,
             lock: false,
-            _id: "relic_4".to_string(),
+            discard: false,
+            _uid: "relic_4".to_string(),
         };
 
         let sphere = Relic {
-            set: RelicSetName::FleetOfTheAgeless,
+            set_id: "302".to_string(),
+            name: "The Xianzhou Luofu's Celestial Ark".to_string(),
             slot: Slot::PlanarSphere,
             rarity: 5,
             level: 15,
@@ -817,11 +832,13 @@ mod tests {
             ],
             location: None,
             lock: false,
-            _id: "relic_5".to_string(),
+            discard: false,
+            _uid: "relic_5".to_string(),
         };
 
         let rope = Relic {
-            set: RelicSetName::FleetOfTheAgeless,
+            set_id: "302".to_string(),
+            name: "The Xianzhou Luofu's Ambrosial Arbor Vines".to_string(),
             slot: Slot::LinkRope,
             rarity: 5,
             level: 15,
@@ -846,31 +863,32 @@ mod tests {
             ],
             location: None,
             lock: false,
-            _id: "relic_6".to_string(),
+            discard: false,
+            _uid: "relic_6".to_string(),
         };
 
         // Combine all relics into a vector for evaluation.
         let relics = vec![head, hands, body, feet, sphere, rope];
 
         // Add base stats to the character and fetch the main stat of the light cone.
-        fu_xuan.add_base_stats().await?;
-        we_are_wild_fire.get_main_stat().await?;
+        let fu_xuan = fetcher.fetch_character_data(&fu_xuan).await?;
+        let we_are_wild_fire = fetcher.fetch_light_cone_data(&we_are_wild_fire).await?;
 
         // Clone the trace bonuses from the character.
-        let trace_bonus = fu_xuan.traces.total_bonus.clone();
+        let trace_bonus = fu_xuan.stat_bonus.clone();
 
         // Define set bonuses for relic sets.
         let set_bonus = HashMap::from([
             (
-                RelicSetName::KnightOfPurityPalace,
+                "103".to_string(),
                 HashMap::from([(2, vec![(Stats::Def_, 15.0, None)])]),
             ),
             (
-                RelicSetName::LongevousDisciple,
+                "113".to_string(),
                 HashMap::from([(2, vec![(Stats::Hp_, 12.0, None)])]),
             ),
             (
-                RelicSetName::FleetOfTheAgeless,
+                "302".to_string(),
                 HashMap::from([(2, vec![(Stats::Hp_, 12.0, None)])]),
             ),
         ]);

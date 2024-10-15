@@ -1,4 +1,3 @@
-use crate::domain::CharacterName;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use strum_macros::EnumIter;
@@ -163,15 +162,17 @@ pub enum RelicSetName {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Relic {
-    pub set: RelicSetName,
+    pub set_id: String,
+    pub name: String,
     pub slot: Slot,
     pub rarity: u8,
     pub level: u8,
     pub mainstat: Stats,
     pub substats: Vec<SubStats>,
-    pub location: Option<CharacterName>,
+    pub location: Option<String>,
     pub lock: bool,
-    pub _id: String,
+    pub discard: bool,
+    pub _uid: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -242,617 +243,617 @@ pub struct Relics {
     pub total: HashMap<Stats, f64>,
 }
 
-impl Relics {
-    pub fn new(
-        head: Option<Relic>,
-        hands: Option<Relic>,
-        body: Option<Relic>,
-        feet: Option<Relic>,
-        planar_sphere: Option<Relic>,
-        link_rope: Option<Relic>,
-    ) -> Self {
-        let mut total = HashMap::new();
-        let mut substats = vec![];
-        if let Some(head) = &head {
-            substats.push(head.substats.clone());
-        }
-        if let Some(hands) = &hands {
-            substats.push(hands.substats.clone());
-        }
-        if let Some(body) = &body {
-            substats.push(body.substats.clone());
-        }
-        if let Some(feet) = &feet {
-            substats.push(feet.substats.clone());
-        }
-        if let Some(planar_sphere) = &planar_sphere {
-            substats.push(planar_sphere.substats.clone());
-        }
-        if let Some(link_rope) = &link_rope {
-            substats.push(link_rope.substats.clone());
-        }
-        for substat in substats
-            .iter()
-            .flatten()
-            .cloned()
-            .collect::<Vec<SubStats>>()
-        {
-            let s = total.get_mut(&substat.key);
-            match s {
-                Some(s) => *s += substat.value,
-                None => {
-                    total.insert(substat.key, substat.value);
-                }
-            }
-        }
-        for relic in &[&head, &hands, &body, &feet, &planar_sphere, &link_rope] {
-            match relic {
-                Some(relic) => {
-                    let mainstat = match &relic.mainstat {
-                        Stats::Atk if relic.slot != Slot::Hands => Stats::Atk_,
-                        Stats::Hp if relic.slot != Slot::Head => Stats::Hp_,
-                        other => other.clone(),
-                    };
-                    let s = total.get_mut(&mainstat);
-                    match s {
-                        Some(s) => *s += relic.get_mainstat(),
-                        None => {
-                            total.insert(mainstat, relic.get_mainstat());
-                        }
-                    }
-                }
-                None => {}
-            }
-        }
-        Self {
-            head,
-            hands,
-            body,
-            feet,
-            planar_sphere,
-            link_rope,
-            total,
-        }
-    }
+// impl Relics {
+//     pub fn new(
+//         head: Option<Relic>,
+//         hands: Option<Relic>,
+//         body: Option<Relic>,
+//         feet: Option<Relic>,
+//         planar_sphere: Option<Relic>,
+//         link_rope: Option<Relic>,
+//     ) -> Self {
+//         let mut total = HashMap::new();
+//         let mut substats = vec![];
+//         if let Some(head) = &head {
+//             substats.push(head.substats.clone());
+//         }
+//         if let Some(hands) = &hands {
+//             substats.push(hands.substats.clone());
+//         }
+//         if let Some(body) = &body {
+//             substats.push(body.substats.clone());
+//         }
+//         if let Some(feet) = &feet {
+//             substats.push(feet.substats.clone());
+//         }
+//         if let Some(planar_sphere) = &planar_sphere {
+//             substats.push(planar_sphere.substats.clone());
+//         }
+//         if let Some(link_rope) = &link_rope {
+//             substats.push(link_rope.substats.clone());
+//         }
+//         for substat in substats
+//             .iter()
+//             .flatten()
+//             .cloned()
+//             .collect::<Vec<SubStats>>()
+//         {
+//             let s = total.get_mut(&substat.key);
+//             match s {
+//                 Some(s) => *s += substat.value,
+//                 None => {
+//                     total.insert(substat.key, substat.value);
+//                 }
+//             }
+//         }
+//         for relic in &[&head, &hands, &body, &feet, &planar_sphere, &link_rope] {
+//             match relic {
+//                 Some(relic) => {
+//                     let mainstat = match &relic.mainstat {
+//                         Stats::Atk if relic.slot != Slot::Hands => Stats::Atk_,
+//                         Stats::Hp if relic.slot != Slot::Head => Stats::Hp_,
+//                         other => other.clone(),
+//                     };
+//                     let s = total.get_mut(&mainstat);
+//                     match s {
+//                         Some(s) => *s += relic.get_mainstat(),
+//                         None => {
+//                             total.insert(mainstat, relic.get_mainstat());
+//                         }
+//                     }
+//                 }
+//                 None => {}
+//             }
+//         }
+//         Self {
+//             head,
+//             hands,
+//             body,
+//             feet,
+//             planar_sphere,
+//             link_rope,
+//             total,
+//         }
+//     }
 
-    pub fn get_set_bonus(
-        &self,
-        base_spd: f64,
-        combat_type: &Stats,
-        bonus: HashMap<Stats, f64>,
-    ) -> eyre::Result<HashMap<Stats, f64>> {
-        let mut set = HashMap::new();
-        match &self.head {
-            Some(relic) => {
-                set.insert(relic.set.clone(), 1);
-            }
-            None => (),
-        }
-        match &self.hands {
-            Some(relic) => {
-                if !set.contains_key(&relic.set) {
-                    set.insert(relic.set.clone(), 1);
-                } else {
-                    *set.get_mut(&relic.set).ok_or(eyre::eyre!("Missing set"))? += 1;
-                }
-            }
-            None => (),
-        }
-        match &self.body {
-            Some(relic) => {
-                if !set.contains_key(&relic.set) {
-                    set.insert(relic.set.clone(), 1);
-                } else {
-                    *set.get_mut(&relic.set).ok_or(eyre::eyre!("Missing set"))? += 1;
-                }
-            }
-            None => (),
-        }
-        match &self.feet {
-            Some(relic) => {
-                if !set.contains_key(&relic.set) {
-                    set.insert(relic.set.clone(), 1);
-                } else {
-                    *set.get_mut(&relic.set).ok_or(eyre::eyre!("Missing set"))? += 1;
-                }
-            }
-            None => (),
-        }
-        match &self.planar_sphere {
-            Some(relic) => {
-                if !set.contains_key(&relic.set) {
-                    set.insert(relic.set.clone(), 1);
-                } else {
-                    *set.get_mut(&relic.set).ok_or(eyre::eyre!("Missing set"))? += 1;
-                }
-            }
-            None => (),
-        }
-        match &self.link_rope {
-            Some(relic) => {
-                if !set.contains_key(&relic.set) {
-                    set.insert(relic.set.clone(), 1);
-                } else {
-                    *set.get_mut(&relic.set).ok_or(eyre::eyre!("Missing set"))? += 1;
-                }
-            }
-            None => (),
-        }
-        let mut ret = HashMap::new();
-        for (k, v) in &set {
-            match k {
-                RelicSetName::PasserbyOfWanderingCloud => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::OutgoingHealingBoost_)
-                        {
-                            e.insert(10.0);
-                        } else {
-                            *ret.get_mut(&Stats::OutgoingHealingBoost_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 10.0;
-                        }
-                    }
-                }
-                RelicSetName::MusketeerOfWildWheat => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Atk_)
-                        {
-                            e.insert(12.0);
-                        } else {
-                            *ret.get_mut(&Stats::Atk_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 12.0;
-                        }
-                    }
-                    if v >= &4 {
-                        // TODO
-                    }
-                }
-                RelicSetName::KnightOfPurityPalace => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Def_)
-                        {
-                            e.insert(15.0);
-                        } else {
-                            *ret.get_mut(&Stats::Def_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 15.0;
-                        }
-                    }
-                }
-                RelicSetName::HunterOfGlacialForest => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::IceDmgBoost_)
-                        {
-                            e.insert(10.0);
-                        } else {
-                            *ret.get_mut(&Stats::IceDmgBoost_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 10.0;
-                        }
-                    }
-                }
-                RelicSetName::ChampionOfStreetwiseBoxing => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::PhysicalDmgBoost_)
-                        {
-                            e.insert(10.0);
-                        } else {
-                            *ret.get_mut(&Stats::PhysicalDmgBoost_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 10.0;
-                        }
-                    }
-                }
-                RelicSetName::GuardOfWutheringSnow => (),
-                RelicSetName::FiresmithOfLavaForging => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::FireDmgBoost_)
-                        {
-                            e.insert(10.0);
-                        } else {
-                            *ret.get_mut(&Stats::FireDmgBoost_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 10.0;
-                        }
-                    }
-                }
-                RelicSetName::GeniusOfBrilliantStars => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::QuantumDmgBoost_)
-                        {
-                            e.insert(10.0);
-                        } else {
-                            *ret.get_mut(&Stats::QuantumDmgBoost_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 10.0;
-                        }
-                    }
-                }
-                RelicSetName::BandOfSizzlingThunder => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::LightningDmgBoost_)
-                        {
-                            e.insert(10.0);
-                        } else {
-                            *ret.get_mut(&Stats::LightningDmgBoost_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 10.0;
-                        }
-                    }
-                }
-                RelicSetName::EagleOfTwilightLine => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::WindDmgBoost_)
-                        {
-                            e.insert(10.0);
-                        } else {
-                            *ret.get_mut(&Stats::WindDmgBoost_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 10.0;
-                        }
-                    }
-                }
-                RelicSetName::ThiefOfShootingMeteor => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::BreakEffect_)
-                        {
-                            e.insert(16.0);
-                        } else {
-                            *ret.get_mut(&Stats::BreakEffect_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 16.0;
-                        }
-                    }
-                }
-                RelicSetName::WastelanderOfBanditryDesert => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::ImaginaryDmgBoost_)
-                        {
-                            e.insert(10.0);
-                        } else {
-                            *ret.get_mut(&Stats::ImaginaryDmgBoost_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 10.0;
-                        }
-                    }
-                }
-                RelicSetName::LongevousDisciple => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Hp_)
-                        {
-                            e.insert(12.0);
-                        } else {
-                            *ret.get_mut(&Stats::Hp_).ok_or(eyre::eyre!("Missing set"))? += 12.0;
-                        }
-                    }
-                }
-                RelicSetName::MessengerTraversingHackerspace => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Spd_)
-                        {
-                            e.insert(6.0);
-                        } else {
-                            *ret.get_mut(&Stats::Spd_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 6.0;
-                        }
-                    }
-                }
-                RelicSetName::TheAshblazingGrandDuke => (),
-                RelicSetName::PrisonerInDeepConfinement => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Atk_)
-                        {
-                            e.insert(12.0);
-                        } else {
-                            *ret.get_mut(&Stats::Atk_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 12.0;
-                        }
-                    }
-                }
-                RelicSetName::SpaceSealingStation => (),
-                RelicSetName::FleetOfTheAgeless => (),
-                RelicSetName::PanCosmicCommercialEnterprise => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::EffectHitRate_)
-                        {
-                            e.insert(10.0);
-                        } else {
-                            *ret.get_mut(&Stats::EffectHitRate_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 10.0;
-                        }
-                    }
-                }
-                RelicSetName::BelobogOfTheArchitects => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Def_)
-                        {
-                            e.insert(15.0);
-                        } else {
-                            *ret.get_mut(&Stats::Def_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 15.0;
-                        }
-                    }
-                }
-                RelicSetName::CelestialDifferentiator => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::CritDmg_)
-                        {
-                            e.insert(16.0);
-                        } else {
-                            *ret.get_mut(&Stats::CritDmg_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 16.0;
-                        }
-                    }
-                }
-                RelicSetName::InertSalsotto => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::CritRate_)
-                        {
-                            e.insert(8.0);
-                        } else {
-                            *ret.get_mut(&Stats::CritRate_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 8.0;
-                        }
-                    }
-                }
-                RelicSetName::TaliaKingdomOfBanditry => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::BreakEffect_)
-                        {
-                            e.insert(16.0);
-                        } else {
-                            *ret.get_mut(&Stats::BreakEffect_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 16.0;
-                        }
-                    }
-                }
-                RelicSetName::SprightlyVonwacq => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::EnergyRegenerationRate_)
-                        {
-                            e.insert(5.0);
-                        } else {
-                            *ret.get_mut(&Stats::EnergyRegenerationRate_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 5.0;
-                        }
-                    }
-                }
-                RelicSetName::RutilantArena => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::CritRate_)
-                        {
-                            e.insert(8.0);
-                        } else {
-                            *ret.get_mut(&Stats::CritRate_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 8.0;
-                        }
-                    }
-                }
-                RelicSetName::BrokenKeel => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::EffectRes_)
-                        {
-                            e.insert(10.0);
-                        } else {
-                            *ret.get_mut(&Stats::EffectRes_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 10.0;
-                        }
-                    }
-                }
-                RelicSetName::FirmamentFrontlineGlamoth => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Atk_)
-                        {
-                            e.insert(12.0);
-                        } else {
-                            *ret.get_mut(&Stats::Atk_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 12.0;
-                        }
-                    }
-                }
-                RelicSetName::PenaconyLandOfTheDreams => {
-                    if v >= &2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::EnergyRegenerationRate_)
-                        {
-                            e.insert(5.0);
-                        } else {
-                            *ret.get_mut(&Stats::EnergyRegenerationRate_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 5.0;
-                        }
-                    }
-                }
-                RelicSetName::Dummy => todo!(),
-                RelicSetName::PioneerDiverOfDeadWaters => todo!(),
-                RelicSetName::WatchmakerMasterOfDreamMachinations => todo!(),
-                RelicSetName::IronCavalryAgainstTheScourge => todo!(),
-                RelicSetName::TheWindSoaringValorous => todo!(),
-            }
-        }
-        for (k, v) in set {
-            match k {
-                RelicSetName::SpaceSealingStation => {
-                    if v >= 2 {
-                        let spd = base_spd
-                            * (1.0
-                                + ((self.total.get(&Stats::Spd_).cloned().unwrap_or_default()
-                                    + ret.get(&Stats::Spd_).cloned().unwrap_or_default()
-                                    + bonus.get(&Stats::Spd_).cloned().unwrap_or_default())
-                                    / 100.0))
-                            + (self.total.get(&Stats::Spd).cloned().unwrap_or_default()
-                                + ret.get(&Stats::Spd).cloned().unwrap_or_default());
-                        if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Atk_)
-                        {
-                            e.insert(12.0);
-                        } else {
-                            *ret.get_mut(&Stats::Atk_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 12.0;
-                        }
-                        if spd >= 120.0 {
-                            *ret.get_mut(&Stats::Atk_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 12.0;
-                        }
-                    }
-                }
-                RelicSetName::FleetOfTheAgeless => {
-                    if v >= 2 {
-                        let spd = base_spd
-                            * (1.0
-                                + ((self.total.get(&Stats::Spd_).cloned().unwrap_or_default()
-                                    + ret.get(&Stats::Spd_).cloned().unwrap_or_default()
-                                    + bonus.get(&Stats::Spd_).cloned().unwrap_or_default())
-                                    / 100.0))
-                            + (self.total.get(&Stats::Spd).cloned().unwrap_or_default()
-                                + ret.get(&Stats::Spd).cloned().unwrap_or_default());
-                        if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Hp_)
-                        {
-                            e.insert(12.0);
-                        } else {
-                            *ret.get_mut(&Stats::Hp_).ok_or(eyre::eyre!("Missing set"))? += 12.0;
-                        }
-                        if spd >= 120.0 {
-                            if let std::collections::hash_map::Entry::Vacant(e) =
-                                ret.entry(Stats::Atk_)
-                            {
-                                e.insert(8.0);
-                            } else {
-                                *ret.get_mut(&Stats::Atk_)
-                                    .ok_or(eyre::eyre!("Missing set"))? += 8.0;
-                            }
-                        }
-                    }
-                }
-                RelicSetName::PanCosmicCommercialEnterprise => {
-                    if v >= 2 {
-                        let effect_hit_rate = self
-                            .total
-                            .get(&Stats::EffectHitRate_)
-                            .cloned()
-                            .unwrap_or_default()
-                            + bonus
-                                .get(&Stats::EffectHitRate_)
-                                .cloned()
-                                .unwrap_or_default()
-                            + ret.get(&Stats::EffectHitRate_).cloned().unwrap_or_default();
-                        if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Atk_)
-                        {
-                            e.insert(f64::min(effect_hit_rate * 25.0, 25.0));
-                        } else {
-                            *ret.get_mut(&Stats::Atk_)
-                                .ok_or(eyre::eyre!("Missing set"))? +=
-                                f64::min(effect_hit_rate * 25.0, 25.0);
-                        }
-                    }
-                }
-                RelicSetName::BelobogOfTheArchitects => {
-                    let effect_hit_rate = self
-                        .total
-                        .get(&Stats::EffectHitRate_)
-                        .cloned()
-                        .unwrap_or_default()
-                        + bonus
-                            .get(&Stats::EffectHitRate_)
-                            .cloned()
-                            .unwrap_or_default()
-                        + ret.get(&Stats::EffectHitRate_).cloned().unwrap_or_default();
-                    if effect_hit_rate >= 50.0 && v >= 2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Def_)
-                        {
-                            e.insert(15.0);
-                        } else {
-                            *ret.get_mut(&Stats::Def_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 15.0;
-                        }
-                    }
-                }
-                RelicSetName::CelestialDifferentiator => {
-                    if v >= 2 {
-                        // TODO
-                    }
-                }
-                RelicSetName::InertSalsotto => {
-                    if v >= 2 {
-                        // TODO
-                    }
-                }
-                RelicSetName::TaliaKingdomOfBanditry => {
-                    let spd = base_spd
-                        * (1.0
-                            + ((self.total.get(&Stats::Spd_).cloned().unwrap_or_default()
-                                + ret.get(&Stats::Spd_).cloned().unwrap_or_default()
-                                + bonus.get(&Stats::Spd_).cloned().unwrap_or_default())
-                                / 100.0))
-                        + (self.total.get(&Stats::Spd).cloned().unwrap_or_default()
-                            + ret.get(&Stats::Spd).cloned().unwrap_or_default());
-                    if spd >= 145.0 && v >= 2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::BreakEffect_)
-                        {
-                            e.insert(20.0);
-                        } else {
-                            *ret.get_mut(&Stats::BreakEffect_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 20.0;
-                        }
-                    }
-                }
-                RelicSetName::RutilantArena => {
-                    if v >= 2 {
-                        // TODO
-                    }
-                }
-                RelicSetName::BrokenKeel => {
-                    let effect_res = self
-                        .total
-                        .get(&Stats::EffectRes_)
-                        .cloned()
-                        .unwrap_or_default()
-                        + bonus.get(&Stats::EffectRes_).cloned().unwrap_or_default()
-                        + ret.get(&Stats::EffectRes_).cloned().unwrap_or_default();
-                    if effect_res >= 30.0 && v >= 2 {
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            ret.entry(Stats::CritDmg_)
-                        {
-                            e.insert(10.0);
-                        } else {
-                            *ret.get_mut(&Stats::CritDmg_)
-                                .ok_or(eyre::eyre!("Missing set"))? += 10.0;
-                        }
-                    }
-                }
-                RelicSetName::FirmamentFrontlineGlamoth => {
-                    let spd = base_spd
-                        * (1.0
-                            + ((self.total.get(&Stats::Spd_).cloned().unwrap_or_default()
-                                + ret.get(&Stats::Spd_).cloned().unwrap_or_default()
-                                + bonus.get(&Stats::Spd_).cloned().unwrap_or_default())
-                                / 100.0))
-                        + (self.total.get(&Stats::Spd).cloned().unwrap_or_default()
-                            + ret.get(&Stats::Spd).cloned().unwrap_or_default());
-                    let increment = if spd >= 160.0 {
-                        18.0
-                    } else if spd >= 135.0 {
-                        12.0
-                    } else {
-                        0.0
-                    };
-                    if v >= 2 {
-                        if !ret.contains_key(combat_type) {
-                            ret.insert(combat_type.clone(), increment);
-                        } else {
-                            *ret.get_mut(combat_type).ok_or(eyre::eyre!("Missing set"))? +=
-                                increment;
-                        }
-                    }
-                }
-                _ => (),
-            }
-        }
-        Ok(ret)
-    }
-}
+//     pub fn get_set_bonus(
+//         &self,
+//         base_spd: f64,
+//         combat_type: &Stats,
+//         bonus: HashMap<Stats, f64>,
+//     ) -> eyre::Result<HashMap<Stats, f64>> {
+//         let mut set = HashMap::new();
+//         match &self.head {
+//             Some(relic) => {
+//                 set.insert(relic.set.clone(), 1);
+//             }
+//             None => (),
+//         }
+//         match &self.hands {
+//             Some(relic) => {
+//                 if !set.contains_key(&relic.set) {
+//                     set.insert(relic.set.clone(), 1);
+//                 } else {
+//                     *set.get_mut(&relic.set).ok_or(eyre::eyre!("Missing set"))? += 1;
+//                 }
+//             }
+//             None => (),
+//         }
+//         match &self.body {
+//             Some(relic) => {
+//                 if !set.contains_key(&relic.set) {
+//                     set.insert(relic.set.clone(), 1);
+//                 } else {
+//                     *set.get_mut(&relic.set).ok_or(eyre::eyre!("Missing set"))? += 1;
+//                 }
+//             }
+//             None => (),
+//         }
+//         match &self.feet {
+//             Some(relic) => {
+//                 if !set.contains_key(&relic.set) {
+//                     set.insert(relic.set.clone(), 1);
+//                 } else {
+//                     *set.get_mut(&relic.set).ok_or(eyre::eyre!("Missing set"))? += 1;
+//                 }
+//             }
+//             None => (),
+//         }
+//         match &self.planar_sphere {
+//             Some(relic) => {
+//                 if !set.contains_key(&relic.set) {
+//                     set.insert(relic.set.clone(), 1);
+//                 } else {
+//                     *set.get_mut(&relic.set).ok_or(eyre::eyre!("Missing set"))? += 1;
+//                 }
+//             }
+//             None => (),
+//         }
+//         match &self.link_rope {
+//             Some(relic) => {
+//                 if !set.contains_key(&relic.set) {
+//                     set.insert(relic.set.clone(), 1);
+//                 } else {
+//                     *set.get_mut(&relic.set).ok_or(eyre::eyre!("Missing set"))? += 1;
+//                 }
+//             }
+//             None => (),
+//         }
+//         let mut ret = HashMap::new();
+//         for (k, v) in &set {
+//             match k {
+//                 RelicSetName::PasserbyOfWanderingCloud => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::OutgoingHealingBoost_)
+//                         {
+//                             e.insert(10.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::OutgoingHealingBoost_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::MusketeerOfWildWheat => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Atk_)
+//                         {
+//                             e.insert(12.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::Atk_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 12.0;
+//                         }
+//                     }
+//                     if v >= &4 {
+//                         // TODO
+//                     }
+//                 }
+//                 RelicSetName::KnightOfPurityPalace => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Def_)
+//                         {
+//                             e.insert(15.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::Def_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 15.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::HunterOfGlacialForest => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::IceDmgBoost_)
+//                         {
+//                             e.insert(10.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::IceDmgBoost_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::ChampionOfStreetwiseBoxing => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::PhysicalDmgBoost_)
+//                         {
+//                             e.insert(10.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::PhysicalDmgBoost_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::GuardOfWutheringSnow => (),
+//                 RelicSetName::FiresmithOfLavaForging => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::FireDmgBoost_)
+//                         {
+//                             e.insert(10.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::FireDmgBoost_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::GeniusOfBrilliantStars => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::QuantumDmgBoost_)
+//                         {
+//                             e.insert(10.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::QuantumDmgBoost_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::BandOfSizzlingThunder => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::LightningDmgBoost_)
+//                         {
+//                             e.insert(10.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::LightningDmgBoost_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::EagleOfTwilightLine => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::WindDmgBoost_)
+//                         {
+//                             e.insert(10.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::WindDmgBoost_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::ThiefOfShootingMeteor => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::BreakEffect_)
+//                         {
+//                             e.insert(16.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::BreakEffect_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 16.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::WastelanderOfBanditryDesert => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::ImaginaryDmgBoost_)
+//                         {
+//                             e.insert(10.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::ImaginaryDmgBoost_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::LongevousDisciple => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Hp_)
+//                         {
+//                             e.insert(12.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::Hp_).ok_or(eyre::eyre!("Missing set"))? += 12.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::MessengerTraversingHackerspace => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Spd_)
+//                         {
+//                             e.insert(6.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::Spd_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 6.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::TheAshblazingGrandDuke => (),
+//                 RelicSetName::PrisonerInDeepConfinement => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Atk_)
+//                         {
+//                             e.insert(12.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::Atk_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 12.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::SpaceSealingStation => (),
+//                 RelicSetName::FleetOfTheAgeless => (),
+//                 RelicSetName::PanCosmicCommercialEnterprise => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::EffectHitRate_)
+//                         {
+//                             e.insert(10.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::EffectHitRate_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::BelobogOfTheArchitects => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Def_)
+//                         {
+//                             e.insert(15.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::Def_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 15.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::CelestialDifferentiator => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::CritDmg_)
+//                         {
+//                             e.insert(16.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::CritDmg_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 16.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::InertSalsotto => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::CritRate_)
+//                         {
+//                             e.insert(8.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::CritRate_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 8.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::TaliaKingdomOfBanditry => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::BreakEffect_)
+//                         {
+//                             e.insert(16.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::BreakEffect_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 16.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::SprightlyVonwacq => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::EnergyRegenerationRate_)
+//                         {
+//                             e.insert(5.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::EnergyRegenerationRate_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 5.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::RutilantArena => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::CritRate_)
+//                         {
+//                             e.insert(8.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::CritRate_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 8.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::BrokenKeel => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::EffectRes_)
+//                         {
+//                             e.insert(10.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::EffectRes_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::FirmamentFrontlineGlamoth => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Atk_)
+//                         {
+//                             e.insert(12.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::Atk_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 12.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::PenaconyLandOfTheDreams => {
+//                     if v >= &2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::EnergyRegenerationRate_)
+//                         {
+//                             e.insert(5.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::EnergyRegenerationRate_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 5.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::Dummy => todo!(),
+//                 RelicSetName::PioneerDiverOfDeadWaters => todo!(),
+//                 RelicSetName::WatchmakerMasterOfDreamMachinations => todo!(),
+//                 RelicSetName::IronCavalryAgainstTheScourge => todo!(),
+//                 RelicSetName::TheWindSoaringValorous => todo!(),
+//             }
+//         }
+//         for (k, v) in set {
+//             match k {
+//                 RelicSetName::SpaceSealingStation => {
+//                     if v >= 2 {
+//                         let spd = base_spd
+//                             * (1.0
+//                                 + ((self.total.get(&Stats::Spd_).cloned().unwrap_or_default()
+//                                     + ret.get(&Stats::Spd_).cloned().unwrap_or_default()
+//                                     + bonus.get(&Stats::Spd_).cloned().unwrap_or_default())
+//                                     / 100.0))
+//                             + (self.total.get(&Stats::Spd).cloned().unwrap_or_default()
+//                                 + ret.get(&Stats::Spd).cloned().unwrap_or_default());
+//                         if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Atk_)
+//                         {
+//                             e.insert(12.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::Atk_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 12.0;
+//                         }
+//                         if spd >= 120.0 {
+//                             *ret.get_mut(&Stats::Atk_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 12.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::FleetOfTheAgeless => {
+//                     if v >= 2 {
+//                         let spd = base_spd
+//                             * (1.0
+//                                 + ((self.total.get(&Stats::Spd_).cloned().unwrap_or_default()
+//                                     + ret.get(&Stats::Spd_).cloned().unwrap_or_default()
+//                                     + bonus.get(&Stats::Spd_).cloned().unwrap_or_default())
+//                                     / 100.0))
+//                             + (self.total.get(&Stats::Spd).cloned().unwrap_or_default()
+//                                 + ret.get(&Stats::Spd).cloned().unwrap_or_default());
+//                         if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Hp_)
+//                         {
+//                             e.insert(12.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::Hp_).ok_or(eyre::eyre!("Missing set"))? += 12.0;
+//                         }
+//                         if spd >= 120.0 {
+//                             if let std::collections::hash_map::Entry::Vacant(e) =
+//                                 ret.entry(Stats::Atk_)
+//                             {
+//                                 e.insert(8.0);
+//                             } else {
+//                                 *ret.get_mut(&Stats::Atk_)
+//                                     .ok_or(eyre::eyre!("Missing set"))? += 8.0;
+//                             }
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::PanCosmicCommercialEnterprise => {
+//                     if v >= 2 {
+//                         let effect_hit_rate = self
+//                             .total
+//                             .get(&Stats::EffectHitRate_)
+//                             .cloned()
+//                             .unwrap_or_default()
+//                             + bonus
+//                                 .get(&Stats::EffectHitRate_)
+//                                 .cloned()
+//                                 .unwrap_or_default()
+//                             + ret.get(&Stats::EffectHitRate_).cloned().unwrap_or_default();
+//                         if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Atk_)
+//                         {
+//                             e.insert(f64::min(effect_hit_rate * 25.0, 25.0));
+//                         } else {
+//                             *ret.get_mut(&Stats::Atk_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? +=
+//                                 f64::min(effect_hit_rate * 25.0, 25.0);
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::BelobogOfTheArchitects => {
+//                     let effect_hit_rate = self
+//                         .total
+//                         .get(&Stats::EffectHitRate_)
+//                         .cloned()
+//                         .unwrap_or_default()
+//                         + bonus
+//                             .get(&Stats::EffectHitRate_)
+//                             .cloned()
+//                             .unwrap_or_default()
+//                         + ret.get(&Stats::EffectHitRate_).cloned().unwrap_or_default();
+//                     if effect_hit_rate >= 50.0 && v >= 2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) = ret.entry(Stats::Def_)
+//                         {
+//                             e.insert(15.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::Def_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 15.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::CelestialDifferentiator => {
+//                     if v >= 2 {
+//                         // TODO
+//                     }
+//                 }
+//                 RelicSetName::InertSalsotto => {
+//                     if v >= 2 {
+//                         // TODO
+//                     }
+//                 }
+//                 RelicSetName::TaliaKingdomOfBanditry => {
+//                     let spd = base_spd
+//                         * (1.0
+//                             + ((self.total.get(&Stats::Spd_).cloned().unwrap_or_default()
+//                                 + ret.get(&Stats::Spd_).cloned().unwrap_or_default()
+//                                 + bonus.get(&Stats::Spd_).cloned().unwrap_or_default())
+//                                 / 100.0))
+//                         + (self.total.get(&Stats::Spd).cloned().unwrap_or_default()
+//                             + ret.get(&Stats::Spd).cloned().unwrap_or_default());
+//                     if spd >= 145.0 && v >= 2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::BreakEffect_)
+//                         {
+//                             e.insert(20.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::BreakEffect_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 20.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::RutilantArena => {
+//                     if v >= 2 {
+//                         // TODO
+//                     }
+//                 }
+//                 RelicSetName::BrokenKeel => {
+//                     let effect_res = self
+//                         .total
+//                         .get(&Stats::EffectRes_)
+//                         .cloned()
+//                         .unwrap_or_default()
+//                         + bonus.get(&Stats::EffectRes_).cloned().unwrap_or_default()
+//                         + ret.get(&Stats::EffectRes_).cloned().unwrap_or_default();
+//                     if effect_res >= 30.0 && v >= 2 {
+//                         if let std::collections::hash_map::Entry::Vacant(e) =
+//                             ret.entry(Stats::CritDmg_)
+//                         {
+//                             e.insert(10.0);
+//                         } else {
+//                             *ret.get_mut(&Stats::CritDmg_)
+//                                 .ok_or(eyre::eyre!("Missing set"))? += 10.0;
+//                         }
+//                     }
+//                 }
+//                 RelicSetName::FirmamentFrontlineGlamoth => {
+//                     let spd = base_spd
+//                         * (1.0
+//                             + ((self.total.get(&Stats::Spd_).cloned().unwrap_or_default()
+//                                 + ret.get(&Stats::Spd_).cloned().unwrap_or_default()
+//                                 + bonus.get(&Stats::Spd_).cloned().unwrap_or_default())
+//                                 / 100.0))
+//                         + (self.total.get(&Stats::Spd).cloned().unwrap_or_default()
+//                             + ret.get(&Stats::Spd).cloned().unwrap_or_default());
+//                     let increment = if spd >= 160.0 {
+//                         18.0
+//                     } else if spd >= 135.0 {
+//                         12.0
+//                     } else {
+//                         0.0
+//                     };
+//                     if v >= 2 {
+//                         if !ret.contains_key(combat_type) {
+//                             ret.insert(combat_type.clone(), increment);
+//                         } else {
+//                             *ret.get_mut(combat_type).ok_or(eyre::eyre!("Missing set"))? +=
+//                                 increment;
+//                         }
+//                     }
+//                 }
+//                 _ => (),
+//             }
+//         }
+//         Ok(ret)
+//     }
+// }

@@ -1,8 +1,5 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
-
-use super::{CharacterName, ProjectYattaCharacterType};
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum LightConeName {
@@ -161,15 +158,14 @@ pub enum LightConeName {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LightCone {
-    pub key: LightConeName,
+    pub id: String,
+    pub name: String,
     pub level: u8,
     pub ascension: u8,
     pub superimposition: u8,
-    pub location: Option<CharacterName>,
+    pub location: Option<String>,
     pub lock: bool,
-    pub _id: String,
-    #[serde(skip_deserializing)]
-    pub light_cone_stats: LightConeStats,
+    pub _uid: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -199,6 +195,12 @@ pub struct ProjectYattaLightConeData {
     upgrade: Vec<ProjectYattaLightConeUpgrade>,
     skill: ProjectYattaLightConeSkill,
     ascension: HashMap<String, u8>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct ProjectYattaCharacterType {
+    id: String,
+    name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -251,127 +253,127 @@ pub struct ProjectYattaLightConeSkill {
     params: HashMap<String, Vec<f64>>,
 }
 
-impl LightConeName {
-    pub fn get_yatta_id(&self) -> String {
-        match self {
-            Self::Arrows => "20000",
-            Self::Cornucopia => "20001",
-            Self::CollapsingSky => "20002",
-            Self::Amber => "20003",
-            Self::Void => "20004",
-            Self::Chorus => "20005",
-            Self::DataBank => "20006",
-            Self::DartingArrow => "20007",
-            Self::FineFruit => "20008",
-            Self::ShatteredHome => "20009",
-            Self::Defense => "20010",
-            Self::Loop => "20011",
-            Self::MeshingCogs => "20012",
-            Self::Passkey => "20013",
-            Self::Adversarial => "20014",
-            Self::Multiplication => "20015",
-            Self::MutualDemise => "20016",
-            Self::Pioneering => "20017",
-            Self::HiddenShadow => "20018",
-            Self::Mediation => "20019",
-            Self::Sagacity => "20020",
-            Self::PostOpConversation => "21000",
-            Self::GoodNightAndSleepWell => "21001",
-            Self::DayOneOfMyNewLife => "21002",
-            Self::OnlySilenceRemains => "21003",
-            Self::MemoriesOfThePast => "21004",
-            Self::TheMolesWelcomeYou => "21005",
-            Self::TheBirthoftheSelf => "21006",
-            Self::SharedFeeling => "21007",
-            Self::EyesOfThePrey => "21008",
-            Self::LandausChoice => "21009",
-            Self::Swordplay => "21010",
-            Self::PlanetaryRendezvous => "21011",
-            Self::ASecretVow => "21012",
-            Self::MakeTheWorldClamor => "21013",
-            Self::PerfectTiming => "21014",
-            Self::ResolutionShinesAsPearlsOfSweat => "21015",
-            Self::TrendOfTheUniversalMarket => "21016",
-            Self::SubscribeForMore => "21017",
-            Self::DanceDanceDance => "21018",
-            Self::UnderTheBlueSky => "21019",
-            Self::GeniusesRepose => "21020",
-            Self::QuidProQuo => "21021",
-            Self::Fermata => "21022",
-            Self::WeAreWildfire => "21023",
-            Self::RiverFlowsInSpring => "21024",
-            Self::PastAndFuture => "21025",
-            Self::WoofWalkTime => "21026",
-            Self::TheSeriousnessOfBreakfast => "21027",
-            Self::WarmthShortensColdNights => "21028",
-            Self::WeWillMeetAgain => "21029",
-            Self::ThisIsMe => "21030",
-            Self::ReturnToDarkness => "21031",
-            Self::CarveTheMoonWeaveTheClouds => "21032",
-            Self::NowhereToRun => "21033",
-            Self::TodayIsAnotherPeacefulDay => "21034",
-            Self::BeforeTheTutorialMissionStarts => "22000",
-            Self::HeyOverHere => "22001",
-            Self::NightOnTheMilkyWay => "23000",
-            Self::InTheNight => "23001",
-            Self::SomethingIrreplaceable => "23002",
-            Self::ButTheBattleIsntOver => "23003",
-            Self::InTheNameOfTheWorld => "23004",
-            Self::MomentOfVictory => "23005",
-            Self::PatienceIsAllYouNeed => "23006",
-            Self::IncessantRain => "23007",
-            Self::EchoesOfTheCoffin => "23008",
-            Self::TheUnreachableSide => "23009",
-            Self::BeforeDawn => "23010",
-            Self::SheAlreadyShutHerEyes => "23011",
-            Self::SleepLikeTheDead => "23012",
-            Self::TimeWaitsForNoOne => "23013",
-            Self::IShallBeMyOwnSword => "23014",
-            Self::BrighterThanTheSun => "23015",
-            Self::WorrisomeBlissful => "23016",
-            Self::NightOfFright => "23017",
-            Self::AnInstantBeforeAGaze => "23018",
-            Self::PastSelfInMirror => "23019",
-            Self::BaptismOfPureThought => "23020",
-            Self::OnTheFallOfAnAeon => "24000",
-            Self::CruisingInTheStellarSea => "24001",
-            Self::TextureOfMemories => "24002",
-            Self::SolitaryHealing => "24003",
-        }
-        .to_string()
-    }
-}
+// impl LightConeName {
+//     pub fn get_yatta_id(&self) -> String {
+//         match self {
+//             Self::Arrows => "20000",
+//             Self::Cornucopia => "20001",
+//             Self::CollapsingSky => "20002",
+//             Self::Amber => "20003",
+//             Self::Void => "20004",
+//             Self::Chorus => "20005",
+//             Self::DataBank => "20006",
+//             Self::DartingArrow => "20007",
+//             Self::FineFruit => "20008",
+//             Self::ShatteredHome => "20009",
+//             Self::Defense => "20010",
+//             Self::Loop => "20011",
+//             Self::MeshingCogs => "20012",
+//             Self::Passkey => "20013",
+//             Self::Adversarial => "20014",
+//             Self::Multiplication => "20015",
+//             Self::MutualDemise => "20016",
+//             Self::Pioneering => "20017",
+//             Self::HiddenShadow => "20018",
+//             Self::Mediation => "20019",
+//             Self::Sagacity => "20020",
+//             Self::PostOpConversation => "21000",
+//             Self::GoodNightAndSleepWell => "21001",
+//             Self::DayOneOfMyNewLife => "21002",
+//             Self::OnlySilenceRemains => "21003",
+//             Self::MemoriesOfThePast => "21004",
+//             Self::TheMolesWelcomeYou => "21005",
+//             Self::TheBirthoftheSelf => "21006",
+//             Self::SharedFeeling => "21007",
+//             Self::EyesOfThePrey => "21008",
+//             Self::LandausChoice => "21009",
+//             Self::Swordplay => "21010",
+//             Self::PlanetaryRendezvous => "21011",
+//             Self::ASecretVow => "21012",
+//             Self::MakeTheWorldClamor => "21013",
+//             Self::PerfectTiming => "21014",
+//             Self::ResolutionShinesAsPearlsOfSweat => "21015",
+//             Self::TrendOfTheUniversalMarket => "21016",
+//             Self::SubscribeForMore => "21017",
+//             Self::DanceDanceDance => "21018",
+//             Self::UnderTheBlueSky => "21019",
+//             Self::GeniusesRepose => "21020",
+//             Self::QuidProQuo => "21021",
+//             Self::Fermata => "21022",
+//             Self::WeAreWildfire => "21023",
+//             Self::RiverFlowsInSpring => "21024",
+//             Self::PastAndFuture => "21025",
+//             Self::WoofWalkTime => "21026",
+//             Self::TheSeriousnessOfBreakfast => "21027",
+//             Self::WarmthShortensColdNights => "21028",
+//             Self::WeWillMeetAgain => "21029",
+//             Self::ThisIsMe => "21030",
+//             Self::ReturnToDarkness => "21031",
+//             Self::CarveTheMoonWeaveTheClouds => "21032",
+//             Self::NowhereToRun => "21033",
+//             Self::TodayIsAnotherPeacefulDay => "21034",
+//             Self::BeforeTheTutorialMissionStarts => "22000",
+//             Self::HeyOverHere => "22001",
+//             Self::NightOnTheMilkyWay => "23000",
+//             Self::InTheNight => "23001",
+//             Self::SomethingIrreplaceable => "23002",
+//             Self::ButTheBattleIsntOver => "23003",
+//             Self::InTheNameOfTheWorld => "23004",
+//             Self::MomentOfVictory => "23005",
+//             Self::PatienceIsAllYouNeed => "23006",
+//             Self::IncessantRain => "23007",
+//             Self::EchoesOfTheCoffin => "23008",
+//             Self::TheUnreachableSide => "23009",
+//             Self::BeforeDawn => "23010",
+//             Self::SheAlreadyShutHerEyes => "23011",
+//             Self::SleepLikeTheDead => "23012",
+//             Self::TimeWaitsForNoOne => "23013",
+//             Self::IShallBeMyOwnSword => "23014",
+//             Self::BrighterThanTheSun => "23015",
+//             Self::WorrisomeBlissful => "23016",
+//             Self::NightOfFright => "23017",
+//             Self::AnInstantBeforeAGaze => "23018",
+//             Self::PastSelfInMirror => "23019",
+//             Self::BaptismOfPureThought => "23020",
+//             Self::OnTheFallOfAnAeon => "24000",
+//             Self::CruisingInTheStellarSea => "24001",
+//             Self::TextureOfMemories => "24002",
+//             Self::SolitaryHealing => "24003",
+//         }
+//         .to_string()
+//     }
+// }
 
-impl LightCone {
-    pub async fn get_main_stat(&mut self) -> eyre::Result<LightConeStats> {
-        if self.light_cone_stats.atk != 0.0 {
-            return Ok(self.light_cone_stats.clone());
-        }
-        let client = reqwest::Client::new();
-        let response = client
-            .get(format!(
-                "https://api.yatta.top/hsr/v2/en/equipment/{}",
-                self.key.get_yatta_id()
-            ))
-            .send()
-            .await?
-            .text()
-            .await?;
-        let character_data: ProjectYattaLightConeResponse = serde_json::from_str(&response)?;
-        let upgrade_data = character_data.data.upgrade;
-        let base_atk = upgrade_data[self.ascension as usize].skill_base.attack_base
-            + (self.level - 1) as f64 * upgrade_data[0].skill_add.attack_add;
-        let base_def = upgrade_data[self.ascension as usize]
-            .skill_base
-            .defence_base
-            + (self.level - 1) as f64 * upgrade_data[0].skill_add.defence_add;
-        let base_hp = upgrade_data[self.ascension as usize].skill_base.hp_base
-            + (self.level - 1) as f64 * upgrade_data[0].skill_add.hp_add;
-        self.light_cone_stats = LightConeStats {
-            atk: base_atk,
-            def: base_def,
-            hp: base_hp,
-        };
-        Ok(self.light_cone_stats.clone())
-    }
-}
+// impl LightCone {
+//     pub async fn get_main_stat(&mut self) -> eyre::Result<LightConeStats> {
+//         if self.light_cone_stats.atk != 0.0 {
+//             return Ok(self.light_cone_stats.clone());
+//         }
+//         let client = reqwest::Client::new();
+//         let response = client
+//             .get(format!(
+//                 "https://api.yatta.top/hsr/v2/en/equipment/{}",
+//                 self.name.get_yatta_id()
+//             ))
+//             .send()
+//             .await?
+//             .text()
+//             .await?;
+//         let character_data: ProjectYattaLightConeResponse = serde_json::from_str(&response)?;
+//         let upgrade_data = character_data.data.upgrade;
+//         let base_atk = upgrade_data[self.ascension as usize].skill_base.attack_base
+//             + (self.level - 1) as f64 * upgrade_data[0].skill_add.attack_add;
+//         let base_def = upgrade_data[self.ascension as usize]
+//             .skill_base
+//             .defence_base
+//             + (self.level - 1) as f64 * upgrade_data[0].skill_add.defence_add;
+//         let base_hp = upgrade_data[self.ascension as usize].skill_base.hp_base
+//             + (self.level - 1) as f64 * upgrade_data[0].skill_add.hp_add;
+//         self.light_cone_stats = LightConeStats {
+//             atk: base_atk,
+//             def: base_def,
+//             hp: base_hp,
+//         };
+//         Ok(self.light_cone_stats.clone())
+//     }
+// }

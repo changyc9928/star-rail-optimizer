@@ -1,21 +1,25 @@
 use crate::domain::{ScannerInput, Stats};
+use client::hoyowiki_client::HoyowikiClient;
 use engine::{
     evaluator::{Evaluator, SetBonusMap},
     optimizer::Optimizer,
     simulated_annealing::SimulatedAnnealing,
 };
 use eyre::Result;
+use service::data_fetcher::DataFetcherService;
 use std::{collections::HashMap, fs};
 use tracing_subscriber;
 
+mod client;
 mod domain;
 mod engine;
+mod service;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     setup_logging();
 
-    let input = load_input_data("scanned_data/HSRScanData_20231126_122032.json").await?;
+    let input = load_input_data("scanned_data/HSRScanData_20241014_152542.json").await?;
     let relic_pool = build_relic_pool(&input);
     let evaluator = create_evaluator(&input).await?;
 
@@ -40,12 +44,11 @@ async fn main() -> Result<()> {
     };
 
     println!("----------------- Optimizing Fu Xuan's HP -----------------");
-    let fuxuan = input
-        .characters
-        .iter()
-        .find(|c| c.key == domain::CharacterName::FuXuan)
-        .ok_or(eyre::eyre!("Missing Fu Xuan"))?;
-    println!("Current stats: {:#?}", fuxuan.stats_panel);
+    // let fuxuan = input
+    //     .characters
+    //     .iter()
+    //     .find(|c| c.name == "Fu Xuan")
+    //     .ok_or(eyre::eyre!("Missing Fu Xuan"))?;
 
     let res = optimizer.optimize()?;
     println!("Optimized relics: {:#?}", res);
@@ -86,9 +89,20 @@ async fn create_evaluator(input: &ScannerInput) -> Result<Evaluator> {
     let fuxuan = input
         .characters
         .iter()
-        .find(|c| c.key == domain::CharacterName::FuXuan)
+        .find(|c| c.name == "Fu Xuan")
         .ok_or(eyre::eyre!("Missing Fu Xuan"))?;
-    let light_cone = fuxuan.light_cone.clone().unwrap();
+    let fetcher = DataFetcherService {
+        client: HoyowikiClient {
+            base_url: "https://sg-wiki-api-static.hoyolab.com/hoyowiki/hsr/wapi".to_string(),
+            language: "en-us".to_string(),
+            wiki_app: "hsr".to_string(),
+        },
+    };
+    let light_cone = input
+        .light_cones
+        .iter()
+        .find(|l| l.location == Some("1208".to_owned()))
+        .ok_or_else(|| eyre::eyre!("Missing Fu Xuan's light cone"))?;
     let yaml_content = fs::read_to_string("src/config/set_bonus.yaml")?;
     let set_bonus: SetBonusMap = serde_yaml::from_str(&yaml_content)?;
 
@@ -105,12 +119,18 @@ async fn create_evaluator(input: &ScannerInput) -> Result<Evaluator> {
     let effect_res_formula = "Effect_RES";
     let break_effect_formula = "Break_Effect";
 
+    let fuxuan = fetcher.fetch_character_data(fuxuan).await?;
+    let light_cone = fetcher.fetch_light_cone_data(light_cone).await?;
+
+    println!("Character: {:#?}", fuxuan);
+    println!("Light cone: {:#?}", light_cone);
+
     Ok(Evaluator::new(
         fuxuan.clone(),
-        light_cone,
+        light_cone.clone(),
         HashMap::new(),
         set_bonus,
-        fuxuan.traces.total_bonus.clone(),
+        fuxuan.stat_bonus.clone(),
         HashMap::from([
             (Stats::Hp, hp_formula.to_owned()),
             (Stats::Atk, atk_formula.to_owned()),
