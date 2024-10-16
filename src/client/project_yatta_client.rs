@@ -3,6 +3,31 @@ use reqwest::Client;
 use serde::Deserialize;
 use std::collections::HashMap;
 
+pub trait Upgrade {
+    fn skill_base(&self) -> &SkillBase;
+    fn skill_add(&self) -> &SkillAdd;
+}
+
+impl Upgrade for CharacterUpgrade {
+    fn skill_base(&self) -> &SkillBase {
+        &self.skill_base
+    }
+    
+    fn skill_add(&self) -> &SkillAdd {
+        &self.skill_add
+    }
+}
+
+impl Upgrade for LightConeUpgrade {
+    fn skill_base(&self) -> &SkillBase {
+        &self.skill_base
+    }
+    
+    fn skill_add(&self) -> &SkillAdd {
+        &self.skill_add
+    }
+}
+
 pub struct ProjectYattaClient {
     pub url: String,
 }
@@ -40,7 +65,7 @@ pub struct StatusList {
 #[serde(rename_all = "camelCase")]
 pub struct CharacterUpgrade {
     pub skill_add: SkillAdd,
-    pub skill_base: CharacterSkillBase,
+    pub skill_base: SkillBase,
 }
 
 #[derive(Deserialize)]
@@ -53,14 +78,14 @@ pub struct SkillAdd {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct CharacterSkillBase {
+pub struct SkillBase {
     pub attack_base: f64,
-    pub base_aggro: u64,
-    pub critical_chance: f64,
-    pub critical_damage: f64,
     pub defence_base: f64,
     pub h_p_base: f64,
-    pub speed_base: f64,
+    pub speed_base: Option<f64>, // Optional, since only Character has speed_base
+    pub base_aggro: Option<u64>,  // Optional, since only Character has base_aggro
+    pub critical_chance: Option<f64>, // Optional, since only Character has critical stats
+    pub critical_damage: Option<f64>, // Optional, since only Character has critical stats
 }
 
 #[derive(Deserialize)]
@@ -73,19 +98,12 @@ pub struct LightConeData {
     pub upgrade: Vec<LightConeUpgrade>,
 }
 
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LightConeUpgrade {
     pub skill_add: SkillAdd,
-    pub skill_base: LightConeSkillBase,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LightConeSkillBase {
-    pub attack_base: f64,
-    pub h_p_base: f64,
-    pub defence_base: f64,
+    pub skill_base: SkillBase,
 }
 
 impl ProjectYattaClient {

@@ -1,7 +1,7 @@
 use super::DataFetcher;
 use crate::{
     client::project_yatta_client::{
-        CharacterUpgrade, LightConeUpgrade, ProjectYattaClient, Traces,
+        CharacterUpgrade, LightConeUpgrade, ProjectYattaClient, Traces, Upgrade,
     },
     domain::{Character, CharacterEntity, LightCone, LightConeEntity, Stats},
     engine::evaluator::StatBonusMap,
@@ -52,31 +52,12 @@ impl ProjectYattaDataFetcher {
         Ok(())
     }
 
-    fn calculate_base_stats<T>(
-        &self,
-        upgrade: &T,
-        level: u8,
-        stat_getters: (
-            fn(&T) -> f64,
-            fn(&T) -> f64,
-            fn(&T) -> f64,
-            fn(&T) -> f64,
-            fn(&T) -> f64,
-            fn(&T) -> f64,
-        ),
-    ) -> (f64, f64, f64) {
-        let (get_base_hp, get_add_hp, get_base_atk, get_add_atk, get_base_def, get_add_def) = (
-            stat_getters.0,
-            stat_getters.1,
-            stat_getters.2,
-            stat_getters.3,
-            stat_getters.4,
-            stat_getters.5,
-        );
-
-        let hp = get_base_hp(upgrade) + get_add_hp(upgrade) * (level - 1) as f64;
-        let atk = get_base_atk(upgrade) + get_add_atk(upgrade) * (level - 1) as f64;
-        let def = get_base_def(upgrade) + get_add_def(upgrade) * (level - 1) as f64;
+    fn calculate_base_stats<T: Upgrade>(&self, upgrade: &T, level: u8) -> (f64, f64, f64) {
+        let hp = upgrade.skill_base().h_p_base + upgrade.skill_add().h_p_add * (level - 1) as f64;
+        let atk =
+            upgrade.skill_base().attack_base + upgrade.skill_add().attack_add * (level - 1) as f64;
+        let def = upgrade.skill_base().defence_base
+            + upgrade.skill_add().defence_add * (level - 1) as f64;
 
         (hp, atk, def)
     }
@@ -87,27 +68,16 @@ impl ProjectYattaDataFetcher {
         upgrades: &[CharacterUpgrade],
     ) -> CharacterEntity {
         let upgrade = &upgrades[character.ascension as usize];
-        let (hp, atk, def) = self.calculate_base_stats(
-            upgrade,
-            character.level,
-            (
-                |u| u.skill_base.h_p_base,     // Base HP
-                |u| u.skill_add.h_p_add,       // Add HP
-                |u| u.skill_base.attack_base,  // Base ATK
-                |u| u.skill_add.attack_add,    // Add ATK
-                |u| u.skill_base.defence_base, // Base DEF
-                |u| u.skill_add.defence_add,   // Add DEF
-            ),
-        );
+        let (hp, atk, def) = self.calculate_base_stats(upgrade, character.level);
 
         CharacterEntity {
             base_hp: hp,
             base_atk: atk,
             base_def: def,
-            base_spd: upgrade.skill_base.speed_base,
-            _base_aggro: upgrade.skill_base.base_aggro,
-            critical_chance: upgrade.skill_base.critical_chance * 100.0,
-            critical_damage: upgrade.skill_base.critical_damage * 100.0,
+            base_spd: upgrade.skill_base.speed_base.unwrap_or(0.0), // Handle optional
+            _base_aggro: upgrade.skill_base.base_aggro.unwrap_or(0), // Handle optional
+            critical_chance: upgrade.skill_base.critical_chance.unwrap_or(0.0) * 100.0,
+            critical_damage: upgrade.skill_base.critical_damage.unwrap_or(0.0) * 100.0,
             stat_bonus: HashMap::new(),
             _character: character.clone(),
         }
@@ -119,18 +89,7 @@ impl ProjectYattaDataFetcher {
         upgrades: &[LightConeUpgrade],
     ) -> LightConeEntity {
         let upgrade = &upgrades[light_cone.ascension as usize];
-        let (hp, atk, def) = self.calculate_base_stats(
-            upgrade,
-            light_cone.level,
-            (
-                |u| u.skill_base.h_p_base,     // Base HP
-                |u| u.skill_add.h_p_add,       // Add HP
-                |u| u.skill_base.attack_base,  // Base ATK
-                |u| u.skill_add.attack_add,    // Add ATK
-                |u| u.skill_base.defence_base, // Base DEF
-                |u| u.skill_add.defence_add,   // Add DEF
-            ),
-        );
+        let (hp, atk, def) = self.calculate_base_stats(upgrade, light_cone.level);
 
         LightConeEntity {
             base_hp: hp,

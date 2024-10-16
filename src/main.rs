@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
 
     let optimizer = Optimizer {
         relic_pool,
-        generation: 30,
+        generation: 20,
         population_size: 1000,
         mutation_rate: 0.1,
         crossover_rate: 0.7,
