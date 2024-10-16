@@ -1,15 +1,43 @@
-use std::collections::HashMap;
-
+use super::DataFetcher;
 use crate::{
     client::hoyowiki_client::HoyowikiClient,
     domain::{Character, CharacterEntity, LightCone, LightConeEntity, Path, Stats},
     engine::evaluator::StatBonusMap,
+    utils::trace_title_mapper::title_mapper,
 };
 use eyre::{bail, eyre, Result};
 use regex::Regex;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
-use super::DataFetcher;
+#[derive(Deserialize, Serialize, Debug)]
+pub struct HoyowikiResponse {
+    pub data: Data,
+    pub message: String,
+    pub retcode: u64,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Data {
+    pub page: Page,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Page {
+    pub id: String,
+    pub modules: Vec<Module>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Module {
+    pub name: String,
+    pub components: Vec<Component>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Component {
+    pub data: String,
+}
 
 #[derive(Deserialize, Clone)]
 pub struct Traces {
@@ -148,19 +176,6 @@ impl HoyowikiDataFetcherService {
     }
 
     fn extract_trace_bonus(&self, key: &str, traces: &Traces) -> Result<(Stats, f64)> {
-        let title_mapper = |title: &str| match title {
-            "HP Boost" => Stats::Hp_,
-            "ATK Boost" => Stats::Atk_,
-            "DEF Boost" => Stats::Def_,
-            "SPD Boost" => Stats::Spd_,
-            "CRIT Rate Boost" => Stats::CritRate_,
-            "CRIT DMG Boost" => Stats::CritDmg_,
-            "Effect RES Boost" => Stats::EffectRes_,
-            "Beak Effect Boost" => Stats::BreakEffect_,
-            "Energy Regeneration Boost" => Stats::EnergyRegenerationRate_,
-            "Effect Hit Rate Boost" => Stats::EffectHitRate_,
-            _ => todo!(),
-        };
         let extract_boost = |desc: &str| -> Result<f64> {
             Regex::new(r"(\d+(\.\d+)?)%")
                 .map(|re| {

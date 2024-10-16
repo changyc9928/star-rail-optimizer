@@ -12,24 +12,6 @@ pub struct ScannerInput {
 
 impl ScannerInput {
     pub async fn update(&mut self) -> eyre::Result<()> {
-        // for character in &mut self.characters {
-        //     let light_cone = self
-        //         .light_cones
-        //         .iter()
-        //         .find(|l| l.location == Some(character.name.clone()))
-        //         .cloned();
-        //     let relics: Vec<_> = self
-        //         .relics
-        //         .iter()
-        //         .filter(|r| r.location == Some(character.name.clone()))
-        //         .cloned()
-        //         .collect();
-        //     character.add_base_stats().await?;
-        //     character.update(relics, light_cone).await?;
-        // }
-        // for light_cone in &mut self.light_cones {
-        //     light_cone.get_main_stat().await?;
-        // }
         for relic in &mut self.relics {
             if ![Slot::Head, Slot::Hands].contains(&relic.slot) {
                 relic.mainstat = match &relic.mainstat {

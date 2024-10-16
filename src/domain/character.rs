@@ -68,3 +68,21 @@ pub enum Path {
     #[serde(alias = "erudition")]
     Erudition,
 }
+
+impl CharacterTraces {
+    pub fn get_stat(&self, index: usize) -> bool {
+        match index {
+            1 => self.stat_1,
+            2 => self.stat_2,
+            3 => self.stat_3,
+            4 => self.stat_4,
+            5 => self.stat_5,
+            6 => self.stat_6,
+            7 => self.stat_7,
+            8 => self.stat_8,
+            9 => self.stat_9,
+            10 => self.stat_10,
+            _ => false, // or handle invalid indices as needed
+        }
+    }
+}

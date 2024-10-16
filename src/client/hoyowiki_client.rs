@@ -1,8 +1,7 @@
+use crate::data_fetcher::hoyowiki_data_fetcher::HoyowikiResponse;
 use eyre::{eyre, Result};
 use reqwest::Client;
 use serde::Deserialize;
-
-use crate::domain::HoyowikiResponse;
 
 pub struct HoyowikiClient {
     pub base_url: String,

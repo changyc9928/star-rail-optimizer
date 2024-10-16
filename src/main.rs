@@ -14,6 +14,7 @@ mod data_fetcher;
 mod domain;
 mod engine;
 mod service;
+mod utils;
 
 #[tokio::main]
 async fn main() -> Result<()> {

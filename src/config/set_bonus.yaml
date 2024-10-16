@@ -34,19 +34,19 @@
       - null
   # for 4 pieces: After the wearer uses their Ultimate, their CRIT DMG increases by 25% for 2 turn(s).
 
-105: # CHAMPION_OF_STREETWISE_BOXING
+105: # Champion of Streetwise Boxing
   2:
     - - PHYSICAL_DMG_BOOST_
       - 10
       - null
   # for 4 pieces: After the wearer attacks or is hit, their ATK increases by 5% for the rest of the battle. This effect can stack up to 5 time(s).
 
-106: # GUARD_OF_WUTHERING_SNOW
+106: # Guard of Wuthering Snow
   2:
     - - DMG_REDUCTION_
       - 8
       - null
-107: # FIRESMITH_OF_LAVA_FORGING
+107: # Firesmith of Lava-Forging
   2:
     - - FIRE_DMG_BOOST_
       - 10
@@ -57,27 +57,27 @@
       - null
     # After unleashing Ultimate, increases the wearer's Fire DMG by 12% for the next attack.
 
-108: # GENIUS_OF_BRILLIANT_STARS
+108: # Genius of Brilliant Stars
   2:
     - - QUANTUM_DMG_BOOST_
       - 10
       - null
   # for 4 pieces: When the wearer deals DMG to the target enemy, ignores 10% DEF. If the target enemy has Quantum Weakness, the wearer additionally ignores 10% DEF.
 
-109: # BAND_OF_SIZZLING_THUNDER
+109: # Band of Sizzling Thunder
   2:
     - - LIGHTNING_DMG_BOOST_
       - 10
       - null
   # for 4 pieces: When the wearer uses their Skill, increases the wearer's ATK by 20% for 1 turn(s).
 
-110: # EAGLE_OF_TWILIGHT_LINE
+110: # Eagle of Twilight Line
   2:
     - - WIND_DMG_BOOST_
       - 10
       - null
 
-111: # THIEF_OF_SHOOTING_METEOR
+111: # Thief of Shooting Meteor
   2:
     - - BREAK_EFFECT_
       - 16
@@ -87,41 +87,41 @@
       - 16
       - null
 
-112: # WASTELANDER_OF_BANDITRY_DESERT
+112: # Wastelander of Banditry Desert
   2:
     - - IMAGINARY_DMG_BOOST_
       - 10
       - null
   # for 4 pieces: When attacking debuffed enemies, the wearer's CRIT Rate increases by 10%, and their CRIT DMG increases by 20% against Imprisoned enemies.
 
-113: # LONGEVOUS_DISCIPLE
+113: # Longevous Disciple
   2:
     - - HP_
       - 12
       - null
   # for 4 pieces: When the wearer is hit or has their HP consumed by an ally or themselves, their CRIT Rate increases by 8% for 2 turn(s) and up to 2 stacks.
 
-114: # MESSENGER_TRAVERSING_HACKERSPACE
+114: # Messenger Traversing Hackerspace
   2:
     - - SPD_
       - 6
       - null
   
-115: # THE_ASHBLAZING_GRAND_DUKE
+115: # The Ashblazing Grand Duke
   2:
     - - FOLLOW_UP_ATK_DMG_BOOST_
       - 20
       - null
   # for 4 pieces: When the wearer uses a follow-up attack, increases the wearer's ATK by 6% for every time the follow-up attack deals DMG. This effect can stack up to 8 time(s) and lasts for 3 turn(s). This effect is removed the next time the wearer uses a follow-up attack.
 
-116: # PRISONER_IN_DEEP_CONFINEMENT
+116: # Prisoner in Deep Confinement
   2:
     - - ATK_
       - 20
       - null
   # for 4 pieces: For every DoT the target enemy is afflicted with, the wearer will ignore 6% of its DEF when dealing DMG to it. This effect is valid for a max of 3 DoTs.
 
-117: # PIONEER_DIVER_OF_DEAD_WATERS
+117: # Pioneer Diver of Dead Waters
   # for 2 pieces: Increases DMG dealt to enemies with debuffs by 12%.
   4:
     - - CRIT_RATE_
@@ -129,13 +129,13 @@
       - null
   # for 4 pieces: The wearer deals 8%/12% increased CRIT DMG to enemies with at least 2/3 debuffs. After the wearer inflicts a debuff on enemy targets, the aforementioned effects increase by 100%, lasting for 1 turn(s).
 
-118: # WATCHMAKER_MASTER_OF_DREAM_MACHINATIONS
+118: # Watchmaker, Master of Dream Machinations
   2:
     - - BREAK_EFFECT_
       - 16
       - null
 
-119: # IRON_CAVALRY_AGAINST_THE_SCOURGE
+119: # Iron Cavalry Against the Scourge
   2:
     - - BREAK_EFFECT_
       - 16
@@ -150,7 +150,7 @@
       - - BREAK_EFFECT_
         - 250
 
-120: # THE_WIND_SOARING_VALOROUS
+120: # The Wind-Soaring Valorous
   2:
     - - ATK_
       - 12
@@ -161,7 +161,7 @@
       - null
     # After the wearer uses a follow-up attack, increases DMG dealt by Ultimate by 36%, lasting for 1 turn(s).
 
-301: # SPACE_SEALING_STATION
+301: # Space Sealing Station
   2:
     - - ATK_
       - 12
@@ -171,20 +171,20 @@
       - - SPD
         - 120
 
-302: # FLEET_OF_THE_AGELESS
+302: # Fleet of the Ageless
   2:
     - - HP_
       - 12
       - null
 
-303: # PAN_COSMIC_COMMERCIAL_ENTERPRISE
+303: # Pan-Cosmic Commercial Enterprise
   2:
     - - EFFECT_HIT_RATE_
       - 10
       - null
     # Meanwhile, the wearer's ATK increases by an amount that is equal to 25% of the current Effect Hit Rate, up to a maximum of 25%.
 
-304: # BELOBOG_OF_THE_ARCHITECTS
+304: # Belobog of the Architects
   2:
     - - DEF_
       - 15
@@ -194,14 +194,14 @@
       - - EFFECT_HIT_RATE_
         - 50
 
-305: # CELESTIAL_DIFFERENTIATOR
+305: # Celestial Differentiator
   2:
     - - CRIT_DMG_
       - 16
       - null
     # When the wearer's current CRIT DMG reaches 120% or higher, after entering battle, the wearer's CRIT Rate increases by 60% until the end of their first attack.
 
-306: # INERT_SALSOTTO
+306: # Inert Salsotto
   2:
     - - CRIT_RATE_
       - 8
@@ -215,7 +215,7 @@
       - - CRIT_RATE_
         - 50
   
-307: # TALIA_KINGDOM_OF_BANDITRY
+307: # Talia: Kingdom of Banditry
   2:
     - - BREAK_EFFECT_
       - 16
@@ -225,13 +225,13 @@
       - - SPD
         - 145
 
-308: # SPRIGHTLY_VONWACQ
+308: # Sprightly Vonwacq
   2:
     - - ENERGY_REGENERATION_RATE_
       - 5
       - null
     
-309: # RUTILANT_ARENA
+309: # Rutilant Arena
   2:
     - - CRIT_RATE_
       - 8
@@ -245,13 +245,13 @@
       - - CRIT_RATE_
         - 70
 
-310: # BROKEN_KEEL
+310: # Broken Keel
   2:
     - - EFFECT_RES_
       - 10
       - null
 
-311: # FIRMAMENT_FRONTLINE_GLAMOTH
+311: # Firmament Frontline: Glamoth
   2:
     - - ATK_
       - 12
