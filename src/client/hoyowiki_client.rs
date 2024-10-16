@@ -37,7 +37,7 @@ impl HoyowikiClient {
             .components;
         let data: Vec<T> = raw_data
             .iter()
-            .map(|d| Ok(serde_json::from_str::<T>(&format!("{}", d.data))?))
+            .map(|d| Ok(serde_json::from_str::<T>(&d.data)?))
             .collect::<Result<Vec<_>>>()?;
         Ok(data)
     }

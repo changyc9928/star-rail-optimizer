@@ -1,18 +1,11 @@
 // Import necessary modules and crates
-use crate::{
-    domain::{Relic, Stats},
-    service::data_fetcher::{CharacterEntity, LightConeEntity},
-};
+use crate::domain::{CharacterEntity, LightConeEntity, Relic, Stats};
 use eval::Expr;
 use eyre::{OptionExt, Result};
 use itertools::Itertools;
 use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::collections::HashMap;
 use strum::IntoEnumIterator;
-
-// Constants for base critical rate and damage
-const BASE_CRIT_RATE: f64 = 5.0; // Base critical rate in percentage
-const BASE_CRIT_DMG: f64 = 50.0; // Base critical damage in percentage
 
 // Type aliases for complex data structures
 type SetBonus = HashMap<u8, Vec<(Stats, f64, Option<(Stats, f64)>)>>;
@@ -165,9 +158,7 @@ impl Evaluator {
             .sum();
 
         // Calculate the total value including both main stat and substats
-        let total_value = mainstat_value + substat_values;
-
-        total_value
+        mainstat_value + substat_values
     }
 
     /// Applies the bonuses from relic sets to the total stats.
@@ -370,8 +361,8 @@ impl Evaluator {
 
         // Substitute default values for base crit rate and crit damage
         expr = expr
-            .value("Character_Base_CRIT_Rate", BASE_CRIT_RATE)
-            .value("Character_Base_CRIT_DMG", BASE_CRIT_DMG);
+            .value("Character_Base_CRIT_Rate", self.character.critical_chance)
+            .value("Character_Base_CRIT_DMG", self.character.critical_damage);
 
         expr
     }
@@ -623,18 +614,23 @@ impl Evaluator {
 mod tests {
     use super::*;
     use crate::{
-        client::hoyowiki_client::HoyowikiClient,
+        client::project_yatta_client::ProjectYattaClient,
+        data_fetcher::{project_yatta_data_fetcher::ProjectYattaDataFetcher, DataFetcher},
         domain::{Character, CharacterSkills, CharacterTraces, LightCone, Slot, SubStats},
-        service::data_fetcher::DataFetcherService,
     };
 
     #[tokio::test]
     async fn test_evaluation() -> Result<()> {
-        let fetcher = DataFetcherService {
-            client: HoyowikiClient {
-                base_url: "https://sg-wiki-api-static.hoyolab.com/hoyowiki/hsr/wapi".to_string(),
-                language: "en-us".to_string(),
-                wiki_app: "hsr".to_string(),
+        // let fetcher = HoyowikiDataFetcherService {
+        //     client: HoyowikiClient {
+        //         base_url: "https://sg-wiki-api-static.hoyolab.com/hoyowiki/hsr/wapi".to_string(),
+        //         language: "en-us".to_string(),
+        //         wiki_app: "hsr".to_string(),
+        //     },
+        // };
+        let fetcher = ProjectYattaDataFetcher {
+            client: ProjectYattaClient {
+                url: "https://sr.yatta.moe/api/v2/en/".to_string(),
             },
         };
         // Create a new character instance with specific attributes.

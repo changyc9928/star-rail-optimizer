@@ -78,10 +78,10 @@ impl Optimizer {
         Ok(selected_population)
     }
 
-    fn evaluation(&self, x: &Vec<Relic>, y: &Vec<Relic>) -> Ordering {
+    fn evaluation(&self, x: &[Relic], y: &[Relic]) -> Ordering {
         match (
-            self.evaluator.evaluate(x.clone()),
-            self.evaluator.evaluate(y.clone()),
+            self.evaluator.evaluate(x.to_owned()),
+            self.evaluator.evaluate(y.to_owned()),
         ) {
             (Ok(x_val), Ok(y_val)) => x_val.partial_cmp(&y_val).unwrap(),
             _ => f64::MIN.partial_cmp(&f64::MIN).unwrap(),
@@ -167,7 +167,7 @@ impl Optimizer {
                     let mut best_individual = population
                         .par_iter()
                         .max_by(|arg0: &&Vec<Relic>, arg1: &&Vec<Relic>| {
-                            self.evaluation(*arg0, *arg1)
+                            self.evaluation(arg0, arg1)
                         })
                         .ok_or_eyre("Best combination not found")?
                         .clone();
@@ -194,7 +194,7 @@ impl Optimizer {
             // Find and print the best relic set of the current generation in parallel.
             let best_combination = population
                 .par_iter()
-                .max_by(|arg0: &&Vec<Relic>, arg1: &&Vec<Relic>| self.evaluation(*arg0, *arg1))
+                .max_by(|arg0: &&Vec<Relic>, arg1: &&Vec<Relic>| self.evaluation(arg0, arg1))
                 .ok_or_eyre("Best combination not found")?;
 
             let result = self.evaluator.evaluate(best_combination.clone())?;

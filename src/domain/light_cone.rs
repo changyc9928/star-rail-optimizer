@@ -1,6 +1,14 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+#[derive(Clone, Debug)]
+pub struct LightConeEntity {
+    pub base_hp: f64,
+    pub base_atk: f64,
+    pub base_def: f64,
+    pub _light_cone: LightCone,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum LightConeName {
     Arrows,

@@ -1,31 +1,15 @@
-use std::{collections::HashMap, u64};
+use std::collections::HashMap;
 
 use crate::{
     client::hoyowiki_client::HoyowikiClient,
-    domain::{Character, LightCone, Path, Stats},
+    domain::{Character, CharacterEntity, LightCone, LightConeEntity, Path, Stats},
     engine::evaluator::StatBonusMap,
 };
 use eyre::{bail, eyre, Result};
 use regex::Regex;
 use serde::Deserialize;
 
-#[derive(Clone, Debug)]
-pub struct CharacterEntity {
-    pub base_hp: u64,
-    pub base_atk: u64,
-    pub base_def: u64,
-    pub base_spd: u64,
-    pub stat_bonus: StatBonusMap,
-    pub character: Character,
-}
-
-#[derive(Clone, Debug)]
-pub struct LightConeEntity {
-    pub base_hp: u64,
-    pub base_atk: u64,
-    pub base_def: u64,
-    pub light_cone: LightCone,
-}
+use super::DataFetcher;
 
 #[derive(Deserialize, Clone)]
 pub struct Traces {
@@ -57,15 +41,97 @@ pub struct CombatList {
     values: Vec<String>,
 }
 
-pub struct DataFetcherService {
+#[deprecated]
+pub struct HoyowikiDataFetcherService {
     pub client: HoyowikiClient,
 }
 
-impl DataFetcherService {
+#[allow(deprecated)]
+impl DataFetcher for HoyowikiDataFetcherService {
+    async fn fetch_character_data(&self, character: &Character) -> Result<CharacterEntity> {
+        let components: Vec<Ascensions> = self.client.fetch_data("Ascend", &character.id).await?;
+        let ascensions = components
+            .first()
+            .ok_or_else(|| eyre!("Ascension data not found"))?;
+        let stat_bonus = self.calculate_trace_bonus(character).await?;
+        match character.ascension {
+            0 => self.calculate_character_base_stats(
+                "Lv. 1",
+                "Lv. 20",
+                ascensions,
+                character,
+                &stat_bonus,
+            ),
+            1 => self.calculate_character_base_stats(
+                "Lv. 20",
+                "Lv. 30",
+                ascensions,
+                character,
+                &stat_bonus,
+            ),
+            2 => self.calculate_character_base_stats(
+                "Lv. 30",
+                "Lv. 40",
+                ascensions,
+                character,
+                &stat_bonus,
+            ),
+            3 => self.calculate_character_base_stats(
+                "Lv. 40",
+                "Lv. 50",
+                ascensions,
+                character,
+                &stat_bonus,
+            ),
+            4 => self.calculate_character_base_stats(
+                "Lv. 50",
+                "Lv. 60",
+                ascensions,
+                character,
+                &stat_bonus,
+            ),
+            5 => self.calculate_character_base_stats(
+                "Lv. 60",
+                "Lv. 70",
+                ascensions,
+                character,
+                &stat_bonus,
+            ),
+            6 => self.calculate_character_base_stats(
+                "Lv. 70",
+                "Lv. 80",
+                ascensions,
+                character,
+                &stat_bonus,
+            ),
+            _ => Err(eyre!("Invalid ascension value")),
+        }
+    }
+
+    async fn fetch_light_cone_data(&self, light_cone: &LightCone) -> Result<LightConeEntity> {
+        let components: Vec<Ascensions> = self.client.fetch_data("Ascend", &light_cone.id).await?;
+        let ascensions = components
+            .first()
+            .ok_or_else(|| eyre!("Ascension data not found"))?;
+        match light_cone.ascension {
+            0 => self.calculate_light_cone_base_stats("Lv. 1", "Lv. 20", ascensions, light_cone),
+            1 => self.calculate_light_cone_base_stats("Lv. 20", "Lv. 30", ascensions, light_cone),
+            2 => self.calculate_light_cone_base_stats("Lv. 30", "Lv. 40", ascensions, light_cone),
+            3 => self.calculate_light_cone_base_stats("Lv. 40", "Lv. 50", ascensions, light_cone),
+            4 => self.calculate_light_cone_base_stats("Lv. 50", "Lv. 60", ascensions, light_cone),
+            5 => self.calculate_light_cone_base_stats("Lv. 60", "Lv. 70", ascensions, light_cone),
+            6 => self.calculate_light_cone_base_stats("Lv. 70", "Lv. 80", ascensions, light_cone),
+            _ => Err(eyre!("Invalid ascension value")),
+        }
+    }
+}
+
+#[allow(deprecated)]
+impl HoyowikiDataFetcherService {
     fn extract_ascension_value(&self, stat: &str, ascension: &Ascension) -> Result<Vec<u64>> {
         let term = stat.split(" ").collect::<Vec<_>>();
         let specific_re = Regex::new(&format!(r"{}\s*{}", term[0], term[1])).unwrap();
-        Ok(ascension
+        ascension
             .combat_list
             .iter()
             .find(|c| specific_re.is_match(&c.key))
@@ -78,7 +144,7 @@ impl DataFetcherService {
                 }
                 Ok(v.parse()?)
             })
-            .collect::<Result<Vec<_>>>()?)
+            .collect::<Result<Vec<_>>>()
     }
 
     fn extract_trace_bonus(&self, key: &str, traces: &Traces) -> Result<(Stats, f64)> {
@@ -97,9 +163,8 @@ impl DataFetcherService {
         };
         let extract_boost = |desc: &str| -> Result<f64> {
             Regex::new(r"(\d+(\.\d+)?)%")
-                .and_then(|re| {
-                    Ok(re
-                        .captures(desc)
+                .map(|re| {
+                    re.captures(desc)
                         .and_then(|captures| captures.get(1))
                         .ok_or_else(|| eyre!("No boost value found"))
                         .and_then(|value| {
@@ -107,9 +172,9 @@ impl DataFetcherService {
                                 .as_str()
                                 .parse::<f64>()
                                 .map_err(|e| eyre!("Failed to parse boost value: {}", e))
-                        }))
+                        })
                 })
-                .or_else(|e| Err(eyre!("Regex compilation failed: {}", e)))?
+                .map_err(|e| eyre!("Regex compilation failed: {}", e))?
         };
         traces
             .points
@@ -152,11 +217,10 @@ impl DataFetcherService {
                 bail!("Invalid level")
             }
         };
-        let calc_base_stat = |lo: Vec<u64>, hi: Vec<u64>, lo_key: &str| -> Result<u64> {
-            Ok((calc_gradient(hi[0], lo[1], lo_key)
+        let calc_base_stat = |lo: Vec<u64>, hi: Vec<u64>, lo_key: &str| -> Result<f64> {
+            Ok(calc_gradient(hi[0], lo[1], lo_key)
                 * (character.level - extract_level(lo_key)?) as f64
                 + lo[1] as f64)
-                .round() as u64)
         };
         let (hp_lo, hp_hi) = (
             self.extract_ascension_value("Base HP", lower_bound)?,
@@ -179,8 +243,11 @@ impl DataFetcherService {
             base_atk: calc_base_stat(atk_lo, atk_hi, lo)?,
             base_def: calc_base_stat(def_lo, def_hi, lo)?,
             base_spd: calc_base_stat(spd_lo, spd_hi, lo)?,
+            _base_aggro: 0,
+            critical_chance: 5.0,
+            critical_damage: 50.0,
             stat_bonus: stat_bonus.clone(),
-            character: character.clone(),
+            _character: character.clone(),
         })
     }
 
@@ -216,11 +283,10 @@ impl DataFetcherService {
                 bail!("Invalid level")
             }
         };
-        let calc_base_stat = |lo: Vec<u64>, hi: Vec<u64>, lo_key: &str| -> Result<u64> {
-            Ok((calc_gradient(hi[0], lo[1], lo_key)
+        let calc_base_stat = |lo: Vec<u64>, hi: Vec<u64>, lo_key: &str| -> Result<f64> {
+            Ok(calc_gradient(hi[0], lo[1], lo_key)
                 * (light_cone.level - extract_level(lo_key)?) as f64
                 + lo[1] as f64)
-                .round() as u64)
         };
         let (hp_lo, hp_hi) = (
             self.extract_ascension_value("Base HP", lower_bound)?,
@@ -238,7 +304,7 @@ impl DataFetcherService {
             base_hp: calc_base_stat(hp_lo, hp_hi, lo)?,
             base_atk: calc_base_stat(atk_lo, atk_hi, lo)?,
             base_def: calc_base_stat(def_lo, def_hi, lo)?,
-            light_cone: light_cone.clone(),
+            _light_cone: light_cone.clone(),
         })
     }
 
@@ -318,82 +384,5 @@ impl DataFetcherService {
             trace_bonus_adder("stat_10")?
         }
         Ok(stat_bonus)
-    }
-
-    pub async fn fetch_character_data(&self, character: &Character) -> Result<CharacterEntity> {
-        let components: Vec<Ascensions> = self.client.fetch_data("Ascend", &character.id).await?;
-        let ascensions = components
-            .first()
-            .ok_or_else(|| eyre!("Ascension data not found"))?;
-        let stat_bonus = self.calculate_trace_bonus(character).await?;
-        match character.ascension {
-            0 => self.calculate_character_base_stats(
-                "Lv. 1",
-                "Lv. 20",
-                ascensions,
-                character,
-                &stat_bonus,
-            ),
-            1 => self.calculate_character_base_stats(
-                "Lv. 20",
-                "Lv. 30",
-                ascensions,
-                character,
-                &stat_bonus,
-            ),
-            2 => self.calculate_character_base_stats(
-                "Lv. 30",
-                "Lv. 40",
-                ascensions,
-                character,
-                &stat_bonus,
-            ),
-            3 => self.calculate_character_base_stats(
-                "Lv. 40",
-                "Lv. 50",
-                ascensions,
-                character,
-                &stat_bonus,
-            ),
-            4 => self.calculate_character_base_stats(
-                "Lv. 50",
-                "Lv. 60",
-                ascensions,
-                character,
-                &stat_bonus,
-            ),
-            5 => self.calculate_character_base_stats(
-                "Lv. 60",
-                "Lv. 70",
-                ascensions,
-                character,
-                &stat_bonus,
-            ),
-            6 => self.calculate_character_base_stats(
-                "Lv. 70",
-                "Lv. 80",
-                ascensions,
-                character,
-                &stat_bonus,
-            ),
-            _ => Err(eyre!("Invalid ascension value")),
-        }
-    }
-
-    pub async fn fetch_light_cone_data(&self, light_cone: &LightCone) -> Result<LightConeEntity> {
-        let components: Vec<Ascensions> = self.client.fetch_data("Ascend", &light_cone.id).await?;
-        let ascensions = components
-            .first()
-            .ok_or_else(|| eyre!("Ascension data not found"))?;
-        match light_cone.ascension {
-            0 => self.calculate_light_cone_base_stats("Lv. 1", "Lv. 20", ascensions, light_cone),
-            1 => self.calculate_light_cone_base_stats("Lv. 20", "Lv. 30", ascensions, light_cone),
-            2 => self.calculate_light_cone_base_stats("Lv. 30", "Lv. 40", ascensions, light_cone),
-            3 => self.calculate_light_cone_base_stats("Lv. 40", "Lv. 50", ascensions, light_cone),
-            4 => self.calculate_light_cone_base_stats("Lv. 50", "Lv. 60", ascensions, light_cone),
-            5 => self.calculate_light_cone_base_stats("Lv. 60", "Lv. 70", ascensions, light_cone),
-            6 => self.calculate_light_cone_base_stats("Lv. 70", "Lv. 80", ascensions, light_cone),
-            _ => Err(eyre!("Invalid ascension value")),
-        }
     }
 }

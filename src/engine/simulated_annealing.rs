@@ -15,9 +15,9 @@ pub struct SimulatedAnnealing {
 }
 
 impl SimulatedAnnealing {
-    pub fn simulated_annealing(&self, initial_solution: &Vec<Relic>) -> Result<Vec<Relic>> {
-        let mut current_solution = initial_solution.clone();
-        let mut best_solution = initial_solution.clone();
+    pub fn simulated_annealing(&self, initial_solution: &[Relic]) -> Result<Vec<Relic>> {
+        let mut current_solution = initial_solution.to_owned();
+        let mut best_solution = initial_solution.to_owned();
         let mut current_temp = self.initial_temp;
 
         while current_temp > self.min_temp {

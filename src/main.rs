@@ -1,16 +1,16 @@
 use crate::domain::{ScannerInput, Stats};
-use client::hoyowiki_client::HoyowikiClient;
+use client::project_yatta_client::ProjectYattaClient;
+use data_fetcher::{project_yatta_data_fetcher::ProjectYattaDataFetcher, DataFetcher};
 use engine::{
     evaluator::{Evaluator, SetBonusMap},
     optimizer::Optimizer,
     simulated_annealing::SimulatedAnnealing,
 };
 use eyre::Result;
-use service::data_fetcher::DataFetcherService;
 use std::{collections::HashMap, fs};
-use tracing_subscriber;
 
 mod client;
+mod data_fetcher;
 mod domain;
 mod engine;
 mod service;
@@ -34,7 +34,7 @@ async fn main() -> Result<()> {
 
     let optimizer = Optimizer {
         relic_pool,
-        generation: 25,
+        generation: 30,
         population_size: 1000,
         mutation_rate: 0.1,
         crossover_rate: 0.7,
@@ -91,11 +91,16 @@ async fn create_evaluator(input: &ScannerInput) -> Result<Evaluator> {
         .iter()
         .find(|c| c.name == "Fu Xuan")
         .ok_or(eyre::eyre!("Missing Fu Xuan"))?;
-    let fetcher = DataFetcherService {
-        client: HoyowikiClient {
-            base_url: "https://sg-wiki-api-static.hoyolab.com/hoyowiki/hsr/wapi".to_string(),
-            language: "en-us".to_string(),
-            wiki_app: "hsr".to_string(),
+    // let fetcher = HoyowikiDataFetcherService {
+    //     client: HoyowikiClient {
+    //         base_url: "https://sg-wiki-api-static.hoyolab.com/hoyowiki/hsr/wapi".to_string(),
+    //         language: "en-us".to_string(),
+    //         wiki_app: "hsr".to_string(),
+    //     },
+    // };
+    let fetcher = ProjectYattaDataFetcher {
+        client: ProjectYattaClient {
+            url: "https://sr.yatta.moe/api/v2/en/".to_string(),
         },
     };
     let light_cone = input
