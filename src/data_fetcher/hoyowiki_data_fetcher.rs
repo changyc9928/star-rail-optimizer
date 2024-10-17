@@ -5,6 +5,7 @@ use crate::{
     engine::evaluator::StatBonusMap,
     utils::trace_title_mapper::title_mapper,
 };
+use async_trait::async_trait;
 use eyre::{bail, eyre, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -75,6 +76,7 @@ pub struct HoyowikiDataFetcherService {
 }
 
 #[allow(deprecated)]
+#[async_trait]
 impl DataFetcher for HoyowikiDataFetcherService {
     async fn fetch_character_data(&self, character: &Character) -> Result<CharacterEntity> {
         let components: Vec<Ascensions> = self.client.fetch_data("Ascend", &character.id).await?;
@@ -136,7 +138,7 @@ impl DataFetcher for HoyowikiDataFetcherService {
         }
     }
 
-    async fn fetch_light_cone_data(&self, light_cone: &LightCone) -> Result<LightConeEntity> {
+    async fn fetch_light_cone_data(&mut self, light_cone: &LightCone) -> Result<LightConeEntity> {
         let components: Vec<Ascensions> = self.client.fetch_data("Ascend", &light_cone.id).await?;
         let ascensions = components
             .first()
@@ -177,7 +179,7 @@ impl HoyowikiDataFetcherService {
 
     fn extract_trace_bonus(&self, key: &str, traces: &Traces) -> Result<(Stats, f64)> {
         let extract_boost = |desc: &str| -> Result<f64> {
-            Regex::new(r"(\d+(\.\d+)?)%")
+            Regex::new(r"(\d+(\.\d+)?)(%)?")
                 .map(|re| {
                     re.captures(desc)
                         .and_then(|captures| captures.get(1))
@@ -237,22 +239,28 @@ impl HoyowikiDataFetcherService {
                 * (character.level - extract_level(lo_key)?) as f64
                 + lo[1] as f64)
         };
-        let (hp_lo, hp_hi) = (
+        let (mut hp_lo, hp_hi) = (
             self.extract_ascension_value("Base HP", lower_bound)?,
             self.extract_ascension_value("Base HP", upper_bound)?,
         );
-        let (atk_lo, atk_hi) = (
+        let (mut atk_lo, atk_hi) = (
             self.extract_ascension_value("Base ATK", lower_bound)?,
             self.extract_ascension_value("Base ATK", upper_bound)?,
         );
-        let (def_lo, def_hi) = (
+        let (mut def_lo, def_hi) = (
             self.extract_ascension_value("Base DEF", lower_bound)?,
             self.extract_ascension_value("Base DEF", upper_bound)?,
         );
-        let (spd_lo, spd_hi) = (
+        let (mut spd_lo, spd_hi) = (
             self.extract_ascension_value("Base SPD", lower_bound)?,
             self.extract_ascension_value("Base SPD", upper_bound)?,
         );
+        if lo == "Lv. 1" {
+            hp_lo[1] = hp_lo[0];
+            atk_lo[1] = atk_lo[0];
+            def_lo[1] = def_lo[0];
+            spd_lo[1] = spd_lo[0];
+        }
         Ok(CharacterEntity {
             base_hp: calc_base_stat(hp_lo, hp_hi, lo)?,
             base_atk: calc_base_stat(atk_lo, atk_hi, lo)?,
@@ -303,18 +311,23 @@ impl HoyowikiDataFetcherService {
                 * (light_cone.level - extract_level(lo_key)?) as f64
                 + lo[1] as f64)
         };
-        let (hp_lo, hp_hi) = (
+        let (mut hp_lo, hp_hi) = (
             self.extract_ascension_value("Base HP", lower_bound)?,
             self.extract_ascension_value("Base HP", upper_bound)?,
         );
-        let (atk_lo, atk_hi) = (
+        let (mut atk_lo, atk_hi) = (
             self.extract_ascension_value("Base ATK", lower_bound)?,
             self.extract_ascension_value("Base ATK", upper_bound)?,
         );
-        let (def_lo, def_hi) = (
+        let (mut def_lo, def_hi) = (
             self.extract_ascension_value("Base DEF", lower_bound)?,
             self.extract_ascension_value("Base DEF", upper_bound)?,
         );
+        if lo == "Lv. 1" {
+            hp_lo[1] = hp_lo[0];
+            atk_lo[1] = atk_lo[0];
+            def_lo[1] = def_lo[0];
+        }
         Ok(LightConeEntity {
             base_hp: calc_base_stat(hp_lo, hp_hi, lo)?,
             base_atk: calc_base_stat(atk_lo, atk_hi, lo)?,
@@ -351,7 +364,71 @@ impl HoyowikiDataFetcherService {
                 "stat_10" => "B3",
                 _ => return Err(eyre!("Invalid trace key")),
             },
-            _ => todo!(),
+            Path::TheHunt => match key {
+                "stat_1" => "D1",
+                "stat_2" => "D6",
+                "stat_3" => "D7",
+                "stat_4" => "E1",
+                "stat_5" => "D3",
+                "stat_6" => "D4",
+                "stat_7" => "C1",
+                "stat_8" => "B2",
+                "stat_9" => "B4",
+                "stat_10" => "B3",
+                _ => return Err(eyre!("Invalid trace key")),
+            },
+            Path::Nihility => match key {
+                "stat_1" => "D1",
+                "stat_2" => "E2",
+                "stat_3" => "E3",
+                "stat_4" => "E4",
+                "stat_5" => "C2",
+                "stat_6" => "C3",
+                "stat_7" => "C4",
+                "stat_8" => "B3",
+                "stat_9" => "B2",
+                "stat_10" => "D2",
+                _ => return Err(eyre!("Invalid trace key")),
+            },
+            Path::Abundance => match key {
+                "stat_1" => "D1",
+                "stat_2" => "D4",
+                "stat_3" => "D5",
+                "stat_4" => "D6",
+                "stat_5" => "D8",
+                "stat_6" => "D9",
+                "stat_7" => "D10",
+                "stat_8" => "B2",
+                "stat_9" => "B3",
+                "stat_10" => "D2",
+                _ => return Err(eyre!("Invalid trace key")),
+            },
+            Path::Harmony => match key {
+                "stat_1" => "D1",
+                "stat_2" => "E2",
+                "stat_3" => "E3",
+                "stat_4" => "D3",
+                "stat_5" => "C2",
+                "stat_6" => "C3",
+                "stat_7" => "D2",
+                "stat_8" => "B2",
+                "stat_9" => "B4",
+                "stat_10" => "B3",
+                _ => return Err(eyre!("Invalid trace key")),
+            },
+            Path::Erudition => match key {
+                "stat_1" => "D2",
+                "stat_2" => "E2",
+                "stat_3" => "E4",
+                "stat_4" => "E3",
+                "stat_5" => "C2",
+                "stat_6" => "C3",
+                "stat_7" => "C4",
+                "stat_8" => "B3",
+                "stat_9" => "B2",
+                "stat_10" => "D1",
+                _ => return Err(eyre!("Invalid trace key")),
+            },
         }
         .to_string())
     }

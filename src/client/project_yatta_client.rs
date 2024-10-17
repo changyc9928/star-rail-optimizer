@@ -1,4 +1,4 @@
-use eyre::Result;
+use eyre::{eyre, Result};
 use reqwest::Client;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -12,7 +12,7 @@ impl Upgrade for CharacterUpgrade {
     fn skill_base(&self) -> &SkillBase {
         &self.skill_base
     }
-    
+
     fn skill_add(&self) -> &SkillAdd {
         &self.skill_add
     }
@@ -22,7 +22,7 @@ impl Upgrade for LightConeUpgrade {
     fn skill_base(&self) -> &SkillBase {
         &self.skill_base
     }
-    
+
     fn skill_add(&self) -> &SkillAdd {
         &self.skill_add
     }
@@ -30,6 +30,7 @@ impl Upgrade for LightConeUpgrade {
 
 pub struct ProjectYattaClient {
     pub url: String,
+    pub light_cone_cache: HashMap<String, ProjectYattaLightConeResponse>,
 }
 
 #[derive(Deserialize)]
@@ -68,7 +69,7 @@ pub struct CharacterUpgrade {
     pub skill_base: SkillBase,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SkillAdd {
     pub attack_add: f64,
@@ -76,30 +77,29 @@ pub struct SkillAdd {
     pub h_p_add: f64,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SkillBase {
     pub attack_base: f64,
     pub defence_base: f64,
     pub h_p_base: f64,
     pub speed_base: Option<f64>, // Optional, since only Character has speed_base
-    pub base_aggro: Option<u64>,  // Optional, since only Character has base_aggro
+    pub base_aggro: Option<u64>, // Optional, since only Character has base_aggro
     pub critical_chance: Option<f64>, // Optional, since only Character has critical stats
     pub critical_damage: Option<f64>, // Optional, since only Character has critical stats
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct ProjectYattaLightConeResponse {
     pub data: LightConeData,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct LightConeData {
     pub upgrade: Vec<LightConeUpgrade>,
 }
 
-
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct LightConeUpgrade {
     pub skill_add: SkillAdd,
@@ -108,24 +108,35 @@ pub struct LightConeUpgrade {
 
 impl ProjectYattaClient {
     pub async fn fetch_character_data(&self, id: &str) -> Result<ProjectYattaCharacterResponse> {
-        let response = Client::new()
+        Ok(Client::new()
             .get(format!("{}avatar/{}", self.url, id))
             .send()
             .await?
             .error_for_status()?
             .json()
-            .await?;
-        Ok(response)
+            .await?)
     }
 
-    pub async fn fetch_light_cone_data(&self, id: &str) -> Result<ProjectYattaLightConeResponse> {
-        let response = Client::new()
+    pub async fn fetch_light_cone_data(
+        &mut self,
+        id: &str,
+    ) -> Result<ProjectYattaLightConeResponse> {
+        if self.light_cone_cache.contains_key(id) {
+            return self
+                .light_cone_cache
+                .get(id)
+                .cloned()
+                .ok_or_else(|| eyre!("Unexpected error"));
+        }
+        let response: ProjectYattaLightConeResponse = Client::new()
             .get(format!("{}equipment/{}", self.url, id))
             .send()
             .await?
             .error_for_status()?
             .json()
             .await?;
+        self.light_cone_cache
+            .insert(id.to_owned(), response.clone());
         Ok(response)
     }
 }

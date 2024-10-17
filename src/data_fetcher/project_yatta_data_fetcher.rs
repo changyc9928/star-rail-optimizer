@@ -7,6 +7,7 @@ use crate::{
     engine::evaluator::StatBonusMap,
     utils::trace_title_mapper::title_mapper,
 };
+use async_trait::async_trait;
 use eyre::{eyre, Result};
 use std::collections::HashMap;
 
@@ -100,6 +101,7 @@ impl ProjectYattaDataFetcher {
     }
 }
 
+#[async_trait]
 impl DataFetcher for ProjectYattaDataFetcher {
     async fn fetch_character_data(&self, character: &Character) -> Result<CharacterEntity> {
         let response = self.client.fetch_character_data(&character.id).await?;
@@ -110,7 +112,7 @@ impl DataFetcher for ProjectYattaDataFetcher {
         Ok(character_entity)
     }
 
-    async fn fetch_light_cone_data(&self, light_cone: &LightCone) -> Result<LightConeEntity> {
+    async fn fetch_light_cone_data(&mut self, light_cone: &LightCone) -> Result<LightConeEntity> {
         let response = self.client.fetch_light_cone_data(&light_cone.id).await?;
         Ok(self.calculate_light_cone_base_stats(light_cone, &response.data.upgrade))
     }

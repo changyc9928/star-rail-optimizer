@@ -362,7 +362,8 @@ impl Evaluator {
         // Substitute default values for base crit rate and crit damage
         expr = expr
             .value("Character_Base_CRIT_Rate", self.character.critical_chance)
-            .value("Character_Base_CRIT_DMG", self.character.critical_damage);
+            .value("Character_Base_CRIT_DMG", self.character.critical_damage)
+            .value("Level", self.character._character.level);
 
         expr
     }
@@ -628,9 +629,10 @@ mod tests {
         //         wiki_app: "hsr".to_string(),
         //     },
         // };
-        let fetcher = ProjectYattaDataFetcher {
+        let mut fetcher = ProjectYattaDataFetcher {
             client: ProjectYattaClient {
                 url: "https://sr.yatta.moe/api/v2/en/".to_string(),
+                light_cone_cache: HashMap::new(),
             },
         };
         // Create a new character instance with specific attributes.

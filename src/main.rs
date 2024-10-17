@@ -1,13 +1,16 @@
 use crate::domain::{ScannerInput, Stats};
 use client::project_yatta_client::ProjectYattaClient;
-use data_fetcher::{project_yatta_data_fetcher::ProjectYattaDataFetcher, DataFetcher};
+use data_fetcher::project_yatta_data_fetcher::ProjectYattaDataFetcher;
+use domain::{CharacterEntity, LightConeEntity};
 use engine::{
     evaluator::{Evaluator, SetBonusMap},
     optimizer::Optimizer,
     simulated_annealing::SimulatedAnnealing,
 };
-use eyre::Result;
-use std::{collections::HashMap, fs};
+use eyre::{eyre, Result};
+use service::scanner_parser_service::ScannerParserService;
+use std::{collections::HashMap, fs, sync::Arc};
+use tokio::sync::Mutex;
 
 mod client;
 mod data_fetcher;
@@ -20,9 +23,32 @@ mod utils;
 async fn main() -> Result<()> {
     setup_logging();
 
+    // let data_fetcher = Arc::new(HoyowikiDataFetcherService {
+    //     client: HoyowikiClient {
+    //         base_url: "https://sg-wiki-api-static.hoyolab.com/hoyowiki/hsr/wapi".to_string(),
+    //         language: "en-us".to_string(),
+    //         wiki_app: "hsr".to_string(),
+    //     },
+    // });
+    let data_fetcher = Arc::new(Mutex::new(ProjectYattaDataFetcher {
+        client: ProjectYattaClient {
+            url: "https://sr.yatta.moe/api/v2/en/".to_string(),
+            light_cone_cache: HashMap::new(),
+        },
+    }));
+    let mut scanner_parser_service = ScannerParserService { data_fetcher };
     let input = load_input_data("scanned_data/HSRScanData_20241014_152542.json").await?;
-    let relic_pool = build_relic_pool(&input);
-    let evaluator = create_evaluator(&input).await?;
+    let (characters, light_cones, relic_pool) =
+        scanner_parser_service.parse_scanner_input(&input).await?;
+    let evaluator = create_evaluator(
+        characters
+            .get("1308")
+            .ok_or_else(|| eyre!("Acheron not found"))?,
+        light_cones
+            .get("light_cone_10")
+            .ok_or_else(|| eyre!("Acheron's light cone not found"))?,
+    )
+    .await?;
 
     let simulated_annealing = SimulatedAnnealing {
         initial_temp: 1000.0,
@@ -35,7 +61,7 @@ async fn main() -> Result<()> {
 
     let optimizer = Optimizer {
         relic_pool,
-        generation: 20,
+        generation: 100,
         population_size: 1000,
         mutation_rate: 0.1,
         crossover_rate: 0.7,
@@ -44,12 +70,7 @@ async fn main() -> Result<()> {
         simulated_annealing,
     };
 
-    println!("----------------- Optimizing Fu Xuan's HP -----------------");
-    // let fuxuan = input
-    //     .characters
-    //     .iter()
-    //     .find(|c| c.name == "Fu Xuan")
-    //     .ok_or(eyre::eyre!("Missing Fu Xuan"))?;
+    println!("----------------- Optimizing Character -----------------");
 
     let res = optimizer.optimize()?;
     println!("Optimized relics: {:#?}", res);
@@ -73,42 +94,11 @@ async fn load_input_data(file_path: &str) -> Result<ScannerInput> {
     Ok(input)
 }
 
-/// Constructs a relic pool from the input data.
-fn build_relic_pool(input: &ScannerInput) -> HashMap<domain::Slot, Vec<domain::Relic>> {
-    let mut relic_pool = HashMap::new();
-    for relic in &input.relics {
-        relic_pool
-            .entry(relic.slot.clone())
-            .or_insert_with(Vec::new)
-            .push(relic.clone());
-    }
-    relic_pool
-}
-
 /// Creates an evaluator instance using the input data.
-async fn create_evaluator(input: &ScannerInput) -> Result<Evaluator> {
-    let fuxuan = input
-        .characters
-        .iter()
-        .find(|c| c.name == "Fu Xuan")
-        .ok_or(eyre::eyre!("Missing Fu Xuan"))?;
-    // let fetcher = HoyowikiDataFetcherService {
-    //     client: HoyowikiClient {
-    //         base_url: "https://sg-wiki-api-static.hoyolab.com/hoyowiki/hsr/wapi".to_string(),
-    //         language: "en-us".to_string(),
-    //         wiki_app: "hsr".to_string(),
-    //     },
-    // };
-    let fetcher = ProjectYattaDataFetcher {
-        client: ProjectYattaClient {
-            url: "https://sr.yatta.moe/api/v2/en/".to_string(),
-        },
-    };
-    let light_cone = input
-        .light_cones
-        .iter()
-        .find(|l| l.location == Some("1208".to_owned()))
-        .ok_or_else(|| eyre::eyre!("Missing Fu Xuan's light cone"))?;
+async fn create_evaluator(
+    character: &CharacterEntity,
+    light_cone: &LightConeEntity,
+) -> Result<Evaluator> {
     let yaml_content = fs::read_to_string("src/config/set_bonus.yaml")?;
     let set_bonus: SetBonusMap = serde_yaml::from_str(&yaml_content)?;
 
@@ -125,18 +115,27 @@ async fn create_evaluator(input: &ScannerInput) -> Result<Evaluator> {
     let effect_res_formula = "Effect_RES";
     let break_effect_formula = "Break_Effect";
 
-    let fuxuan = fetcher.fetch_character_data(fuxuan).await?;
-    let light_cone = fetcher.fetch_light_cone_data(light_cone).await?;
-
-    println!("Character: {:#?}", fuxuan);
-    println!("Light cone: {:#?}", light_cone);
+    let acheron_ultimate_final_dmg = "((1.14 * 1.9 + 6 * 0.25) * ( \
+            (Character_ATK + LightCone_ATK) * (1 + Percentage_ATK_Bonus / 100) + Additive_ATK_Bonus) \
+        ) \
+        * (1 + (Character_Base_CRIT_Rate + CRIT_Rate) / 100 * (Character_Base_CRIT_DMG + CRIT_DMG) / 100) \
+        * (1 + (Lightning_DMG_Boost + Common_DMG_Boost + Ultimate_DMG_Boost) / 100) \
+        * ((Level + 20) / ((80 + 20) * (1 - (DMG_Reduction - DEF_Ignore) / 100) + Level + 20)) \
+        * (1 - (20 / 100 - 20 / 100)) \
+        * 0.9 \
+        * 1.6";
+    // let acheron_ultimate_final_dmg_with_sparkle = "((1.14 * 1.9 + 6 * 0.25) * ((Character_ATK + LightCone_ATK) * (1 + (Percentage_ATK_Bonus + 15) / 100) + Additive_ATK_Bonus)) * (1 + (Character_Base_CRIT_Rate + CRIT_Rate) / 100 * (Character_Base_CRIT_DMG + CRIT_DMG + 79.115) / 100) * (1 + Lightning_DMG_Boost / 100 + Common_DMG_Boost / 100 + Ultimate_DMG_Boost / 100 + 0.453) * ((Level + 20) / ((80 + 20) * (1 - DMG_Reduction / 100 - DEF_Ignore / 100) + Level + 20)) * (1 - (20 / 100 - 20 / 100)) * 0.9 * 1.6";
+    let mut other_bonus = HashMap::from([(Stats::CritDmg_, 79.115), (Stats::DmgBoost_, 45.3)]); // Assuming Sparkle's support
+    for (key, val) in &character.stat_bonus {
+        *other_bonus.entry(key.clone()).or_default() += val;
+    }
 
     Ok(Evaluator::new(
-        fuxuan.clone(),
+        character.clone(),
         light_cone.clone(),
         HashMap::new(),
         set_bonus,
-        fuxuan.stat_bonus.clone(),
+        other_bonus,
         HashMap::from([
             (Stats::Hp, hp_formula.to_owned()),
             (Stats::Atk, atk_formula.to_owned()),
@@ -152,7 +151,7 @@ async fn create_evaluator(input: &ScannerInput) -> Result<Evaluator> {
             (Stats::EffectRes_, effect_res_formula.to_owned()),
             (Stats::BreakEffect_, break_effect_formula.to_owned()),
         ]),
-        hp_formula,
-        "Maximum HP",
+        acheron_ultimate_final_dmg,
+        "AVG Ultimate AoE DMG",
     ))
 }
