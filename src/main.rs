@@ -115,17 +115,33 @@ async fn create_evaluator(
     let effect_res_formula = "Effect_RES";
     let break_effect_formula = "Break_Effect";
 
-    let acheron_ultimate_final_dmg = "((1.14 * 1.9 + 6 * 0.25) * ( \
-            (Character_ATK + LightCone_ATK) * (1 + Percentage_ATK_Bonus / 100) + Additive_ATK_Bonus) \
-        ) \
-        * (1 + (Character_Base_CRIT_Rate + CRIT_Rate) / 100 * (Character_Base_CRIT_DMG + CRIT_DMG) / 100) \
-        * (1 + (Lightning_DMG_Boost + Common_DMG_Boost + Ultimate_DMG_Boost) / 100) \
-        * ((Level + 20) / ((80 + 20) * (1 - (DMG_Reduction - DEF_Ignore) / 100) + Level + 20)) \
-        * (1 - (20 / 100 - 20 / 100)) \
-        * 0.9 \
-        * 1.6";
+    let enemy_level = "80";
+    let enemy_resistance = "20";
+    let acheron_ult_resistance_reduction = "19";
+    let avg_crit_formula = format!("({crit_rate_formula}) / 100 * ({crit_dmg_formula}) / 100");
+    let total_dmg_boost = "(Lightning_DMG_Boost + Common_DMG_Boost + Ultimate_DMG_Boost) / 100";
+    let def_multiplier = format!("(Level + 20) / (({enemy_level} + 20) * (1 - (DMG_Reduction - DEF_Ignore) / 100) + Level + 20)");
+    let resistance_multipler =
+        format!("1 - ({enemy_resistance} / 100 - ({acheron_ult_resistance_reduction}) / 100)");
+    let toughness_break = false;
+    let toughness = if toughness_break { "1" } else { "0.9" };
+    let independent_multiplier = "1.15"; // With only one nihility teammate
+
+    let acheron_ultimate_final_dmg = format!(
+        "((1.14 * 1.9 + 6 * 0.25) * ({atk_formula})) \
+        * (1 + ({avg_crit_formula})) \
+        * (1 + ({total_dmg_boost})) \
+        * ({def_multiplier}) \
+        * ({resistance_multipler}) \
+        * ({toughness}) \
+        * ({independent_multiplier})"
+    );
     // let acheron_ultimate_final_dmg_with_sparkle = "((1.14 * 1.9 + 6 * 0.25) * ((Character_ATK + LightCone_ATK) * (1 + (Percentage_ATK_Bonus + 15) / 100) + Additive_ATK_Bonus)) * (1 + (Character_Base_CRIT_Rate + CRIT_Rate) / 100 * (Character_Base_CRIT_DMG + CRIT_DMG + 79.115) / 100) * (1 + Lightning_DMG_Boost / 100 + Common_DMG_Boost / 100 + Ultimate_DMG_Boost / 100 + 0.453) * ((Level + 20) / ((80 + 20) * (1 - DMG_Reduction / 100 - DEF_Ignore / 100) + Level + 20)) * (1 - (20 / 100 - 20 / 100)) * 0.9 * 1.6";
-    let mut other_bonus = HashMap::from([(Stats::CritDmg_, 79.115), (Stats::DmgBoost_, 45.3)]); // Assuming Sparkle's support
+    let mut other_bonus = HashMap::from([
+        (Stats::Atk_, 15.0),
+        (Stats::CritDmg_, 79.115),
+        (Stats::DmgBoost_, 45.3),
+    ]); // Assuming Sparkle's support
     for (key, val) in &character.stat_bonus {
         *other_bonus.entry(key.clone()).or_default() += val;
     }
@@ -151,7 +167,7 @@ async fn create_evaluator(
             (Stats::EffectRes_, effect_res_formula.to_owned()),
             (Stats::BreakEffect_, break_effect_formula.to_owned()),
         ]),
-        acheron_ultimate_final_dmg,
+        &acheron_ultimate_final_dmg,
         "AVG Ultimate AoE DMG",
     ))
 }
