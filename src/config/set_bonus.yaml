@@ -264,3 +264,49 @@
       - 18
       - - SPD
         - 160
+
+312: # Penacony, Land of the Dreams
+  2:
+    - - ENERGY_REGENERATION_RATE_
+      - 5
+      - null
+    # Increases DMG by 10.00% for all other allies that are of the same Type as the wearer.
+
+313: # Sigonia, the Unclaimed Desolation
+  2:
+    - - CRIT_RATE_
+      - 4
+      - null
+    # When an enemy target gets defeated, the wearer's CRIT DMG increases by 4.00%, stacking up to 10 time(s).
+
+314: # Izumo Gensei and Takama Divine Realm
+  2:
+    - - ATK_
+      - 12
+      - null
+    # When entering battle, if at least one teammate follows the same Path as the wearer, then the wearer's CRIT Rate increases by 12.00%.
+
+# 315: # Duran, Dynasty of Running Wolves
+#   2:
+  # When an ally uses a follow-up attack, the wearer gains 1 stack of Merit, stacking up to 5 time(s). Each stack of Merit increases the DMG dealt by the wearer's follow-up attacks by 5.00%. When there are 5 stacks, additionally increases the wearer's CRIT DMG by 25.00%.
+
+316: # Forge of the Kalpagni Lantern
+  2:
+    - - SPD_
+      - 6
+      - null
+    #  When the wearer hits an enemy target that has Fire Weakness, the wearer's Break Effect increases by 40.00%, lasting for 1 turn(s).
+
+317: # Lushaka, the Sunken Seas
+  2:
+    - - ENERGY_REGENERATION_RATE_
+      - 5
+      - null
+    # If the wearer is not the first character in the team lineup, then increases the ATK of the first character in the team lineup by 12.00%.
+
+318: # The Wondrous BananAmusement Park
+  2:
+    - - CRIT_DMG_
+      - 16
+      - null
+    # When a target summoned by the wearer is on the field, CRIT DMG additionally increases by 32.00%.

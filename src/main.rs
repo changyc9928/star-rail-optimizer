@@ -61,7 +61,7 @@ async fn main() -> Result<()> {
 
     let optimizer = Optimizer {
         relic_pool,
-        generation: 100,
+        generation: 25,
         population_size: 1000,
         mutation_rate: 0.1,
         crossover_rate: 0.7,
@@ -100,7 +100,7 @@ async fn create_evaluator(
     light_cone: &LightConeEntity,
 ) -> Result<Evaluator> {
     let yaml_content = fs::read_to_string("src/config/set_bonus.yaml")?;
-    let set_bonus: SetBonusMap = serde_yaml::from_str(&yaml_content)?;
+    let mut set_bonus: SetBonusMap = serde_yaml::from_str(&yaml_content)?;
 
     let hp_formula =
         "(Character_HP + LightCone_HP) * (1 + Percentage_HP_Bonus / 100) + Additive_HP_Bonus";
@@ -142,6 +142,59 @@ async fn create_evaluator(
         (Stats::CritDmg_, 79.115),
         (Stats::DmgBoost_, 45.3),
     ]); // Assuming Sparkle's support
+
+    let activated_set_bonus = HashMap::from([
+        (
+            "104",
+            HashMap::from([(4, vec![(Stats::CritDmg_, 25.0, None::<(Stats, f64)>)])]), // After the wearer uses their Ultimate, their CRIT DMG increases by 25% for 2 turn(s).
+        ),
+        (
+            "105",
+            HashMap::from([(4, vec![(Stats::Atk_, 25.0, None::<(Stats, f64)>)])]), // (5 stacks) After the wearer attacks or is hit, their ATK increases by 5% for the rest of the battle. This effect can stack up to 5 time(s).
+        ),
+        (
+            "108",
+            HashMap::from([(4, vec![(Stats::DefIgnore_, 10.0, None::<(Stats, f64)>)])]), // (Assuming no Quantum weakness) When the wearer deals DMG to the target enemy, ignores 10% DEF. If the target enemy has Quantum Weakness, the wearer additionally ignores 10% DEF.
+        ),
+        (
+            "109",
+            HashMap::from([(4, vec![(Stats::Atk_, 20.0, None::<(Stats, f64)>)])]), // (Assuming Ult right after Skill) When the wearer uses their Skill, increases the wearer's ATK by 20% for 1 turn(s).
+        ),
+        (
+            "112",
+            HashMap::from([(4, vec![(Stats::CritRate_, 10.0, None::<(Stats, f64)>)])]), // (Assuming no Imaginary teammate) When attacking debuffed enemies, the wearer's CRIT Rate increases by 10%, and their CRIT DMG increases by 20% against Imprisoned enemies.
+        ),
+        (
+            "117",
+            HashMap::from([
+                (2, vec![(Stats::DmgBoost_, 12.0, None::<(Stats, f64)>)]), // (Considering Acheron's team comp, assuming enemies always get debuffs) Increases DMG dealt to enemies with debuffs by 12%.
+                (4, vec![(Stats::CritDmg_, 24.0, None::<(Stats, f64)>)]), // (Assuming 3 stacks and Ult after Skill (inflicting Crimson Knot)) The wearer deals 8%/12% increased CRIT DMG to enemies with at least 2/3 debuffs. After the wearer inflicts a debuff on enemy targets, the aforementioned effects increase by 100%, lasting for 1 turn(s).
+            ]),
+        ),
+        (
+            "313",
+            HashMap::from([
+                (2, vec![(Stats::CritRate_, 4.0, None::<(Stats, f64)>)]), // (Assuming only 1 enemy get defeated) When an enemy target gets defeated, the wearer's CRIT DMG increases by 4.00%, stacking up to 10 time(s).
+            ]),
+        ),
+        (
+            "314",
+            HashMap::from([
+                (2, vec![(Stats::CritRate_, 12.0, None::<(Stats, f64)>)]), // (Considering Acheron's team comp, at least one nihility teammate will present) When entering battle, if at least one teammate follows the same Path as the wearer, then the wearer's CRIT Rate increases by 12.00%.
+            ]),
+        ),
+    ]);
+
+    for (key, val) in activated_set_bonus {
+        for (num_items, mut bonus) in val {
+            set_bonus
+                .entry(key.to_owned())
+                .or_default()
+                .entry(num_items)
+                .or_default()
+                .append(&mut bonus);
+        }
+    }
     for (key, val) in &character.stat_bonus {
         *other_bonus.entry(key.clone()).or_default() += val;
     }
