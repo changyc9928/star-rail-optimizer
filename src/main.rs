@@ -123,8 +123,8 @@ async fn create_evaluator(
     let def_multiplier = format!("(Level + 20) / (({enemy_level} + 20) * (1 - (DMG_Reduction - DEF_Ignore) / 100) + Level + 20)");
     let resistance_multipler =
         format!("1 - ({enemy_resistance} / 100 - ({acheron_ult_resistance_reduction}) / 100)");
-    let toughness_break = false;
-    let toughness = if toughness_break { "1" } else { "0.9" };
+    let weakness_break = false;
+    let toughness = if weakness_break { "1" } else { "0.9" };
     let independent_multiplier = "1.15"; // With only one nihility teammate
 
     let acheron_ultimate_final_dmg = format!(
