@@ -1,3 +1,4 @@
+use eyre::{bail, Result};
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
@@ -84,6 +85,9 @@ pub enum Stats {
     BreakDmgDefIgnore_,
     #[serde(alias = "Super Break DMG DEF Ignore")]
     SuperBreakDmgDefIgnore_,
+    ResPenalty_,
+    Vulnerebility_,
+    Weaken_,
     #[default]
     Dummy,
 }
@@ -181,20 +185,20 @@ pub struct SubStats {
 }
 
 impl Relic {
-    pub fn get_mainstat(&self) -> f64 {
+    pub fn get_mainstat(&self) -> Result<f64> {
         let stat = match &self.mainstat {
             &Stats::Atk if self.slot != Slot::Hands => Stats::Atk_,
             &Stats::Hp if self.slot != Slot::Head => Stats::Hp_,
             other => other.clone(),
         };
-        match (self.rarity, &stat) {
+        Ok(match (self.rarity, &stat) {
             (5, Stats::Spd) => 4.032 + 1.4 * self.level as f64,
             (5, Stats::Hp) => 112.896 + 39.5136 * self.level as f64,
             (5, Stats::Atk) => 56.448 + 19.7568 * self.level as f64,
             (5, Stats::Hp_) | (5, Stats::Atk_) | (5, Stats::EffectHitRate_) => {
                 6.9120 + 2.4192 * self.level as f64
             }
-            (5, Stats::Def) => 8.64 + 3.024 * self.level as f64, // Special case
+            (5, Stats::Def_) => 8.64 + 3.024 * self.level as f64, // Special case
             (5, Stats::BreakEffect_) => 10.3680 + 3.6277 * self.level as f64,
             (5, Stats::EnergyRegenerationRate_) => 3.1104 + 1.0886 * self.level as f64,
             (5, Stats::OutgoingHealingBoost_) => 5.5296 + 1.9354 * self.level as f64,
@@ -213,7 +217,7 @@ impl Relic {
             (4, Stats::Hp_) | (4, Stats::Atk_) | (4, Stats::EffectHitRate_) => {
                 5.5296 + 1.9354 * self.level as f64
             }
-            (4, Stats::Def) => 6.912 + 2.4192 * self.level as f64, // Special case
+            (4, Stats::Def_) => 6.912 + 2.4192 * self.level as f64, // Special case
             (4, Stats::BreakEffect_) => 8.2944 + 2.9030 * self.level as f64,
             (4, Stats::EnergyRegenerationRate_) => 2.4883 + 0.8709 * self.level as f64,
             (4, Stats::OutgoingHealingBoost_) => 4.4237 + 1.5483 * self.level as f64,
@@ -232,7 +236,7 @@ impl Relic {
             (3, Stats::Hp_) | (3, Stats::Atk_) | (3, Stats::EffectHitRate_) => {
                 4.1472 + 1.4515 * self.level as f64
             }
-            (3, Stats::Def) => 5.184 + 1.8144 * self.level as f64, // Special case
+            (3, Stats::Def_) => 5.184 + 1.8144 * self.level as f64, // Special case
             (3, Stats::BreakEffect_) => 6.2208 + 2.1773 * self.level as f64,
             (3, Stats::EnergyRegenerationRate_) => 1.8662 + 0.6532 * self.level as f64,
             (3, Stats::OutgoingHealingBoost_) => 3.3178 + 1.1612 * self.level as f64,
@@ -251,7 +255,7 @@ impl Relic {
             (2, Stats::Hp_) | (2, Stats::Atk_) | (2, Stats::EffectHitRate_) => {
                 2.7648 + 0.9677 * self.level as f64
             }
-            (2, Stats::Def) => 3.456 + 1.2096 * self.level as f64, // Special case
+            (2, Stats::Def_) => 3.456 + 1.2096 * self.level as f64, // Special case
             (2, Stats::BreakEffect_) => 4.1472 + 1.4515 * self.level as f64,
             (2, Stats::EnergyRegenerationRate_) => 1.2442 + 0.4355 * self.level as f64,
             (2, Stats::OutgoingHealingBoost_) => 2.2118 + 0.7741 * self.level as f64,
@@ -264,7 +268,7 @@ impl Relic {
             | (2, Stats::ImaginaryDmgBoost_) => 2.4883 + 0.8709 * self.level as f64,
             (2, Stats::CritRate_) => 2.0736 + 0.7258 * self.level as f64,
             (2, Stats::CritDmg_) => 4.1472 + 1.4515 * self.level as f64,
-            _ => 0.0, // Default case
-        }
+            other => bail!("Invalid rarity or stats: {other:?}"),
+        })
     }
 }

@@ -1,4 +1,4 @@
-use crate::engine::evaluator::StatBonusMap;
+use crate::engine::StatBonusMap;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug)]

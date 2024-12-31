@@ -1,11 +1,9 @@
 // Import necessary modules and crates
-use crate::domain::{CharacterEntity, LightConeEntity, Relic, Stats};
+use crate::domain::{BattleConditionEnum, CharacterEntity, LightConeEntity, Relics, Stats, Tag};
 use eval::Expr;
 use eyre::{OptionExt, Result};
-use itertools::Itertools;
-use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::collections::HashMap;
-use strum::IntoEnumIterator;
 
 // Type aliases for complex data structures
 type SetBonus = HashMap<u8, Vec<(Stats, f64, Option<(Stats, f64)>)>>;
@@ -20,17 +18,6 @@ pub type SetBonusMap = HashMap<String, SetBonus>;
 pub type StatBonusMap = HashMap<Stats, f64>;
 // `StatBonusMap` maps `Stats` to `f64`, representing various stat bonuses.
 
-type Bonus = (Stats, f64, Option<ConditionBonus>);
-// `Bonus` represents a bonus with:
-// - `Stats`: The stat affected by the bonus.
-// - `f64`: The value of the bonus.
-// - `Option<ConditionBonus>`: Optional condition bonus.
-
-type ConditionBonus = (Stats, f64);
-// `ConditionBonus` represents a conditional bonus with:
-// - `Stats`: The condition stat.
-// - `f64`: The bonus value if the condition is met.
-
 /// Represents an evaluator for calculating and assessing character stats in a game.
 /// This struct holds various components such as the character, light cone, bonuses, and formulas
 /// required for evaluating and calculating the target stat based on equipped relics and other factors.
@@ -39,11 +26,12 @@ pub struct Evaluator {
     pub character: CharacterEntity, // The character being evaluated, containing base stats and other attributes.
     pub light_cone: LightConeEntity, // The light cone equipped by the character, affecting stats and bonuses.
     pub constraint: StatBonusMap, // A map of constraints for stat bonuses to be considered during evaluation.
-    pub set_bonus: SetBonusMap, // A map of bonuses from relic sets, indicating bonuses applied based on equipped sets.
     pub other_bonus: StatBonusMap, // A map of additional stat bonuses not related to relic sets.
     pub base_stats_formulas: HashMap<Stats, String>, // Formulas for calculating base stats of the character and light cone.
     pub target_formula: String, // Formula used to calculate the final target stat based on all bonuses and base stats.
     pub target_name: String,    // Name of the target stat to be calculated and evaluated.
+    pub tags: Vec<Tag>,
+    pub battle_condition: Vec<BattleConditionEnum>,
 }
 
 impl Evaluator {
@@ -68,210 +56,24 @@ impl Evaluator {
         character: CharacterEntity,
         light_cone: LightConeEntity,
         constraint: StatBonusMap,
-        set_bonus: SetBonusMap,
         other_bonus: StatBonusMap,
         base_stats_formulas: HashMap<Stats, String>,
         target_formula: &str,
         target_name: &str,
+        tags: Vec<Tag>,
+        battle_condition: Vec<BattleConditionEnum>,
     ) -> Self {
         Self {
             character,
             light_cone,
             constraint,
-            set_bonus,
             other_bonus,
             base_stats_formulas,
             target_formula: target_formula.to_owned(),
             target_name: target_name.to_owned(),
+            tags,
+            battle_condition,
         }
-    }
-
-    /// Calculates the total value of each stat from the given relics.
-    ///
-    /// This function iterates over all possible stats and computes the total value for each stat
-    /// based on the relics provided. It aggregates the values from the main stats and substats
-    /// of each relic to compute the total value for each stat.
-    ///
-    /// # Parameters
-    ///
-    /// - `relics`: A slice of `Relic` instances representing the relics equipped by the character.
-    ///   Each relic may contribute to the total value of different stats based on its main stat
-    ///   and substats.
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result<HashMap<Stats, f64>>`, where the `HashMap` maps each `Stats` variant to
-    /// its total calculated value based on the relics. If an error occurs during calculation, the
-    /// function returns an `Err`.
-    fn calculate_stat_total_from_relics(&self, relics: &[Relic]) -> Result<HashMap<Stats, f64>> {
-        // Convert the iterator to a vector
-        let stats: Vec<Stats> = Stats::iter().collect();
-
-        // Use rayon's parallel iterator to process each stat in parallel
-        let maps: Vec<HashMap<Stats, f64>> = stats
-            .into_par_iter()
-            .map(|stat| {
-                // Calculate the total value for the current stat
-                let total = relics
-                    .iter()
-                    .map(|relic| self.relic_stat_value(relic, stat.clone()))
-                    .sum::<f64>();
-
-                // Lock the mutex and update the HashMap
-                HashMap::from([(stat, total)])
-            })
-            .collect();
-
-        // Retrieve the final HashMap from the Arc<Mutex<_>>
-        let totals = maps.into_par_iter().flatten().collect();
-
-        Ok(totals)
-    }
-
-    /// Calculates the total value of a specific stat from a given relic.
-    ///
-    /// This function computes the value of a specific stat by summing up the main stat value
-    /// and any substat values associated with the relic. If the relic's main stat matches the
-    /// queried stat, the main stat's value is obtained and added to the sum of relevant substats.
-    ///
-    /// # Parameters
-    ///
-    /// - `relic`: A reference to a `Relic` instance from which the stat value is calculated.
-    /// - `stat`: The `Stats` enum variant representing the stat whose value is being calculated.
-    ///
-    /// # Returns
-    ///
-    /// Returns a `f64` value representing the total value of the specified stat for the given relic.
-    fn relic_stat_value(&self, relic: &Relic, stat: Stats) -> f64 {
-        // Calculate the main stat value
-        let mainstat_value = if relic.mainstat == stat {
-            relic.get_mainstat()
-        } else {
-            f64::default()
-        };
-
-        // Calculate the sum of substat values for the specified stat in parallel
-        let substat_values: f64 = relic
-            .substats
-            .iter() // Use parallel iterator
-            .filter_map(|s| if s.key == stat { Some(s.value) } else { None })
-            .sum();
-
-        // Calculate the total value including both main stat and substats
-        mainstat_value + substat_values
-    }
-
-    /// Applies the bonuses from relic sets to the total stats.
-    ///
-    /// This function calculates and applies bonuses based on the relic sets equipped. It
-    /// determines the count of relics in each set and looks up the corresponding bonuses
-    /// from the `set_bonus` map. These bonuses are then applied to the total stats. If the
-    /// set bonuses include conditions, they are evaluated based on the first round's stats.
-    ///
-    /// # Parameters
-    ///
-    /// - `relics`: A slice of `Relic` instances representing the relics equipped.
-    /// - `first_round_stats`: An optional reference to a `HashMap` containing the base stats
-    ///   from the first round of calculations. This is used to apply conditional bonuses.
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result<HashMap<Stats, f64>>` where the `HashMap` contains the updated stats
-    /// with the set bonuses applied.
-    fn apply_set_bonus(
-        &self,
-        relics: &[Relic],
-        first_round_stats: Option<&HashMap<Stats, f64>>,
-    ) -> Result<HashMap<Stats, f64>> {
-        // Create a thread-safe HashMap to store totals
-        let mut totals = HashMap::new();
-
-        // Count the number of relics in each set
-        let counts: HashMap<String, usize> = relics.iter().counts_by(|relic| relic.set_id.clone());
-
-        // Use Rayon to process each set in parallel
-        let partial_totals: Vec<HashMap<Stats, f64>> = counts
-            .into_iter()
-            .map(|(set, count)| {
-                Ok::<HashMap<Stats, f64>, eyre::Report>(
-                    if let Some(bonuses) =
-                        self.set_bonus.get(&set).and_then(|s| s.get(&(count as u8)))
-                    {
-                        self.apply_bonuses(bonuses, first_round_stats)?
-                    } else {
-                        HashMap::new()
-                    },
-                )
-            })
-            .collect::<Result<Vec<HashMap<Stats, f64>>>>()?;
-
-        for total in partial_totals {
-            for (key, val) in total {
-                *totals.entry(key).or_default() += val;
-            }
-        }
-
-        Ok(totals.clone()) // Return the final results
-    }
-
-    /// Applies bonuses to the total stats, considering conditional bonuses.
-    ///
-    /// This function updates the `totals` with bonuses provided. It handles both unconditional
-    /// bonuses and conditional bonuses, which are applied only if certain conditions based on
-    /// the first round of stats are met.
-    ///
-    /// # Parameters
-    ///
-    /// - `totals`: A mutable reference to a `HashMap` where the bonuses will be applied.
-    /// - `bonuses`: A slice of `Bonus` tuples where each tuple contains:
-    ///   - `stat`: The stat to which the bonus should be applied.
-    ///   - `bonus_value`: The amount of the bonus to apply.
-    ///   - `condition_bonus`: An optional tuple containing:
-    ///     - `cond_stat`: The stat upon which the condition is based.
-    ///     - `cond_bonus`: The bonus to apply if the condition is met.
-    /// - `first_round_stats`: An optional reference to a `HashMap` of base stats from the first
-    ///   round of calculations. Used to evaluate conditions for conditional bonuses.
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result` which is `Ok` if the bonuses were applied successfully, or an error
-    /// if any condition is not met.
-    fn apply_bonuses(
-        &self,
-        bonuses: &[Bonus],
-        first_round_stats: Option<&HashMap<Stats, f64>>,
-    ) -> Result<HashMap<Stats, f64>> {
-        // Process bonuses in parallel
-        let partial_totals: Vec<HashMap<Stats, f64>> = bonuses
-            .iter()
-            .map(|(stat, bonus_value, condition_bonus)| {
-                let mut totals = HashMap::new();
-
-                // Apply unconditional bonus
-                *totals.entry(stat.clone()).or_default() += bonus_value;
-
-                // Check and apply conditional bonus if applicable
-                if let Some((cond_stat, cond_bonus)) = condition_bonus {
-                    let stat_value = first_round_stats
-                        .and_then(|fs| fs.get(cond_stat).cloned())
-                        .unwrap_or_default();
-                    if stat_value > *cond_bonus {
-                        *totals.entry(stat.clone()).or_default() += cond_bonus;
-                    }
-                }
-                Ok::<HashMap<Stats, f64>, eyre::Report>(totals)
-            })
-            .collect::<Result<Vec<HashMap<Stats, f64>>>>()?;
-
-        // Update the original totals with the results from the parallel processing
-        let mut totals = HashMap::new();
-        for total in partial_totals {
-            for (key, val) in total {
-                *totals.entry(key).or_default() += val;
-            }
-        }
-
-        Ok(totals)
     }
 
     /// Builds an expression by substituting values from the `formula` string and `totals` map.
@@ -349,6 +151,9 @@ impl Evaluator {
                     Stats::BreakDmgDefIgnore_ => "Break_DMG_DEF_Ignore",
                     Stats::SuperBreakDmgDefIgnore_ => "Super_Break_DMG_DEF_Ignore",
                     Stats::Dummy => return None,
+                    Stats::ResPenalty_ => "RES_Pen",
+                    Stats::Vulnerebility_ => "Vulnerebility",
+                    Stats::Weaken_ => "Weaken",
                 };
                 Some((key.to_string(), *value))
             })
@@ -494,15 +299,19 @@ impl Evaluator {
     /// * Evaluation of base statistics fails.
     /// * Final expression cannot be built, executed, or parsed.
     /// * Constraints cannot be applied due to missing or invalid data.
-    pub fn evaluate(&self, relics: Vec<Relic>) -> Result<f64> {
+    pub fn evaluate(&self, relics: &Relics) -> Result<f64> {
         // Calculate initial totals from the provided relics.
-        let initial_totals = self.calculate_totals(&relics, None)?;
+        let initial_totals = relics.calculate_bonus_before_battle(&self.tags)?;
 
         // Evaluate base statistics based on the initial totals.
         let initial_base_stats = self.evaluate_base_stats(&initial_totals)?;
 
         // Recalculate totals considering the evaluated base statistics.
-        let updated_totals = self.calculate_totals(&relics, Some(initial_base_stats))?;
+        let updated_totals = relics.calculate_bonus_during_battle(
+            &self.tags,
+            &initial_base_stats,
+            &self.battle_condition,
+        )?;
 
         // Evaluate base statistics again based on the updated totals.
         let updated_base_stats = self.evaluate_base_stats(&updated_totals)?;
@@ -555,60 +364,6 @@ impl Evaluator {
 
         result
     }
-
-    /// Calculates the total stats, including those from relics and set bonuses.
-    ///
-    /// This function computes the total stats by combining the stat values from relics with
-    /// set bonuses. It first calculates the total stats from relics, then applies any set
-    /// bonuses. Finally, it aggregates the bonuses into the total stats.
-    ///
-    /// # Parameters
-    ///
-    /// - `relics`: A slice of `Relic` objects that contribute to the total stats.
-    /// - `first_round_stats`: An optional `HashMap` of base stats calculated in the first round.
-    ///   This is used for applying conditional set bonuses.
-    ///
-    /// # Returns
-    ///
-    /// - `Result<HashMap<Stats, f64>>`: A `HashMap` where keys are `Stats` and values are the
-    ///   aggregated total values of those stats. The result is wrapped in a `Result` to handle
-    ///   potential errors during calculation.
-    ///
-    /// # Errors
-    ///
-    /// - May return errors from calculating stats from relics or applying set bonuses.
-    ///
-    /// # Notes
-    ///
-    /// - The function first calculates stat totals from relics.
-    /// - It then applies set bonuses and adds these bonuses to the totals.
-    pub fn calculate_totals(
-        &self,
-        relics: &[Relic],
-        first_round_stats: Option<HashMap<Stats, f64>>,
-    ) -> Result<HashMap<Stats, f64>> {
-        // Use a thread pool to handle tasks in parallel
-        let (base_stats_result, set_bonus_result) = rayon::join(
-            || self.calculate_stat_total_from_relics(relics),
-            || self.apply_set_bonus(relics, first_round_stats.as_ref()),
-        );
-
-        // Handle the results from the parallel tasks
-        let mut totals = base_stats_result?;
-        let set_bonus_totals = set_bonus_result?;
-
-        // Add set bonuses to the total stats
-        for (stat, bonus) in set_bonus_totals {
-            *totals.entry(stat).or_default() += bonus;
-        }
-
-        // Add set bonuses to the total stats
-        for (stat, bonus) in &self.other_bonus {
-            *totals.entry(stat.clone()).or_default() += bonus;
-        }
-
-        Ok(totals)
-    }
 }
 
 #[cfg(test)]
@@ -617,7 +372,7 @@ mod tests {
     use crate::{
         client::project_yatta_client::ProjectYattaClient,
         data_fetcher::{project_yatta_data_fetcher::ProjectYattaDataFetcher, DataFetcher},
-        domain::{Character, CharacterSkills, CharacterTraces, LightCone, Slot, SubStats},
+        domain::{Character, CharacterSkills, CharacterTraces, LightCone, Relic, Slot, SubStats},
     };
 
     #[tokio::test]
@@ -875,22 +630,6 @@ mod tests {
         // Clone the trace bonuses from the character.
         let trace_bonus = fu_xuan.stat_bonus.clone();
 
-        // Define set bonuses for relic sets.
-        let set_bonus = HashMap::from([
-            (
-                "103".to_string(),
-                HashMap::from([(2, vec![(Stats::Def_, 15.0, None)])]),
-            ),
-            (
-                "113".to_string(),
-                HashMap::from([(2, vec![(Stats::Hp_, 12.0, None)])]),
-            ),
-            (
-                "302".to_string(),
-                HashMap::from([(2, vec![(Stats::Hp_, 12.0, None)])]),
-            ),
-        ]);
-
         // Define the formulas used for calculations.
         let hp_formula =
             "(Character_HP + LightCone_HP) * (1 + Percentage_HP_Bonus / 100) + Additive_HP_Bonus";
@@ -906,12 +645,13 @@ mod tests {
         let effect_res_formula = "Effect_RES";
         let break_effect_formula = "Break_Effect";
 
+        let tags = vec![Tag::Lightning, Tag::Skill];
+
         // Create an Evaluator instance with the defined attributes and formulas.
         let evaluator = Evaluator::new(
             fu_xuan.clone(),
             we_are_wild_fire.clone(),
             HashMap::new(),
-            set_bonus.clone(),
             trace_bonus.clone(),
             HashMap::from([
                 (Stats::Hp, hp_formula.to_owned()),
@@ -930,10 +670,14 @@ mod tests {
             ]),
             hp_formula,
             "Maximum HP",
+            tags.clone(),
+            vec![],
         );
 
+        let mut relics = Relics { relics };
+
         // Evaluate the result with the current relics setup and check if it matches the expected value.
-        let result = evaluator.evaluate(relics.clone())?;
+        let result = evaluator.evaluate(&mut relics)?;
         assert_eq!(result, 6512.039936000001);
 
         // Create a new Evaluator instance with a constraint on EnergyRegenerationRate_.
@@ -941,7 +685,6 @@ mod tests {
             fu_xuan,
             we_are_wild_fire,
             HashMap::from([(Stats::EnergyRegenerationRate_, 160.0)]), // Expecting no more than 160 energy regeneration rate
-            set_bonus,
             trace_bonus,
             HashMap::from([
                 (Stats::Hp, hp_formula.to_owned()),
@@ -960,10 +703,12 @@ mod tests {
             ]),
             hp_formula,
             "Maximum HP",
+            tags,
+            vec![],
         );
 
         // Evaluate the result with the new setup and check if it matches the expected penalized value.
-        let result = evaluator.evaluate(relics)?;
+        let result = evaluator.evaluate(&mut relics)?;
         assert_eq!(result, -6512.039936000001);
 
         Ok(())

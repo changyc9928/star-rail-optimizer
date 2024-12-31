@@ -4,7 +4,7 @@ use crate::{
         CharacterUpgrade, LightConeUpgrade, ProjectYattaClient, Traces, Upgrade,
     },
     domain::{Character, CharacterEntity, LightCone, LightConeEntity, Stats},
-    engine::evaluator::StatBonusMap,
+    engine::StatBonusMap,
     utils::trace_title_mapper::title_mapper,
 };
 use async_trait::async_trait;

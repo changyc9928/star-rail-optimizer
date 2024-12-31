@@ -2,7 +2,7 @@ use super::DataFetcher;
 use crate::{
     client::hoyowiki_client::HoyowikiClient,
     domain::{Character, CharacterEntity, LightCone, LightConeEntity, Path, Stats},
-    engine::evaluator::StatBonusMap,
+    engine::StatBonusMap,
     utils::trace_title_mapper::title_mapper,
 };
 use async_trait::async_trait;

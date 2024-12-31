@@ -1,17 +1,15 @@
-use crate::domain::{ScannerInput, Stats};
+use crate::domain::ScannerInput;
+use character::{Acheron, Evaluator};
 use client::project_yatta_client::ProjectYattaClient;
 use data_fetcher::project_yatta_data_fetcher::ProjectYattaDataFetcher;
-use domain::{CharacterEntity, LightConeEntity};
-use engine::{
-    evaluator::{Evaluator, SetBonusMap},
-    optimizer::Optimizer,
-    simulated_annealing::SimulatedAnnealing,
-};
+use domain::{BattleConditionEnum, CritEnum, Enemy};
+use engine::{optimizer::Optimizer, simulated_annealing::SimulatedAnnealing};
 use eyre::{eyre, Result};
 use service::scanner_parser_service::ScannerParserService;
 use std::{collections::HashMap, fs, sync::Arc};
 use tokio::sync::Mutex;
 
+mod character;
 mod client;
 mod data_fetcher;
 mod domain;
@@ -40,15 +38,52 @@ async fn main() -> Result<()> {
     let input = load_input_data("scanned_data/HSRScanData_20241014_152542.json").await?;
     let (characters, light_cones, relic_pool) =
         scanner_parser_service.parse_scanner_input(&input).await?;
-    let evaluator = create_evaluator(
-        characters
+    // let evaluator = create_evaluator(
+    //     characters
+    //         .get("1308")
+    //         .ok_or_else(|| eyre!("Acheron not found"))?,
+    //     light_cones
+    //         .get("light_cone_10")
+    //         .ok_or_else(|| eyre!("Acheron's light cone not found"))?,
+    // )
+    // .await?;
+    let a_evaluator: Arc<dyn Evaluator + Send + Sync> = Arc::new(Acheron {
+        character: characters
             .get("1308")
-            .ok_or_else(|| eyre!("Acheron not found"))?,
-        light_cones
-            .get("light_cone_10")
-            .ok_or_else(|| eyre!("Acheron's light cone not found"))?,
-    )
-    .await?;
+            .ok_or_else(|| eyre!("Acheron not found"))?
+            .clone(),
+        light_cone: Some(
+            light_cones
+                .get("light_cone_10")
+                .ok_or_else(|| eyre!("Acheron's light cone not found"))?
+                .clone(),
+        ),
+    });
+    let enemy = Enemy {
+        level: 82,
+        resistance: 0.0,
+        dmg_mitigation: vec![],
+    };
+    let battle_conditions = vec![
+        BattleConditionEnum::AfterUsingSkill,
+        BattleConditionEnum::AfterUsingUltimate,
+        BattleConditionEnum::AfterWearerAttack { number_of_times: 3 },
+        BattleConditionEnum::AfterWearerIsHit { number_of_times: 2 },
+        BattleConditionEnum::AfterAttackingDebuffedEnemy,
+        BattleConditionEnum::AfterWearerInflictingDebuffs,
+        BattleConditionEnum::WhenAttackingEnemyWithDebuff {
+            number_of_debuffs_enemy_has: 3,
+        },
+        BattleConditionEnum::TeammatesSamePathWithWearer {
+            number_of_teammates_having_same_path: 1,
+        },
+        BattleConditionEnum::HittingEnemyWithCrimsonKnot {
+            number_of_crinsom_knot_enemy_has: 3,
+        },
+        BattleConditionEnum::CriticalHit(CritEnum::Avg),
+        BattleConditionEnum::ToughnessBreak(true),
+        BattleConditionEnum::AfterHittingEnemyWithCrinsomKnot { number_of_times: 3 },
+    ];
 
     let simulated_annealing = SimulatedAnnealing {
         initial_temp: 1000.0,
@@ -56,7 +91,10 @@ async fn main() -> Result<()> {
         min_temp: 0.1,
         aggresive_factor: 0.9,
         relic_pool: relic_pool.clone(),
-        evaluator: evaluator.clone(),
+        evaluator: a_evaluator.clone(),
+        battle_conditions: battle_conditions.clone(),
+        enemy: enemy.clone(),
+        target: "FULL_ULTIMATE_ON_THREE_ENEMIES".to_string(),
     };
 
     let optimizer = Optimizer {
@@ -65,9 +103,12 @@ async fn main() -> Result<()> {
         population_size: 1000,
         mutation_rate: 0.1,
         crossover_rate: 0.7,
-        evaluator,
+        evaluator: a_evaluator,
         enable_sa: false,
         simulated_annealing,
+        battle_conditions,
+        enemy,
+        target: "FULL_ULTIMATE_ON_THREE_ENEMIES".to_string(),
     };
 
     println!("----------------- Optimizing Character -----------------");
@@ -94,133 +135,146 @@ async fn load_input_data(file_path: &str) -> Result<ScannerInput> {
     Ok(input)
 }
 
-/// Creates an evaluator instance using the input data.
-async fn create_evaluator(
-    character: &CharacterEntity,
-    light_cone: &LightConeEntity,
-) -> Result<Evaluator> {
-    let yaml_content = fs::read_to_string("src/config/set_bonus.yaml")?;
-    let mut set_bonus: SetBonusMap = serde_yaml::from_str(&yaml_content)?;
+// / Creates an evaluator instance using the input data.
+// async fn create_evaluator(
+//     character: &CharacterEntity,
+//     light_cone: &LightConeEntity,
+// ) -> Result<Evaluator> {
+//     let yaml_content = fs::read_to_string("src/config/set_bonus.yaml")?;
+//     let mut set_bonus: SetBonusMap = serde_yaml::from_str(&yaml_content)?;
 
-    let hp_formula =
-        "(Character_HP + LightCone_HP) * (1 + Percentage_HP_Bonus / 100) + Additive_HP_Bonus";
-    let atk_formula =
-        "(Character_ATK + LightCone_ATK) * (1 + Percentage_ATK_Bonus / 100) + Additive_ATK_Bonus";
-    let def_formula = "(Character_DEF + LightCone_DEF) * (1 + (Percentage_DEF_Bonus - Percentage_DEF_Reduction) / 100) + Additive_DEF_Bonus";
-    let spd_formula = "Character_SPD * (1 + Percentage_SPD_Bonus / 100) + Additive_SPD_Bonus";
-    let crit_rate_formula = "Character_Base_CRIT_Rate + CRIT_Rate";
-    let crit_dmg_formula = "Character_Base_CRIT_DMG + CRIT_DMG";
-    let energy_regen_rate_formula = "Energy_Regeneration_Rate";
-    let effect_hit_rate_formula = "Effect_Hit_Rate";
-    let effect_res_formula = "Effect_RES";
-    let break_effect_formula = "Break_Effect";
+//     let hp_formula =
+//         "(Character_HP + LightCone_HP) * (1 + Percentage_HP_Bonus / 100) + Additive_HP_Bonus";
+//     let atk_formula =
+//         "(Character_ATK + LightCone_ATK) * (1 + Percentage_ATK_Bonus / 100) + Additive_ATK_Bonus";
+//     let def_formula = "(Character_DEF + LightCone_DEF) * (1 + (Percentage_DEF_Bonus - Percentage_DEF_Reduction) / 100) + Additive_DEF_Bonus";
+//     let spd_formula = "Character_SPD * (1 + Percentage_SPD_Bonus / 100) + Additive_SPD_Bonus";
+//     let crit_rate_formula = "Character_Base_CRIT_Rate + CRIT_Rate";
+//     let crit_dmg_formula = "Character_Base_CRIT_DMG + CRIT_DMG";
+//     let energy_regen_rate_formula = "Energy_Regeneration_Rate";
+//     let effect_hit_rate_formula = "Effect_Hit_Rate";
+//     let effect_res_formula = "Effect_RES";
+//     let break_effect_formula = "Break_Effect";
 
-    let enemy_level = "80";
-    let enemy_resistance = "20";
-    let acheron_ult_resistance_reduction = "19";
-    let avg_crit_formula = format!("({crit_rate_formula}) / 100 * ({crit_dmg_formula}) / 100");
-    let total_dmg_boost = "(Lightning_DMG_Boost + Common_DMG_Boost + Ultimate_DMG_Boost) / 100";
-    let def_multiplier = format!("(Level + 20) / (({enemy_level} + 20) * (1 - (DMG_Reduction - DEF_Ignore) / 100) + Level + 20)");
-    let resistance_multipler =
-        format!("1 - ({enemy_resistance} / 100 - ({acheron_ult_resistance_reduction}) / 100)");
-    let weakness_break = false;
-    let toughness = if weakness_break { "1" } else { "0.9" };
-    let independent_multiplier = "1.15"; // With only one nihility teammate
+//     let enemy_level = "80";
+//     let enemy_resistance = "20";
+//     let acheron_ult_resistance_reduction = "19";
+//     let avg_crit_formula = format!("({crit_rate_formula}) / 100 * ({crit_dmg_formula}) / 100");
+//     let total_dmg_boost = "(Lightning_DMG_Boost + Common_DMG_Boost + Ultimate_DMG_Boost) / 100";
+//     let def_multiplier = format!("(Level + 20) / (({enemy_level} + 20) * (1 - (DMG_Reduction - DEF_Ignore) / 100) + Level + 20)");
+//     let resistance_multipler =
+//         format!("1 - ({enemy_resistance} / 100 - ({acheron_ult_resistance_reduction}) / 100)");
+//     let weakness_break = false;
+//     let toughness = if weakness_break { "1" } else { "0.9" };
+//     let independent_multiplier = "1.15"; // With only one nihility teammate
 
-    let acheron_ultimate_final_dmg = format!(
-        "((1.14 * 1.9 + 6 * 0.25) * ({atk_formula})) \
-        * (1 + ({avg_crit_formula})) \
-        * (1 + ({total_dmg_boost})) \
-        * ({def_multiplier}) \
-        * ({resistance_multipler}) \
-        * ({toughness}) \
-        * ({independent_multiplier})"
-    );
-    // let acheron_ultimate_final_dmg_with_sparkle = "((1.14 * 1.9 + 6 * 0.25) * ((Character_ATK + LightCone_ATK) * (1 + (Percentage_ATK_Bonus + 15) / 100) + Additive_ATK_Bonus)) * (1 + (Character_Base_CRIT_Rate + CRIT_Rate) / 100 * (Character_Base_CRIT_DMG + CRIT_DMG + 79.115) / 100) * (1 + Lightning_DMG_Boost / 100 + Common_DMG_Boost / 100 + Ultimate_DMG_Boost / 100 + 0.453) * ((Level + 20) / ((80 + 20) * (1 - DMG_Reduction / 100 - DEF_Ignore / 100) + Level + 20)) * (1 - (20 / 100 - 20 / 100)) * 0.9 * 1.6";
-    let mut other_bonus = HashMap::from([
-        (Stats::Atk_, 15.0),
-        (Stats::CritDmg_, 79.115),
-        (Stats::DmgBoost_, 45.3),
-    ]); // Assuming Sparkle's support
+//     let acheron_ultimate_final_dmg = format!(
+//         "((1.14 * 1.9 + 6 * 0.25) * ({atk_formula})) \
+//         * (1 + ({avg_crit_formula})) \
+//         * (1 + ({total_dmg_boost})) \
+//         * ({def_multiplier}) \
+//         * ({resistance_multipler}) \
+//         * ({toughness}) \
+//         * ({independent_multiplier})"
+//     );
+//     // let acheron_ultimate_final_dmg_with_sparkle = "((1.14 * 1.9 + 6 * 0.25) * ((Character_ATK + LightCone_ATK) * (1 + (Percentage_ATK_Bonus + 15) / 100) + Additive_ATK_Bonus)) * (1 + (Character_Base_CRIT_Rate + CRIT_Rate) / 100 * (Character_Base_CRIT_DMG + CRIT_DMG + 79.115) / 100) * (1 + Lightning_DMG_Boost / 100 + Common_DMG_Boost / 100 + Ultimate_DMG_Boost / 100 + 0.453) * ((Level + 20) / ((80 + 20) * (1 - DMG_Reduction / 100 - DEF_Ignore / 100) + Level + 20)) * (1 - (20 / 100 - 20 / 100)) * 0.9 * 1.6";
+//     let mut other_bonus = HashMap::from([
+//         (Stats::Atk_, 15.0),
+//         (Stats::CritDmg_, 79.115),
+//         (Stats::DmgBoost_, 45.3),
+//     ]); // Assuming Sparkle's support
 
-    let activated_set_bonus = HashMap::from([
-        (
-            "104",
-            HashMap::from([(4, vec![(Stats::CritDmg_, 25.0, None::<(Stats, f64)>)])]), // After the wearer uses their Ultimate, their CRIT DMG increases by 25% for 2 turn(s).
-        ),
-        (
-            "105",
-            HashMap::from([(4, vec![(Stats::Atk_, 25.0, None::<(Stats, f64)>)])]), // (5 stacks) After the wearer attacks or is hit, their ATK increases by 5% for the rest of the battle. This effect can stack up to 5 time(s).
-        ),
-        (
-            "108",
-            HashMap::from([(4, vec![(Stats::DefIgnore_, 10.0, None::<(Stats, f64)>)])]), // (Assuming no Quantum weakness) When the wearer deals DMG to the target enemy, ignores 10% DEF. If the target enemy has Quantum Weakness, the wearer additionally ignores 10% DEF.
-        ),
-        (
-            "109",
-            HashMap::from([(4, vec![(Stats::Atk_, 20.0, None::<(Stats, f64)>)])]), // (Assuming Ult right after Skill) When the wearer uses their Skill, increases the wearer's ATK by 20% for 1 turn(s).
-        ),
-        (
-            "112",
-            HashMap::from([(4, vec![(Stats::CritRate_, 10.0, None::<(Stats, f64)>)])]), // (Assuming no Imaginary teammate) When attacking debuffed enemies, the wearer's CRIT Rate increases by 10%, and their CRIT DMG increases by 20% against Imprisoned enemies.
-        ),
-        (
-            "117",
-            HashMap::from([
-                (2, vec![(Stats::DmgBoost_, 12.0, None::<(Stats, f64)>)]), // (Considering Acheron's team comp, assuming enemies always get debuffs) Increases DMG dealt to enemies with debuffs by 12%.
-                (4, vec![(Stats::CritDmg_, 24.0, None::<(Stats, f64)>)]), // (Assuming 3 stacks and Ult after Skill (inflicting Crimson Knot)) The wearer deals 8%/12% increased CRIT DMG to enemies with at least 2/3 debuffs. After the wearer inflicts a debuff on enemy targets, the aforementioned effects increase by 100%, lasting for 1 turn(s).
-            ]),
-        ),
-        (
-            "313",
-            HashMap::from([
-                (2, vec![(Stats::CritRate_, 4.0, None::<(Stats, f64)>)]), // (Assuming only 1 enemy get defeated) When an enemy target gets defeated, the wearer's CRIT DMG increases by 4.00%, stacking up to 10 time(s).
-            ]),
-        ),
-        (
-            "314",
-            HashMap::from([
-                (2, vec![(Stats::CritRate_, 12.0, None::<(Stats, f64)>)]), // (Considering Acheron's team comp, at least one nihility teammate will present) When entering battle, if at least one teammate follows the same Path as the wearer, then the wearer's CRIT Rate increases by 12.00%.
-            ]),
-        ),
-    ]);
+//     let activated_set_bonus = HashMap::from([
+//         (
+//             "104",
+//             HashMap::from([(4, vec![(Stats::CritDmg_, 25.0, None::<(Stats, f64)>)])]), // After the wearer uses their Ultimate, their CRIT DMG increases by 25% for 2 turn(s).
+//         ),
+//         (
+//             "105",
+//             HashMap::from([(4, vec![(Stats::Atk_, 25.0, None::<(Stats, f64)>)])]), // (5 stacks) After the wearer attacks or is hit, their ATK increases by 5% for the rest of the battle. This effect can stack up to 5 time(s).
+//         ),
+//         (
+//             "108",
+//             HashMap::from([(4, vec![(Stats::DefIgnore_, 10.0, None::<(Stats, f64)>)])]), // (Assuming no Quantum weakness) When the wearer deals DMG to the target enemy, ignores 10% DEF. If the target enemy has Quantum Weakness, the wearer additionally ignores 10% DEF.
+//         ),
+//         (
+//             "109",
+//             HashMap::from([(4, vec![(Stats::Atk_, 20.0, None::<(Stats, f64)>)])]), // (Assuming Ult right after Skill) When the wearer uses their Skill, increases the wearer's ATK by 20% for 1 turn(s).
+//         ),
+//         (
+//             "112",
+//             HashMap::from([(4, vec![(Stats::CritRate_, 10.0, None::<(Stats, f64)>)])]), // (Assuming no Imaginary teammate) When attacking debuffed enemies, the wearer's CRIT Rate increases by 10%, and their CRIT DMG increases by 20% against Imprisoned enemies.
+//         ),
+//         (
+//             "117",
+//             HashMap::from([
+//                 (2, vec![(Stats::DmgBoost_, 12.0, None::<(Stats, f64)>)]), // (Considering Acheron's team comp, assuming enemies always get debuffs) Increases DMG dealt to enemies with debuffs by 12%.
+//                 (4, vec![(Stats::CritDmg_, 24.0, None::<(Stats, f64)>)]), // (Assuming 3 stacks and Ult after Skill (inflicting Crimson Knot)) The wearer deals 8%/12% increased CRIT DMG to enemies with at least 2/3 debuffs. After the wearer inflicts a debuff on enemy targets, the aforementioned effects increase by 100%, lasting for 1 turn(s).
+//             ]),
+//         ),
+//         (
+//             "313",
+//             HashMap::from([
+//                 (2, vec![(Stats::CritRate_, 4.0, None::<(Stats, f64)>)]), // (Assuming only 1 enemy get defeated) When an enemy target gets defeated, the wearer's CRIT DMG increases by 4.00%, stacking up to 10 time(s).
+//             ]),
+//         ),
+//         (
+//             "314",
+//             HashMap::from([
+//                 (2, vec![(Stats::CritRate_, 12.0, None::<(Stats, f64)>)]), // (Considering Acheron's team comp, at least one nihility teammate will present) When entering battle, if at least one teammate follows the same Path as the wearer, then the wearer's CRIT Rate increases by 12.00%.
+//             ]),
+//         ),
+//     ]);
 
-    for (key, val) in activated_set_bonus {
-        for (num_items, mut bonus) in val {
-            set_bonus
-                .entry(key.to_owned())
-                .or_default()
-                .entry(num_items)
-                .or_default()
-                .append(&mut bonus);
-        }
-    }
-    for (key, val) in &character.stat_bonus {
-        *other_bonus.entry(key.clone()).or_default() += val;
-    }
+//     for (key, val) in activated_set_bonus {
+//         for (num_items, mut bonus) in val {
+//             set_bonus
+//                 .entry(key.to_owned())
+//                 .or_default()
+//                 .entry(num_items)
+//                 .or_default()
+//                 .append(&mut bonus);
+//         }
+//     }
+//     for (key, val) in &character.stat_bonus {
+//         *other_bonus.entry(key.clone()).or_default() += val;
+//     }
 
-    Ok(Evaluator::new(
-        character.clone(),
-        light_cone.clone(),
-        HashMap::new(),
-        set_bonus,
-        other_bonus,
-        HashMap::from([
-            (Stats::Hp, hp_formula.to_owned()),
-            (Stats::Atk, atk_formula.to_owned()),
-            (Stats::Def, def_formula.to_owned()),
-            (Stats::Spd, spd_formula.to_owned()),
-            (Stats::CritRate_, crit_rate_formula.to_owned()),
-            (Stats::CritDmg_, crit_dmg_formula.to_owned()),
-            (
-                Stats::EnergyRegenerationRate_,
-                energy_regen_rate_formula.to_owned(),
-            ),
-            (Stats::EffectHitRate_, effect_hit_rate_formula.to_owned()),
-            (Stats::EffectRes_, effect_res_formula.to_owned()),
-            (Stats::BreakEffect_, break_effect_formula.to_owned()),
-        ]),
-        &acheron_ultimate_final_dmg,
-        "AVG Ultimate AoE DMG",
-    ))
-}
+//     Ok(Evaluator::new(
+//         character.clone(),
+//         light_cone.clone(),
+//         HashMap::new(),
+//         other_bonus,
+//         HashMap::from([
+//             (Stats::Hp, hp_formula.to_owned()),
+//             (Stats::Atk, atk_formula.to_owned()),
+//             (Stats::Def, def_formula.to_owned()),
+//             (Stats::Spd, spd_formula.to_owned()),
+//             (Stats::CritRate_, crit_rate_formula.to_owned()),
+//             (Stats::CritDmg_, crit_dmg_formula.to_owned()),
+//             (
+//                 Stats::EnergyRegenerationRate_,
+//                 energy_regen_rate_formula.to_owned(),
+//             ),
+//             (Stats::EffectHitRate_, effect_hit_rate_formula.to_owned()),
+//             (Stats::EffectRes_, effect_res_formula.to_owned()),
+//             (Stats::BreakEffect_, break_effect_formula.to_owned()),
+//         ]),
+//         &acheron_ultimate_final_dmg,
+//         "AVG Ultimate AoE DMG",
+//         vec![Tag::Lightning, Tag::Ultimate],
+//         vec![
+//             BattleConditionEnum::AfterUsingUltimate,
+//             BattleConditionEnum::AfterUsingSkill,
+//             BattleConditionEnum::AfterWearerAttack { number_of_times: 3 },
+//             BattleConditionEnum::AfterWearerInflictingDebuffs,
+//             BattleConditionEnum::AfterAttackingDebuffedEnemy,
+//             BattleConditionEnum::TeammatesSamePathWithWearer {
+//                 number_of_teammates_having_same_path: 2,
+//             },
+//             BattleConditionEnum::WhenAttackingEnemyWithDebuff {
+//                 number_of_debuffs_enemy_has: 2,
+//             },
+//         ],
+//     ))
+// }

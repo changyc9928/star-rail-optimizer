@@ -1,5 +1,8 @@
-use super::{evaluator::Evaluator, simulated_annealing::SimulatedAnnealing};
-use crate::domain::{Relic, Slot};
+use super::simulated_annealing::SimulatedAnnealing;
+use crate::{
+    character::Evaluator,
+    domain::{BattleConditionEnum, Enemy, Relic, Relics, Slot},
+};
 use core::f64;
 use eyre::{OptionExt, Result};
 use rand::{
@@ -11,6 +14,7 @@ use rayon::prelude::*;
 use std::{
     cmp::{min, Ordering},
     collections::HashMap,
+    sync::Arc,
 };
 use strum::IntoEnumIterator;
 use tracing::info;
@@ -29,18 +33,27 @@ pub struct Optimizer {
     /// The probability of performing crossover between parent relic sets.
     pub crossover_rate: f64,
     /// An `Evaluator` instance used to evaluate the fitness of relic sets.
-    pub evaluator: Evaluator,
+    pub evaluator: Arc<dyn Evaluator + Sync + Send>,
     pub enable_sa: bool,
     pub simulated_annealing: SimulatedAnnealing,
+
+    pub target: String,
+    pub enemy: Enemy,
+    pub battle_conditions: Vec<BattleConditionEnum>,
 }
 
 impl Optimizer {
     // Helper method to calculate fitness sum
     #[allow(dead_code)]
-    fn total_fitness(&self, population: &[Vec<Relic>]) -> Result<f64> {
+    fn total_fitness(&self, population: &[Relics]) -> Result<f64> {
         let mut total = 0.0;
         for individual in population {
-            let fitness = self.evaluator.evaluate(individual.clone())?;
+            let fitness = self.evaluator.evaluate(
+                individual,
+                &self.enemy,
+                &self.target,
+                &self.battle_conditions,
+            )?;
             total += fitness;
         }
         Ok(total)
@@ -50,16 +63,21 @@ impl Optimizer {
     #[allow(dead_code)]
     fn roulette_wheel_selection(
         &self,
-        population: &[Vec<Relic>],
+        population: &[Relics],
         rng: &mut ThreadRng,
-    ) -> Result<Vec<Vec<Relic>>> {
+    ) -> Result<Vec<Relics>> {
         let total_fitness = self.total_fitness(population)?;
         let mut cumulative_probabilities = Vec::with_capacity(population.len());
         let mut cumulative_sum = 0.0;
 
         // Calculate cumulative probabilities
         for individual in population {
-            let fitness = self.evaluator.evaluate(individual.clone())?;
+            let fitness = self.evaluator.evaluate(
+                individual,
+                &self.enemy,
+                &self.target,
+                &self.battle_conditions,
+            )?;
             cumulative_sum += fitness / total_fitness;
             cumulative_probabilities.push(cumulative_sum);
         }
@@ -78,10 +96,12 @@ impl Optimizer {
         Ok(selected_population)
     }
 
-    fn evaluation(&self, x: &[Relic], y: &[Relic]) -> Ordering {
+    fn evaluation(&self, x: &Relics, y: &Relics) -> Ordering {
         match (
-            self.evaluator.evaluate(x.to_owned()),
-            self.evaluator.evaluate(y.to_owned()),
+            self.evaluator
+                .evaluate(x, &self.enemy, &self.target, &self.battle_conditions),
+            self.evaluator
+                .evaluate(y, &self.enemy, &self.target, &self.battle_conditions),
         ) {
             (Ok(x_val), Ok(y_val)) => x_val.partial_cmp(&y_val).unwrap(),
             _ => f64::MIN.partial_cmp(&f64::MIN).unwrap(),
@@ -90,23 +110,23 @@ impl Optimizer {
 
     fn tournament_selection(
         &self,
-        population: &[Vec<Relic>],
+        population: &[Relics],
         tournament_size: usize,
-    ) -> Result<Vec<Vec<Relic>>> {
+    ) -> Result<Vec<Relics>> {
         let selected = (0..self.population_size / 2)
             .into_par_iter()
             .map(|_| {
                 let mut rng = thread_rng();
-                let tournament: Vec<_> = (0..tournament_size)
-                    .map(|_| population.choose(&mut rng).unwrap().clone())
+                let tournament: Vec<&Relics> = (0..tournament_size)
+                    .map(|_| population.choose(&mut rng).unwrap())
                     .collect();
                 let winner = tournament
                     .par_iter()
                     .max_by(|arg0, arg1| self.evaluation(arg0, arg1))
                     .ok_or_else(|| eyre::eyre!("No winner found in tournament"))?;
-                Ok::<_, eyre::Report>(winner.clone())
+                Ok::<_, eyre::Report>(winner.clone().clone())
             })
-            .collect::<Result<Vec<Vec<Relic>>>>()?;
+            .collect::<Result<Vec<Relics>>>()?;
         Ok(selected)
     }
 
@@ -116,9 +136,9 @@ impl Optimizer {
     ///
     /// - `Ok(Vec<Relic>)` - The best relic set found after all generations.
     /// - `Err(e)` - An error if something goes wrong during the optimization process.
-    pub fn optimize(&self) -> Result<Vec<Relic>> {
+    pub fn optimize(&self) -> Result<Relics> {
         // Initialize the population with random relic sets.
-        let mut population: Vec<Vec<Relic>> = (0..self.population_size)
+        let mut population: Vec<Relics> = (0..self.population_size)
             .map(|_| self.generate_random_relic_set())
             .collect();
 
@@ -130,7 +150,7 @@ impl Optimizer {
             let difference = (self.population_size - selected_population.len()) / 2;
 
             // Generate new individuals through crossover and mutation in parallel.
-            let mut new_gen: Vec<Vec<Relic>> = (0..difference)
+            let mut new_gen: Vec<Relics> = (0..difference)
                 .into_par_iter()
                 .map(|_| {
                     let mut rng = thread_rng();
@@ -166,25 +186,33 @@ impl Optimizer {
                     // Find the best individual in the current population
                     let mut best_individual = population
                         .par_iter()
-                        .max_by(|arg0: &&Vec<Relic>, arg1: &&Vec<Relic>| {
-                            self.evaluation(arg0, arg1)
-                        })
+                        .max_by(|arg0, arg1| self.evaluation(arg0, arg1))
                         .ok_or_eyre("Best combination not found")?
                         .clone();
-                    let best_fit = self.evaluator.evaluate(best_individual.clone())?;
+                    let best_fit = self.evaluator.evaluate(
+                        &best_individual,
+                        &self.enemy,
+                        &self.target,
+                        &self.battle_conditions,
+                    )?;
                     info!(
                         "Generation {generation}, before SA, Highest {}: {}",
-                        self.evaluator.target_name, best_fit
+                        self.target, best_fit
                     );
 
                     // Apply aggresive SA
                     best_individual = self
                         .simulated_annealing
                         .simulated_annealing(&best_individual)?;
-                    let best_fit = self.evaluator.evaluate(best_individual.clone())?;
+                    let best_fit = self.evaluator.evaluate(
+                        &best_individual,
+                        &self.enemy,
+                        &self.target,
+                        &self.battle_conditions,
+                    )?;
                     info!(
                         "Generation {generation}, after SA, Highest {}: {}",
-                        self.evaluator.target_name, best_fit
+                        self.target, best_fit
                     );
                     let random_index = thread_rng().gen_range(0..population.len() - 1);
                     population[random_index] = best_individual;
@@ -194,14 +222,19 @@ impl Optimizer {
             // Find and print the best relic set of the current generation in parallel.
             let best_combination = population
                 .par_iter()
-                .max_by(|arg0: &&Vec<Relic>, arg1: &&Vec<Relic>| self.evaluation(arg0, arg1))
+                .max_by(|arg0, arg1| self.evaluation(arg0, arg1))
                 .ok_or_eyre("Best combination not found")?;
 
-            let result = self.evaluator.evaluate(best_combination.clone())?;
+            let result = self.evaluator.evaluate(
+                best_combination,
+                &self.enemy,
+                &self.target,
+                &self.battle_conditions,
+            )?;
             info!(
                 "Generation {} Highest {}: {}",
                 generation + 1,
-                self.evaluator.target_name,
+                self.target,
                 result
             );
         }
@@ -217,7 +250,7 @@ impl Optimizer {
     /// # Returns
     ///
     /// - `Vec<Relic>` - A vector of randomly selected relics for each slot.
-    fn generate_random_relic_set(&self) -> Vec<Relic> {
+    fn generate_random_relic_set(&self) -> Relics {
         // Collect all the slots
         let slots: Vec<Slot> = Slot::iter().collect();
 
@@ -234,7 +267,7 @@ impl Optimizer {
             })
             .collect();
 
-        relics
+        Relics { relics }
     }
 
     /// Performs crossover between two parent relic sets to produce two child relic sets.
@@ -247,12 +280,12 @@ impl Optimizer {
     ///
     /// - `Ok(Vec<Vec<Relic>>)` - A vector containing two child relic sets resulting from the crossover.
     /// - `Err(e)` - An error if there are not exactly two parents provided.
-    fn crossover(&self, parents: Vec<Vec<Relic>>) -> Result<Vec<Vec<Relic>>> {
+    fn crossover(&self, parents: Vec<Relics>) -> Result<Vec<Relics>> {
         let mut parents = parents.iter();
         let parent1 = parents.next().ok_or(eyre::eyre!("Missing parent 1"))?;
         let parent2 = parents.next().ok_or(eyre::eyre!("Missing parent 2"))?;
 
-        let min_length = min(parent1.len(), parent2.len());
+        let min_length = min(parent1.relics.len(), parent2.relics.len());
 
         let mut child1 = vec![];
         let mut child2 = vec![];
@@ -260,24 +293,24 @@ impl Optimizer {
         let mut rng = thread_rng();
         for i in 0..min_length {
             if rng.gen::<f64>() > self.crossover_rate {
-                child1.push(parent1[i].clone());
-                child2.push(parent2[i].clone());
+                child1.push(parent1.relics[i].clone());
+                child2.push(parent2.relics[i].clone());
             } else {
-                child1.push(parent2[i].clone());
-                child2.push(parent1[i].clone());
+                child1.push(parent2.relics[i].clone());
+                child2.push(parent1.relics[i].clone());
             }
         }
 
         // Append the remaining relics if the parents have unequal lengths.
-        if parent1.len() > min_length {
-            child1.extend_from_slice(&parent1[min_length..]);
-            child2.extend_from_slice(&parent1[min_length..]);
+        if parent1.relics.len() > min_length {
+            child1.extend_from_slice(&parent1.relics[min_length..]);
+            child2.extend_from_slice(&parent1.relics[min_length..]);
         } else {
-            child1.extend_from_slice(&parent2[min_length..]);
-            child2.extend_from_slice(&parent2[min_length..]);
+            child1.extend_from_slice(&parent2.relics[min_length..]);
+            child2.extend_from_slice(&parent2.relics[min_length..]);
         }
 
-        Ok(vec![child1, child2])
+        Ok(vec![Relics { relics: child1 }, Relics { relics: child2 }])
     }
 
     /// Applies mutation to a relic set by randomly changing some of its relics.
@@ -290,11 +323,11 @@ impl Optimizer {
     ///
     /// - `Ok(Vec<Relic>)` - The mutated relic set.
     /// - `Err(e)` - An error if a relic's slot is not found in the relic pool.
-    fn mutate(&self, child: Vec<Relic>) -> Result<Vec<Relic>> {
+    fn mutate(&self, child: Relics) -> Result<Relics> {
         let mut mutated_child = child;
 
         // Parallelize the mutation of relics
-        mutated_child.iter_mut().for_each(|relic| {
+        mutated_child.relics.iter_mut().for_each(|relic| {
             let mut rng = rand::thread_rng(); // Create a new RNG for each thread
             if rng.gen::<f64>() < self.mutation_rate {
                 let slot = &relic.slot;
