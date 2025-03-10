@@ -44,11 +44,7 @@ impl Relics {
         Ok(())
     }
 
-    pub fn calculate_set_bonus(
-        &self,
-        tags: &[Tag],
-        bonus: &mut HashMap<Stats, f64>,
-    ) -> Result<()> {
+    pub fn calculate_set_bonus(&self, tags: &[Tag], bonus: &mut HashMap<Stats, f64>) -> Result<()> {
         let count = self.relics.iter().counts_by(|r| r.set_id.clone());
         for (set_id, num_relics) in count {
             match set_id.as_str() {
@@ -278,10 +274,20 @@ impl Relics {
                 }
                 "103" => {}
                 "104" => {
-                    if num_relics >= 4
-                        && battle_condition.contains(&BattleConditionEnum::AfterUsingUltimate)
-                    {
-                        *bonus.entry(Stats::CritDmg_).or_default() += 25.0;
+                    if num_relics >= 4 {
+                        for condition in battle_condition {
+                            match condition {
+                                BattleConditionEnum::AfterUsingUltimate {
+                                    number_of_turns_since_using_ultimate,
+                                    ..
+                                } => {
+                                    if *number_of_turns_since_using_ultimate <= 2 {
+                                        *bonus.entry(Stats::CritDmg_).or_default() += 25.0;
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
                     }
                 }
                 "105" => {
@@ -289,9 +295,9 @@ impl Relics {
                         let mut stack = 0;
                         for condition in battle_condition {
                             match condition {
-                                BattleConditionEnum::AfterWearerIsHit { number_of_times } => {
-                                    stack += number_of_times
-                                }
+                                BattleConditionEnum::AfterWearerIsHit {
+                                    number_of_times, ..
+                                } => stack += number_of_times,
                                 BattleConditionEnum::AfterWearerAttack { number_of_times } => {
                                     stack += number_of_times
                                 }
@@ -307,10 +313,20 @@ impl Relics {
                         if tags.contains(&Tag::Skill) {
                             *bonus.entry(Stats::DmgBoost_).or_default() += 12.0;
                         }
-                        if tags.contains(&Tag::Fire)
-                            && battle_condition.contains(&BattleConditionEnum::AfterUsingUltimate)
-                        {
-                            *bonus.entry(Stats::DmgBoost_).or_default() += 12.0;
+                        if tags.contains(&Tag::Fire) {
+                            for condition in battle_condition {
+                                match condition {
+                                    BattleConditionEnum::AfterUsingUltimate {
+                                        next_attack_after_ultimate,
+                                        ..
+                                    } => {
+                                        if *next_attack_after_ultimate {
+                                            *bonus.entry(Stats::DmgBoost_).or_default() += 12.0;
+                                        }
+                                    }
+                                    _ => (),
+                                }
+                            }
                         }
                     }
                 }
@@ -323,10 +339,19 @@ impl Relics {
                     }
                 }
                 "109" => {
-                    if num_relics >= 4
-                        && battle_condition.contains(&BattleConditionEnum::AfterUsingSkill)
-                    {
-                        *bonus.entry(Stats::Atk_).or_default() += 20.0;
+                    if num_relics >= 4 {
+                        for condition in battle_condition {
+                            match condition {
+                                BattleConditionEnum::AfterUsingSkill {
+                                    number_of_turns_since_using_the_skill,
+                                } => {
+                                    if *number_of_turns_since_using_the_skill <= 1 {
+                                        *bonus.entry(Stats::Atk_).or_default() += 20.0;
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
                     }
                 }
                 "110" => {}
@@ -350,12 +375,23 @@ impl Relics {
                         let mut stack = 0;
                         for condition in battle_condition {
                             match condition {
-                                BattleConditionEnum::AfterWearerIsHit { number_of_times } => {
-                                    stack += number_of_times
-                                }
-                                BattleConditionEnum::AfterWearerHpConsumedByAllyOrThemselves {
+                                BattleConditionEnum::AfterWearerIsHit {
                                     number_of_times,
-                                } => stack += number_of_times,
+                                    within_number_of_turns,
+                                } => {
+                                    if *within_number_of_turns <= 2 {
+                                        stack += number_of_times
+                                    }
+                                }
+                                BattleConditionEnum::WhenWearerLosingHp {
+                                    number_of_times,
+                                    within_number_of_turns,
+                                    ..
+                                } => {
+                                    if *within_number_of_turns <= 2 {
+                                        stack += number_of_times
+                                    }
+                                }
                                 _ => (),
                             }
                         }
@@ -389,8 +425,9 @@ impl Relics {
                         for condition in battle_condition {
                             match condition {
                                 BattleConditionEnum::WhenAttackingEnemyWithDot {
-                                    number_of_dots_enemy_has: number_of_dot_enemy_has,
-                                } => stack += number_of_dot_enemy_has,
+                                    number_of_dots_enemy_has,
+                                    ..
+                                } => stack += number_of_dots_enemy_has,
                                 _ => (),
                             }
                         }
@@ -411,38 +448,54 @@ impl Relics {
                         *bonus.entry(Stats::DmgBoost_).or_default() += 12.0;
                     }
                     if num_relics >= 4 {
-                        if battle_condition
-                            .contains(&BattleConditionEnum::AfterWearerInflictingDebuffs)
-                        {
-                            *bonus.entry(Stats::CritRate_).or_default() += 4.0;
-                        }
                         let mut stack = 0;
                         for condition in battle_condition {
                             match condition {
                                 BattleConditionEnum::WhenAttackingEnemyWithDebuff {
                                     number_of_debuffs_enemy_has,
-                                } => stack += number_of_debuffs_enemy_has,
+                                    within_number_of_turns,
+                                } => {
+                                    if *within_number_of_turns <= 1 {
+                                        stack += number_of_debuffs_enemy_has
+                                    }
+                                }
                                 BattleConditionEnum::WhenAttackingEnemyWithDot {
                                     number_of_dots_enemy_has,
-                                } => stack += number_of_dots_enemy_has,
+                                    within_number_of_turns,
+                                    ..
+                                } => {
+                                    if *within_number_of_turns <= 1 {
+                                        stack += number_of_dots_enemy_has
+                                    }
+                                }
                                 _ => (),
                             }
                         }
                         if stack == 2 {
-                            if battle_condition
-                                .contains(&BattleConditionEnum::AfterWearerInflictingDebuffs)
-                            {
-                                *bonus.entry(Stats::CritDmg_).or_default() += 16.0;
-                            } else {
-                                *bonus.entry(Stats::CritDmg_).or_default() += 8.0;
+                            for condition in battle_condition {
+                                match condition {
+                                    BattleConditionEnum::AfterWearerInflictingDebuffs {
+                                        ..
+                                    } => {
+                                        *bonus.entry(Stats::CritDmg_).or_default() += 16.0;
+                                    }
+                                    _ => {
+                                        *bonus.entry(Stats::CritDmg_).or_default() += 8.0;
+                                    }
+                                }
                             }
                         } else if stack >= 3 {
-                            if battle_condition
-                                .contains(&BattleConditionEnum::AfterWearerInflictingDebuffs)
-                            {
-                                *bonus.entry(Stats::CritDmg_).or_default() += 24.0;
-                            } else {
-                                *bonus.entry(Stats::CritDmg_).or_default() += 12.0;
+                            for condition in battle_condition {
+                                match condition {
+                                    BattleConditionEnum::AfterWearerInflictingDebuffs {
+                                        ..
+                                    } => {
+                                        *bonus.entry(Stats::CritDmg_).or_default() += 24.0;
+                                    }
+                                    _ => {
+                                        *bonus.entry(Stats::CritDmg_).or_default() += 12.0;
+                                    }
+                                }
                             }
                         }
                     }
@@ -483,9 +536,19 @@ impl Relics {
                         if tags.contains(&Tag::Skill) || tags.contains(&Tag::Ultimate) {
                             *bonus.entry(Stats::DmgBoost_).or_default() += 20.0;
                         }
-                        if battle_condition.contains(&BattleConditionEnum::AfterUsingUltimate) {
-                            if tags.contains(&Tag::Skill) {
-                                *bonus.entry(Stats::DmgBoost_).or_default() += 25.0;
+                        if tags.contains(&Tag::Skill) {
+                            for condition in battle_condition {
+                                match condition {
+                                    BattleConditionEnum::AfterUsingUltimate {
+                                        next_skill_after_ultimate,
+                                        ..
+                                    } => {
+                                        if *next_skill_after_ultimate {
+                                            *bonus.entry(Stats::DmgBoost_).or_default() += 25.0;
+                                        }
+                                    }
+                                    _ => (),
+                                }
                             }
                         }
                     }
@@ -587,8 +650,9 @@ impl Relics {
                         let mut stack = 0;
                         for condition in battle_condition {
                             match condition {
-                                BattleConditionEnum::WhenEnemyDefeated {
+                                BattleConditionEnum::AfterEnemyDefeated {
                                     number_of_enemies_defeated,
+                                    ..
                                 } => stack += number_of_enemies_defeated,
                                 _ => (),
                             }

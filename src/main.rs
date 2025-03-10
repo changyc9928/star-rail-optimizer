@@ -6,6 +6,7 @@ use domain::{BattleConditionEnum, CritEnum, Enemy};
 use engine::{optimizer::Optimizer, simulated_annealing::SimulatedAnnealing};
 use eyre::{eyre, Result};
 use service::scanner_parser_service::ScannerParserService;
+use simulator::run;
 use std::{collections::HashMap, fs, sync::Arc};
 use tokio::sync::Mutex;
 
@@ -15,6 +16,7 @@ mod data_fetcher;
 mod domain;
 mod engine;
 mod service;
+mod simulator;
 mod utils;
 
 #[tokio::main]
@@ -65,14 +67,27 @@ async fn main() -> Result<()> {
         dmg_mitigation: vec![],
     };
     let battle_conditions = vec![
-        BattleConditionEnum::AfterUsingSkill,
-        BattleConditionEnum::AfterUsingUltimate,
+        BattleConditionEnum::AfterUsingSkill {
+            number_of_turns_since_using_the_skill: 1,
+        },
+        BattleConditionEnum::AfterUsingUltimate {
+            next_attack_after_ultimate: false,
+            next_skill_after_ultimate: false,
+            number_of_turns_since_using_ultimate: 1,
+        },
         BattleConditionEnum::AfterWearerAttack { number_of_times: 3 },
-        BattleConditionEnum::AfterWearerIsHit { number_of_times: 2 },
+        BattleConditionEnum::AfterWearerIsHit {
+            number_of_times: 2,
+            within_number_of_turns: 1,
+        },
         BattleConditionEnum::AfterAttackingDebuffedEnemy,
-        BattleConditionEnum::AfterWearerInflictingDebuffs,
+        BattleConditionEnum::AfterWearerInflictingDebuffs {
+            number_of_times: 1,
+            within_number_of_turns: 1,
+        },
         BattleConditionEnum::WhenAttackingEnemyWithDebuff {
             number_of_debuffs_enemy_has: 3,
+            within_number_of_turns: 1,
         },
         BattleConditionEnum::TeammatesSamePathWithWearer {
             number_of_teammates_having_same_path: 1,

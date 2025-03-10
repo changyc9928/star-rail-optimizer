@@ -76,7 +76,7 @@ pub enum Stats {
     #[serde(alias = "Shield DMG Absorption")]
     ShieldDmgAbsorption_,
     #[serde(alias = "DMG Reduction")]
-    DmgReduction_,
+    DmgMitigation_,
     #[serde(alias = "DEF Reduction")]
     DefReduction_,
     #[serde(alias = "DEF Ignore")]

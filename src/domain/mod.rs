@@ -1,4 +1,4 @@
-mod character;
+pub(crate) mod character;
 mod light_cone;
 mod relic;
 mod scanner_input;

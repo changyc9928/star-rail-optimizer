@@ -10,6 +10,6 @@ pub trait Evaluator {
         relics: &Relics,
         enemy: &Enemy,
         target: &str,
-        battle_conditions: &Vec<BattleConditionEnum>,
+        battle_conditions: &[BattleConditionEnum],
     ) -> Result<f64>;
 }

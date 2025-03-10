@@ -17,7 +17,7 @@ impl Evaluator for Acheron {
         relics: &Relics,
         enemy: &Enemy,
         target: &str,
-        battle_conditions: &Vec<BattleConditionEnum>,
+        battle_conditions: &[BattleConditionEnum],
     ) -> Result<f64> {
         match target {
             "RAINBLADE" => self.rainblade(&relics, &enemy, battle_conditions),
@@ -27,13 +27,16 @@ impl Evaluator for Acheron {
             "FULL_ULTIMATE_ON_THREE_ENEMIES" => {
                 self.full_ultimate_multiplier_on_three_enemies(&relics, &enemy, battle_conditions)
             }
+            "SKILL_MAIN_TARGET" => self.skill_main_target(relics, enemy, battle_conditions),
+            "SKILL_ADJACENT_TARGET" => self.skill_adjacent_target(relics, enemy, battle_conditions),
+            "BASIC_ATTACK" => self.basic_attack(relics, enemy, battle_conditions),
             _ => todo!(),
         }
     }
 }
 
 impl Acheron {
-    fn toughness(&self, battle_conditions: &Vec<BattleConditionEnum>) -> f64 {
+    fn toughness(&self, battle_conditions: &[BattleConditionEnum]) -> f64 {
         let mut toughness_break = false;
         for condition in battle_conditions {
             match condition {
@@ -76,10 +79,11 @@ impl Acheron {
         vulnerebility
     }
 
-    fn res(&self, enemy: &Enemy, bonus: &HashMap<Stats, f64>) -> f64 {
+    fn res(&self, enemy: &Enemy, bonus: &HashMap<Stats, f64>, tags: &[Tag]) -> f64 {
         let res = 1.0
-            - (enemy.resistance - bonus.get(&Stats::ResPenalty_).cloned().unwrap_or_default())
-                / 100.0;
+            - ((enemy.resistance - bonus.get(&Stats::ResPenalty_).cloned().unwrap_or_default())
+                / 100.0
+                - self.eidolon_6(tags));
         res
     }
 
@@ -91,21 +95,80 @@ impl Acheron {
     fn dmg_boost(
         &self,
         bonus: &HashMap<Stats, f64>,
-        battle_conditions: &Vec<BattleConditionEnum>,
+        battle_conditions: &[BattleConditionEnum],
     ) -> f64 {
         1.0 + bonus.get(&Stats::DmgBoost_).cloned().unwrap_or_default() / 100.0
             + self.crinsom_knot_bonus(battle_conditions)
     }
 
+    fn crit_dmg(
+        &self,
+        battle_conditions: &[BattleConditionEnum],
+        bonus: &HashMap<Stats, f64>,
+    ) -> f64 {
+        let mut crit = CritEnum::Avg;
+        for condition in battle_conditions {
+            match condition {
+                BattleConditionEnum::CriticalHit(crit_enum) => crit = crit_enum.clone(),
+                _ => (),
+            }
+        }
+        let crit_rate = match crit {
+            CritEnum::NoCrit => 0.0,
+            CritEnum::Avg => {
+                (bonus.get(&Stats::CritRate_).cloned().unwrap_or_default()
+                    + self.character.critical_chance)
+                    / 100.0
+                    + self.eidolon_1()
+            }
+            CritEnum::Crit => 1.0,
+        };
+        let ret = crit_rate
+            * (1.0
+                + (bonus.get(&Stats::CritDmg_).cloned().unwrap_or_default()
+                    + self.character.critical_damage)
+                    / 100.0);
+        if crit == CritEnum::NoCrit {
+            1.0
+        } else {
+            ret
+        }
+    }
+
+    fn def(&self, enemy: &Enemy, bonus: &HashMap<Stats, f64>) -> f64 {
+        let def = 1.0
+            - ((self.character._character.level + 20) as f64)
+                / ((enemy.level + 20) as f64
+                    * (1.0
+                        - bonus
+                            .get(&Stats::DefReduction_)
+                            .cloned()
+                            .unwrap_or_default()
+                            / 100.0
+                        - bonus.get(&Stats::DefIgnore_).cloned().unwrap_or_default() / 100.0)
+                    + (self.character._character.level + 20) as f64);
+        def
+    }
+
     pub fn base_stats_and_bonus(
         &self,
         relics: &Relics,
-        tags: &Vec<Tag>,
-        battle_conditions: &Vec<BattleConditionEnum>,
+        tags: &[Tag],
+        battle_conditions: &[BattleConditionEnum],
     ) -> Result<(HashMap<Stats, f64>, HashMap<Stats, f64>)> {
         let mut bonus = relics.calculate_bonus_before_battle(&tags)?;
         for (s, b) in &self.character.stat_bonus {
             *bonus.entry(s.clone()).or_default() += b;
+        }
+        let initial_light_cone_bonus = self
+            .light_cone
+            .as_ref()
+            .map(|lc| lc.get_bonus_before_battle())
+            .transpose()?;
+        if let Some(lc_bonus) = initial_light_cone_bonus {
+            for (s, b) in lc_bonus {
+                *bonus.entry(s.clone()).or_default() += b;
+            }
         }
         let base_stats = self.calculate_stats(&bonus);
         let bonus_during_battle =
@@ -116,7 +179,7 @@ impl Acheron {
         let light_cone_bonus = self
             .light_cone
             .as_ref()
-            .map(|lc| lc.get_bonus(&tags, &battle_conditions))
+            .map(|lc| lc.get_bonus_during_battle(&tags, &base_stats, &battle_conditions))
             .transpose()?;
         if let Some(lc_bonus) = light_cone_bonus {
             for (stat, val) in lc_bonus {
@@ -189,11 +252,41 @@ impl Acheron {
         base_stats
     }
 
+    fn eidolon_1(&self) -> f64 {
+        if self.character._character.eidolon >= 1 {
+            return 0.18;
+        } else {
+            return 0.0;
+        }
+    }
+
+    fn eidolon_4(&self) -> f64 {
+        if self.character._character.eidolon >= 4 {
+            return 0.08;
+        } else {
+            return 0.0;
+        }
+    }
+
+    fn eidolon_6(&self, tags: &[Tag]) -> f64 {
+        if self.character._character.eidolon >= 6 && tags.contains(&Tag::Ultimate) {
+            return 20.0;
+        } else {
+            return 0.0;
+        }
+    }
+
+    fn eidolon_6_tags(&self, tags: &mut Vec<Tag>) {
+        if self.character._character.eidolon >= 6 {
+            tags.push(Tag::Ultimate);
+        }
+    }
+
     fn rainblade(
         &self,
         relics: &Relics,
         enemy: &Enemy,
-        battle_conditions: &Vec<BattleConditionEnum>,
+        battle_conditions: &[BattleConditionEnum],
     ) -> Result<f64> {
         let tags = vec![Tag::Lightning, Tag::Ultimate];
         let (base_stats, mut bonus) =
@@ -211,14 +304,14 @@ impl Acheron {
         let weaken = self.weaken(&bonus);
         let def = self.def(enemy, &bonus);
         *bonus.entry(Stats::ResPenalty_).or_default() += self.talent();
-        let res = self.res(enemy, &bonus);
-        let vul = self.vul(&bonus);
+        let res = self.res(enemy, &bonus, &tags);
+        let vul = self.vul(&bonus) + self.eidolon_4();
         let dmg_mit = self.dmg_mit(enemy)?;
         let broken = self.toughness(battle_conditions);
         Ok(base_dmg * crit * dmg_boost * weaken * def * res * vul * dmg_mit * broken)
     }
 
-    fn the_abyss_multiplier(&self, battle_conditions: &Vec<BattleConditionEnum>) -> f64 {
+    fn the_abyss_multiplier(&self, battle_conditions: &[BattleConditionEnum]) -> f64 {
         let mut num_same_path = 0;
         for condition in battle_conditions {
             match condition {
@@ -228,9 +321,10 @@ impl Acheron {
                 _ => (),
             }
         }
-        if self.character._character.eidolon == 6 {
+        if self.character._character.eidolon >= 2 {
             num_same_path += 1;
         }
+        num_same_path = std::cmp::min(2, num_same_path);
         let the_abyss = match self.character._character.traces.ability_2 {
             true => [1.0, 1.15, 1.6][num_same_path as usize],
             false => 1.0,
@@ -242,13 +336,11 @@ impl Acheron {
         &self,
         relics: &Relics,
         enemy: &Enemy,
-        battle_conditions: &Vec<BattleConditionEnum>,
+        battle_conditions: &[BattleConditionEnum],
     ) -> Result<f64> {
-        let (base_stats, mut bonus) = self.base_stats_and_bonus(
-            relics,
-            &vec![Tag::Lightning, Tag::Ultimate],
-            battle_conditions,
-        )?;
+        let tags = vec![Tag::Lightning, Tag::Ultimate];
+        let (base_stats, mut bonus) =
+            self.base_stats_and_bonus(relics, &tags, battle_conditions)?;
         let ability_multiplier = [
             0.0, 0.0900, 0.0960, 0.1020, 0.1080, 0.1140, 0.1200, 0.1275, 0.1350, 0.1425, 0.1500,
             0.1560, 0.1620, 0.1680, 0.1740, 0.1800,
@@ -276,8 +368,8 @@ impl Acheron {
         let weaken = self.weaken(&bonus);
         let def = self.def(enemy, &bonus);
         *bonus.entry(Stats::ResPenalty_).or_default() += self.talent();
-        let res = self.res(enemy, &bonus);
-        let vul = self.vul(&bonus);
+        let res = self.res(enemy, &bonus, &tags);
+        let vul = self.vul(&bonus) + self.eidolon_4();
         let dmg_mit = self.dmg_mit(enemy)?;
         let broken = self.toughness(battle_conditions);
         Ok(base_dmg * crit * dmg_boost * weaken * def * res * vul * dmg_mit * broken)
@@ -287,13 +379,11 @@ impl Acheron {
         &self,
         relics: &Relics,
         enemy: &Enemy,
-        battle_conditions: &Vec<BattleConditionEnum>,
+        battle_conditions: &[BattleConditionEnum],
     ) -> Result<f64> {
-        let (base_stats, mut bonus) = self.base_stats_and_bonus(
-            relics,
-            &vec![Tag::Lightning, Tag::Ultimate],
-            battle_conditions,
-        )?;
+        let tags = vec![Tag::Lightning, Tag::Ultimate];
+        let (base_stats, mut bonus) =
+            self.base_stats_and_bonus(relics, &tags, battle_conditions)?;
         let ability_multiplier = [
             0.0, 0.7200, 0.7680, 0.8160, 0.8640, 0.9120, 0.9600, 1.0200, 1.0800, 1.1400, 1.2000,
             1.2480, 1.2960, 1.3440, 1.3920, 1.4400,
@@ -307,8 +397,8 @@ impl Acheron {
         let weaken = self.weaken(&bonus);
         let def = self.def(enemy, &bonus);
         *bonus.entry(Stats::ResPenalty_).or_default() += self.talent();
-        let res = self.res(enemy, &bonus);
-        let vul = self.vul(&bonus);
+        let res = self.res(enemy, &bonus, &tags);
+        let vul = self.vul(&bonus) + self.eidolon_4();
         let dmg_mit = self.dmg_mit(enemy)?;
         let broken = self.toughness(battle_conditions);
         Ok(base_dmg * crit * dmg_boost * weaken * def * res * vul * dmg_mit * broken)
@@ -318,13 +408,11 @@ impl Acheron {
         &self,
         relics: &Relics,
         enemy: &Enemy,
-        battle_conditions: &Vec<BattleConditionEnum>,
+        battle_conditions: &[BattleConditionEnum],
     ) -> Result<f64> {
-        let (base_stats, mut bonus) = self.base_stats_and_bonus(
-            relics,
-            &vec![Tag::Lightning, Tag::Ultimate],
-            battle_conditions,
-        )?;
+        let tags = vec![Tag::Lightning, Tag::Ultimate];
+        let (base_stats, mut bonus) =
+            self.base_stats_and_bonus(relics, &tags, battle_conditions)?;
         let ability_multiplier = if self.character._character.traces.ability_3 {
             0.25
         } else {
@@ -339,8 +427,8 @@ impl Acheron {
         let weaken = self.weaken(&bonus);
         let def = self.def(enemy, &bonus);
         *bonus.entry(Stats::ResPenalty_).or_default() += self.talent();
-        let res = self.res(enemy, &bonus);
-        let vul = self.vul(&bonus);
+        let res = self.res(enemy, &bonus, &tags);
+        let vul = self.vul(&bonus) + self.eidolon_4();
         let dmg_mit = self.dmg_mit(enemy)?;
         let broken = self.toughness(battle_conditions);
         Ok(base_dmg * crit * dmg_boost * weaken * def * res * vul * dmg_mit * broken)
@@ -350,7 +438,7 @@ impl Acheron {
         &self,
         relics: &Relics,
         enemy: &Enemy,
-        battle_conditions: &Vec<BattleConditionEnum>,
+        battle_conditions: &[BattleConditionEnum],
     ) -> Result<f64> {
         let rainblade = self.rainblade(relics, enemy, battle_conditions)?;
         let crinsom_knot = self.crimson_knot(relics, enemy, battle_conditions)?;
@@ -359,7 +447,7 @@ impl Acheron {
         Ok(rainblade * 3.0 + crinsom_knot * 9.0 + bounce_atk * 6.0 + stygian_resurge * 3.0)
     }
 
-    fn crinsom_knot_bonus(&self, battle_conditions: &Vec<BattleConditionEnum>) -> f64 {
+    fn crinsom_knot_bonus(&self, battle_conditions: &[BattleConditionEnum]) -> f64 {
         let mut crinsom_knot_bonus_stack = 0;
         for condition in battle_conditions {
             match condition {
@@ -377,59 +465,92 @@ impl Acheron {
     }
 
     fn talent(&self) -> f64 {
-        let scale = vec![
+        let resistance_penalty_scale = vec![
             0.0, 10.00, 11.00, 12.00, 13.00, 14.00, 15.00, 16.25, 17.50, 18.75, 20.00, 21.00,
             22.00, 23.00, 24.00, 25.00,
         ];
-        scale[self.character._character.skills.talent as usize]
+        resistance_penalty_scale[self.character._character.skills.talent as usize]
     }
 
-    fn crit_dmg(
+    fn skill_main_target(
         &self,
-        battle_conditions: &Vec<BattleConditionEnum>,
-        bonus: &HashMap<Stats, f64>,
-    ) -> f64 {
-        let mut crit = CritEnum::Avg;
-        for condition in battle_conditions {
-            match condition {
-                BattleConditionEnum::CriticalHit(crit_enum) => crit = crit_enum.clone(),
-                _ => (),
-            }
-        }
-        let crit_rate = match crit {
-            CritEnum::NoCrit => 0.0,
-            CritEnum::Avg => {
-                (bonus.get(&Stats::CritRate_).cloned().unwrap_or_default()
-                    + self.character.critical_chance)
-                    / 100.0
-            }
-            CritEnum::Crit => 1.0,
-        };
-        let ret = crit_rate
-            * (1.0
-                + (bonus.get(&Stats::CritDmg_).cloned().unwrap_or_default()
-                    + self.character.critical_damage)
-                    / 100.0);
-        if crit == CritEnum::NoCrit {
-            1.0
-        } else {
-            ret
-        }
+        relics: &Relics,
+        enemy: &Enemy,
+        battle_conditions: &[BattleConditionEnum],
+    ) -> Result<f64> {
+        let mut tags = vec![Tag::Lightning, Tag::Skill];
+        self.eidolon_6_tags(&mut tags);
+        let (base_stats, bonus) = self.base_stats_and_bonus(relics, &tags, battle_conditions)?;
+        let ability_multiplier = [
+            0.0, 0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.3, 1.4, 1.5, 1.6, 1.68, 1.76, 1.84, 1.92, 2.0,
+        ][self.character._character.skills.skill as usize];
+        let the_abyss = self.the_abyss_multiplier(battle_conditions);
+        let base_dmg = ability_multiplier
+            * base_stats.get(&Stats::Atk).cloned().unwrap_or_default()
+            * the_abyss;
+        let crit = self.crit_dmg(battle_conditions, &bonus);
+        let dmg_boost = self.dmg_boost(&bonus, battle_conditions);
+        let weaken = self.weaken(&bonus);
+        let def = self.def(enemy, &bonus);
+        let res = self.res(enemy, &bonus, &tags);
+        let vul = self.vul(&bonus);
+        let dmg_mit = self.dmg_mit(enemy)?;
+        let broken = self.toughness(battle_conditions);
+        Ok(base_dmg * crit * dmg_boost * weaken * def * res * vul * dmg_mit * broken)
     }
 
-    fn def(&self, enemy: &Enemy, bonus: &HashMap<Stats, f64>) -> f64 {
-        let def = 1.0
-            - ((self.character._character.level + 20) as f64)
-                / ((enemy.level + 20) as f64
-                    * (1.0
-                        - bonus
-                            .get(&Stats::DefReduction_)
-                            .cloned()
-                            .unwrap_or_default()
-                            / 100.0
-                        - bonus.get(&Stats::DefIgnore_).cloned().unwrap_or_default() / 100.0)
-                    + (self.character._character.level + 20) as f64);
-        def
+    fn skill_adjacent_target(
+        &self,
+        relics: &Relics,
+        enemy: &Enemy,
+        battle_conditions: &[BattleConditionEnum],
+    ) -> Result<f64> {
+        let mut tags = vec![Tag::Lightning, Tag::Skill];
+        self.eidolon_6_tags(&mut tags);
+        let (base_stats, bonus) = self.base_stats_and_bonus(relics, &tags, battle_conditions)?;
+        let ability_multiplier = [
+            0.0, 0.3, 0.33, 0.36, 0.39, 0.42, 0.45, 0.4875, 0.525, 0.5625, 0.6, 0.63, 0.66, 0.69,
+            0.72, 0.75,
+        ][self.character._character.skills.skill as usize];
+        let the_abyss = self.the_abyss_multiplier(battle_conditions);
+        let base_dmg = ability_multiplier
+            * base_stats.get(&Stats::Atk).cloned().unwrap_or_default()
+            * the_abyss;
+        let crit = self.crit_dmg(battle_conditions, &bonus);
+        let dmg_boost = self.dmg_boost(&bonus, battle_conditions);
+        let weaken = self.weaken(&bonus);
+        let def = self.def(enemy, &bonus);
+        let res = self.res(enemy, &bonus, &tags);
+        let vul = self.vul(&bonus);
+        let dmg_mit = self.dmg_mit(enemy)?;
+        let broken = self.toughness(battle_conditions);
+        Ok(base_dmg * crit * dmg_boost * weaken * def * res * vul * dmg_mit * broken)
+    }
+
+    fn basic_attack(
+        &self,
+        relics: &Relics,
+        enemy: &Enemy,
+        battle_conditions: &[BattleConditionEnum],
+    ) -> Result<f64> {
+        let mut tags = vec![Tag::Lightning, Tag::BasicAtk];
+        self.eidolon_6_tags(&mut tags);
+        let (base_stats, bonus) = self.base_stats_and_bonus(relics, &tags, battle_conditions)?;
+        let ability_multiplier = [0.0, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3]
+            [self.character._character.skills.skill as usize];
+        let the_abyss = self.the_abyss_multiplier(battle_conditions);
+        let base_dmg = ability_multiplier
+            * base_stats.get(&Stats::Atk).cloned().unwrap_or_default()
+            * the_abyss;
+        let crit = self.crit_dmg(battle_conditions, &bonus);
+        let dmg_boost = self.dmg_boost(&bonus, battle_conditions);
+        let weaken = self.weaken(&bonus);
+        let def = self.def(enemy, &bonus);
+        let res = self.res(enemy, &bonus, &tags);
+        let vul = self.vul(&bonus);
+        let dmg_mit = self.dmg_mit(enemy)?;
+        let broken = self.toughness(battle_conditions);
+        Ok(base_dmg * crit * dmg_boost * weaken * def * res * vul * dmg_mit * broken)
     }
 }
 
@@ -485,6 +606,42 @@ mod tests {
         assert_eq!(
             acheron.evaluate(&relics, &enemy, &target, &battle_conditions)?,
             4668.68834164872
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_skill_main_target() -> Result<()> {
+        let (acheron, relics, enemy, battle_conditions) = setup();
+        let target = "SKILL_MAIN_TARGET".to_string();
+
+        assert_eq!(
+            acheron.evaluate(&relics, &enemy, &target, &battle_conditions)?,
+            23589.162147277733
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_skill_adjacent_target() -> Result<()> {
+        let (acheron, relics, enemy, battle_conditions) = setup();
+        let target = "SKILL_ADJACENT_TARGET".to_string();
+
+        assert_eq!(
+            acheron.evaluate(&relics, &enemy, &target, &battle_conditions)?,
+            8845.935805229152
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_basic_attack() -> Result<()> {
+        let (acheron, relics, enemy, battle_conditions) = setup();
+        let target = "BASIC_ATTACK".to_string();
+
+        assert_eq!(
+            acheron.evaluate(&relics, &enemy, &target, &battle_conditions)?,
+            20443.940527640705
         );
         Ok(())
     }
@@ -738,14 +895,27 @@ mod tests {
             dmg_mitigation: vec![],
         };
         let battle_conditions = vec![
-            BattleConditionEnum::AfterUsingSkill,
-            BattleConditionEnum::AfterUsingUltimate,
+            BattleConditionEnum::AfterUsingSkill {
+                number_of_turns_since_using_the_skill: 1,
+            },
+            BattleConditionEnum::AfterUsingUltimate {
+                next_attack_after_ultimate: false,
+                number_of_turns_since_using_ultimate: 0,
+                next_skill_after_ultimate: false,
+            },
             BattleConditionEnum::AfterWearerAttack { number_of_times: 3 },
-            BattleConditionEnum::AfterWearerIsHit { number_of_times: 2 },
+            BattleConditionEnum::AfterWearerIsHit {
+                number_of_times: 2,
+                within_number_of_turns: 1,
+            },
             BattleConditionEnum::AfterAttackingDebuffedEnemy,
-            BattleConditionEnum::AfterWearerInflictingDebuffs,
+            BattleConditionEnum::AfterWearerInflictingDebuffs {
+                number_of_times: 1,
+                within_number_of_turns: 1,
+            },
             BattleConditionEnum::WhenAttackingEnemyWithDebuff {
                 number_of_debuffs_enemy_has: 3,
+                within_number_of_turns: 1,
             },
             BattleConditionEnum::TeammatesSamePathWithWearer {
                 number_of_teammates_having_same_path: 1,
