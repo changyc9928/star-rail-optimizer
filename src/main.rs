@@ -1,6 +1,6 @@
 use crate::{
-    character::AcheronEvaluationTarget,
-    domain::{RelicSetConfig, ScannerInput},
+    character::{AcheronEvaluationTarget, Support},
+    domain::{LightConePassiveConfig, Path, RelicSetConfig, ScannerInput},
 };
 use character::{Acheron, Evaluator};
 use client::project_yatta_client::ProjectYattaClient;
@@ -50,18 +50,21 @@ async fn main() -> Result<()> {
     //         .ok_or_else(|| eyre!("Acheron's light cone not found"))?,
     // )
     // .await?;
+    let mut light_cone = light_cones
+        .get("light_cone_10")
+        .ok_or_else(|| eyre!("Acheron's light cone not found"))?
+        .clone();
+    light_cone.config = LightConePassiveConfig {
+        stack_21001: 2,
+        ..Default::default()
+    };
     let a_evaluator: Arc<dyn Evaluator<Target = AcheronEvaluationTarget> + Send + Sync> =
         Arc::new(Acheron {
             character: characters
                 .get("1308")
                 .ok_or_else(|| eyre!("Acheron not found"))?
                 .clone(),
-            light_cone: Some(
-                light_cones
-                    .get("light_cone_10")
-                    .ok_or_else(|| eyre!("Acheron's light cone not found"))?
-                    .clone(),
-            ),
+            light_cone: Some(light_cone),
             crimson_knot: 9,
             crit: domain::CritEnum::Avg,
             thunder_core_bonus_stack: 3,
@@ -111,6 +114,22 @@ async fn main() -> Result<()> {
     //     BattleConditionEnum::AfterHittingEnemyWithCrinsomKnot { number_of_times: 3 },
     // ];
 
+    struct Pela {}
+
+    impl Support for Pela {
+        fn get_path(&self) -> Path {
+            Path::Nihility
+        }
+    }
+
+    struct Jiaoqiu {}
+
+    impl Support for Jiaoqiu {
+        fn get_path(&self) -> Path {
+            Path::Nihility
+        }
+    }
+
     let simulated_annealing = SimulatedAnnealing {
         initial_temp: 1000.0,
         cooling_rate: 0.99,
@@ -118,23 +137,23 @@ async fn main() -> Result<()> {
         aggresive_factor: 0.9,
         relic_pool: relic_pool.clone(),
         evaluator: a_evaluator.clone(),
-        teammates: vec![],
+        teammates: vec![Box::new(Pela {}), Box::new(Jiaoqiu {})],
         enemy: enemy.clone(),
         target: AcheronEvaluationTarget::UltimateAoe,
     };
 
     let optimizer = Optimizer {
         relic_pool,
-        generation: 25,
+        generation: 50,
         population_size: 1000,
-        mutation_rate: 0.1,
+        mutation_rate: 0.2,
         crossover_rate: 0.7,
         evaluator: a_evaluator,
         enable_sa: false,
         simulated_annealing,
         enemy,
         target: AcheronEvaluationTarget::UltimateAoe,
-        teammates: vec![],
+        teammates: vec![Box::new(Pela {}), Box::new(Jiaoqiu {})],
         relic_set_config: RelicSetConfig {
             activate_102: true,
             activate_104: true,
