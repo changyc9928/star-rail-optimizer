@@ -3,7 +3,9 @@ use crate::{
     client::project_yatta_client::{
         CharacterUpgrade, LightConeUpgrade, ProjectYattaClient, Traces, Upgrade,
     },
-    domain::{Character, CharacterEntity, LightCone, LightConeEntity, Stats},
+    domain::{
+        Character, CharacterEntity, LightCone, LightConeEntity, LightConePassiveConfig, Stats,
+    },
     engine::StatBonusMap,
     utils::trace_title_mapper::title_mapper,
 };
@@ -97,6 +99,7 @@ impl ProjectYattaDataFetcher {
             base_atk: atk,
             base_def: def,
             _light_cone: light_cone.clone(),
+            config: LightConePassiveConfig::default(),
         }
     }
 }

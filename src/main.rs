@@ -1,12 +1,14 @@
-use crate::domain::ScannerInput;
+use crate::{
+    character::AcheronEvaluationTarget,
+    domain::{RelicSetConfig, ScannerInput},
+};
 use character::{Acheron, Evaluator};
 use client::project_yatta_client::ProjectYattaClient;
 use data_fetcher::project_yatta_data_fetcher::ProjectYattaDataFetcher;
-use domain::{BattleConditionEnum, CritEnum, Enemy};
+use domain::Enemy;
 use engine::{optimizer::Optimizer, simulated_annealing::SimulatedAnnealing};
 use eyre::{eyre, Result};
 use service::scanner_parser_service::ScannerParserService;
-use simulator::run;
 use std::{collections::HashMap, fs, sync::Arc};
 use tokio::sync::Mutex;
 
@@ -16,7 +18,6 @@ mod data_fetcher;
 mod domain;
 mod engine;
 mod service;
-mod simulator;
 mod utils;
 
 #[tokio::main]
@@ -49,56 +50,66 @@ async fn main() -> Result<()> {
     //         .ok_or_else(|| eyre!("Acheron's light cone not found"))?,
     // )
     // .await?;
-    let a_evaluator: Arc<dyn Evaluator + Send + Sync> = Arc::new(Acheron {
-        character: characters
-            .get("1308")
-            .ok_or_else(|| eyre!("Acheron not found"))?
-            .clone(),
-        light_cone: Some(
-            light_cones
-                .get("light_cone_10")
-                .ok_or_else(|| eyre!("Acheron's light cone not found"))?
+    let a_evaluator: Arc<dyn Evaluator<Target = AcheronEvaluationTarget> + Send + Sync> =
+        Arc::new(Acheron {
+            character: characters
+                .get("1308")
+                .ok_or_else(|| eyre!("Acheron not found"))?
                 .clone(),
-        ),
-    });
+            light_cone: Some(
+                light_cones
+                    .get("light_cone_10")
+                    .ok_or_else(|| eyre!("Acheron's light cone not found"))?
+                    .clone(),
+            ),
+            crimson_knot: 9,
+            crit: domain::CritEnum::Avg,
+            thunder_core_bonus_stack: 3,
+            activate_eidolon_1: false,
+        });
     let enemy = Enemy {
-        level: 82,
+        level: 80,
         resistance: 0.0,
         dmg_mitigation: vec![],
+        def_bonus: 0.0,
+        vulnerability: 0.0,
+        toughness_break: false,
+        weaken: 0.0,
     };
-    let battle_conditions = vec![
-        BattleConditionEnum::AfterUsingSkill {
-            number_of_turns_since_using_the_skill: 1,
-        },
-        BattleConditionEnum::AfterUsingUltimate {
-            next_attack_after_ultimate: false,
-            next_skill_after_ultimate: false,
-            number_of_turns_since_using_ultimate: 1,
-        },
-        BattleConditionEnum::AfterWearerAttack { number_of_times: 3 },
-        BattleConditionEnum::AfterWearerIsHit {
-            number_of_times: 2,
-            within_number_of_turns: 1,
-        },
-        BattleConditionEnum::AfterAttackingDebuffedEnemy,
-        BattleConditionEnum::AfterWearerInflictingDebuffs {
-            number_of_times: 1,
-            within_number_of_turns: 1,
-        },
-        BattleConditionEnum::WhenAttackingEnemyWithDebuff {
-            number_of_debuffs_enemy_has: 3,
-            within_number_of_turns: 1,
-        },
-        BattleConditionEnum::TeammatesSamePathWithWearer {
-            number_of_teammates_having_same_path: 1,
-        },
-        BattleConditionEnum::HittingEnemyWithCrimsonKnot {
-            number_of_crinsom_knot_enemy_has: 3,
-        },
-        BattleConditionEnum::CriticalHit(CritEnum::Avg),
-        BattleConditionEnum::ToughnessBreak(true),
-        BattleConditionEnum::AfterHittingEnemyWithCrinsomKnot { number_of_times: 3 },
-    ];
+
+    // let battle_conditions = vec![
+    //     BattleConditionEnum::AfterUsingSkill {
+    //         number_of_turns_since_using_the_skill: 1,
+    //     },
+    //     BattleConditionEnum::AfterUsingUltimate {
+    //         next_attack_after_ultimate: false,
+    //         next_skill_after_ultimate: false,
+    //         number_of_turns_since_using_ultimate: 1,
+    //     },
+    //     BattleConditionEnum::AfterWearerAttack { number_of_times: 3 },
+    //     BattleConditionEnum::AfterWearerIsHit {
+    //         number_of_times: 2,
+    //         within_number_of_turns: 1,
+    //     },
+    //     BattleConditionEnum::AfterAttackingDebuffedEnemy,
+    //     BattleConditionEnum::AfterWearerInflictingDebuffs {
+    //         number_of_times: 1,
+    //         within_number_of_turns: 1,
+    //     },
+    //     BattleConditionEnum::WhenAttackingEnemyWithDebuff {
+    //         number_of_debuffs_enemy_has: 3,
+    //         within_number_of_turns: 1,
+    //     },
+    //     BattleConditionEnum::TeammatesSamePathWithWearer {
+    //         number_of_teammates_having_same_path: 1,
+    //     },
+    //     BattleConditionEnum::HittingEnemyWithCrimsonKnot {
+    //         number_of_crinsom_knot_enemy_has: 3,
+    //     },
+    //     BattleConditionEnum::CriticalHit(CritEnum::Avg),
+    //     BattleConditionEnum::ToughnessBreak(true),
+    //     BattleConditionEnum::AfterHittingEnemyWithCrinsomKnot { number_of_times: 3 },
+    // ];
 
     let simulated_annealing = SimulatedAnnealing {
         initial_temp: 1000.0,
@@ -107,9 +118,9 @@ async fn main() -> Result<()> {
         aggresive_factor: 0.9,
         relic_pool: relic_pool.clone(),
         evaluator: a_evaluator.clone(),
-        battle_conditions: battle_conditions.clone(),
+        teammates: vec![],
         enemy: enemy.clone(),
-        target: "FULL_ULTIMATE_ON_THREE_ENEMIES".to_string(),
+        target: AcheronEvaluationTarget::UltimateAoe,
     };
 
     let optimizer = Optimizer {
@@ -121,9 +132,32 @@ async fn main() -> Result<()> {
         evaluator: a_evaluator,
         enable_sa: false,
         simulated_annealing,
-        battle_conditions,
         enemy,
-        target: "FULL_ULTIMATE_ON_THREE_ENEMIES".to_string(),
+        target: AcheronEvaluationTarget::UltimateAoe,
+        teammates: vec![],
+        relic_set_config: RelicSetConfig {
+            activate_102: true,
+            activate_104: true,
+            stack_105: 5,
+            activate_107: true,
+            activate_108: true,
+            activate_109: true,
+            activate_112_1: true,
+            activate_112_2: true,
+            stack_113: 5,
+            stack_115: 5,
+            stack_116: 5,
+            activate_117_2pcs: true,
+            stack_117: 5,
+            activate_117_4pcs_extra: true,
+            activate_120: true,
+            activate_122: true,
+            activate_305: true,
+            stack_313: 5,
+            stack_315: 5,
+            activate_316: true,
+            activate_318: true,
+        },
     };
 
     println!("----------------- Optimizing Character -----------------");

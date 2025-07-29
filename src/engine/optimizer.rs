@@ -1,7 +1,7 @@
 use super::simulated_annealing::SimulatedAnnealing;
 use crate::{
-    character::Evaluator,
-    domain::{BattleConditionEnum, Enemy, Relic, Relics, Slot},
+    character::{Evaluator, Support},
+    domain::{Enemy, Relic, RelicSetConfig, Relics, Slot},
 };
 use core::f64;
 use eyre::{OptionExt, Result};
@@ -14,6 +14,7 @@ use rayon::prelude::*;
 use std::{
     cmp::{min, Ordering},
     collections::HashMap,
+    fmt::Display,
     sync::Arc,
 };
 use strum::IntoEnumIterator;
@@ -21,7 +22,7 @@ use tracing::info;
 
 /// `Optimizer` struct used for optimizing relic sets in the context of a game or simulation.
 /// It performs evolutionary optimization to find the best combination of relics based on the provided `Evaluator`.
-pub struct Optimizer {
+pub struct Optimizer<T> {
     /// A mapping of slots to a vector of possible relics for each slot.
     pub relic_pool: HashMap<Slot, Vec<Relic>>,
     /// The number of generations to run the optimization process.
@@ -33,27 +34,25 @@ pub struct Optimizer {
     /// The probability of performing crossover between parent relic sets.
     pub crossover_rate: f64,
     /// An `Evaluator` instance used to evaluate the fitness of relic sets.
-    pub evaluator: Arc<dyn Evaluator + Sync + Send>,
+    pub evaluator: Arc<dyn Evaluator<Target = T> + Sync + Send>,
     pub enable_sa: bool,
-    pub simulated_annealing: SimulatedAnnealing,
+    pub simulated_annealing: SimulatedAnnealing<T>,
 
-    pub target: String,
+    pub target: T,
     pub enemy: Enemy,
-    pub battle_conditions: Vec<BattleConditionEnum>,
+    pub teammates: Vec<Box<dyn Support>>,
+    pub relic_set_config: RelicSetConfig,
 }
 
-impl Optimizer {
+impl<T: Sync + Display> Optimizer<T> {
     // Helper method to calculate fitness sum
     #[allow(dead_code)]
     fn total_fitness(&self, population: &[Relics]) -> Result<f64> {
         let mut total = 0.0;
         for individual in population {
-            let fitness = self.evaluator.evaluate(
-                individual,
-                &self.enemy,
-                &self.target,
-                &self.battle_conditions,
-            )?;
+            let fitness =
+                self.evaluator
+                    .evaluate(individual, &self.enemy, &self.target, &self.teammates)?;
             total += fitness;
         }
         Ok(total)
@@ -72,12 +71,9 @@ impl Optimizer {
 
         // Calculate cumulative probabilities
         for individual in population {
-            let fitness = self.evaluator.evaluate(
-                individual,
-                &self.enemy,
-                &self.target,
-                &self.battle_conditions,
-            )?;
+            let fitness =
+                self.evaluator
+                    .evaluate(individual, &self.enemy, &self.target, &self.teammates)?;
             cumulative_sum += fitness / total_fitness;
             cumulative_probabilities.push(cumulative_sum);
         }
@@ -99,9 +95,9 @@ impl Optimizer {
     fn evaluation(&self, x: &Relics, y: &Relics) -> Ordering {
         match (
             self.evaluator
-                .evaluate(x, &self.enemy, &self.target, &self.battle_conditions),
+                .evaluate(x, &self.enemy, &self.target, &self.teammates),
             self.evaluator
-                .evaluate(y, &self.enemy, &self.target, &self.battle_conditions),
+                .evaluate(y, &self.enemy, &self.target, &self.teammates),
         ) {
             (Ok(x_val), Ok(y_val)) => x_val.partial_cmp(&y_val).unwrap(),
             _ => f64::MIN.partial_cmp(&f64::MIN).unwrap(),
@@ -193,7 +189,7 @@ impl Optimizer {
                         &best_individual,
                         &self.enemy,
                         &self.target,
-                        &self.battle_conditions,
+                        &self.teammates,
                     )?;
                     info!(
                         "Generation {generation}, before SA, Highest {}: {}",
@@ -208,7 +204,7 @@ impl Optimizer {
                         &best_individual,
                         &self.enemy,
                         &self.target,
-                        &self.battle_conditions,
+                        &self.teammates,
                     )?;
                     info!(
                         "Generation {generation}, after SA, Highest {}: {}",
@@ -229,7 +225,7 @@ impl Optimizer {
                 best_combination,
                 &self.enemy,
                 &self.target,
-                &self.battle_conditions,
+                &self.teammates,
             )?;
             info!(
                 "Generation {} Highest {}: {}",
@@ -267,7 +263,10 @@ impl Optimizer {
             })
             .collect();
 
-        Relics { relics }
+        Relics {
+            relics,
+            config: self.relic_set_config.clone(),
+        }
     }
 
     /// Performs crossover between two parent relic sets to produce two child relic sets.
@@ -310,7 +309,16 @@ impl Optimizer {
             child2.extend_from_slice(&parent2.relics[min_length..]);
         }
 
-        Ok(vec![Relics { relics: child1 }, Relics { relics: child2 }])
+        Ok(vec![
+            Relics {
+                relics: child1,
+                config: self.relic_set_config.clone(),
+            },
+            Relics {
+                relics: child2,
+                config: self.relic_set_config.clone(),
+            },
+        ])
     }
 
     /// Applies mutation to a relic set by randomly changing some of its relics.

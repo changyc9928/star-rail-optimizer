@@ -1,7 +1,9 @@
 use super::DataFetcher;
 use crate::{
     client::hoyowiki_client::HoyowikiClient,
-    domain::{Character, CharacterEntity, LightCone, LightConeEntity, Path, Stats},
+    domain::{
+        Character, CharacterEntity, LightCone, LightConeEntity, LightConePassiveConfig, Path, Stats,
+    },
     engine::StatBonusMap,
     utils::trace_title_mapper::title_mapper,
 };
@@ -333,6 +335,7 @@ impl HoyowikiDataFetcherService {
             base_atk: calc_base_stat(atk_lo, atk_hi, lo)?,
             base_def: calc_base_stat(def_lo, def_hi, lo)?,
             _light_cone: light_cone.clone(),
+            config: LightConePassiveConfig::default(),
         })
     }
 

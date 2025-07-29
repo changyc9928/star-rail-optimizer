@@ -106,20 +106,6 @@ pub enum BattleConditionEnum {
     Mischievous(u64),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum CritEnum {
-    Crit,
-    NoCrit,
-    Avg,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum CarveTheMoonWeaveTheCloudEffect {
-    Atk,
-    CritDmg,
-    EnergyRegen,
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct DebuffStack {
     pub debuff: String,

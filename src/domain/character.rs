@@ -86,3 +86,39 @@ impl CharacterTraces {
         }
     }
 }
+
+#[derive(PartialEq, Eq)]
+pub enum AttackType {
+    Lightning,
+    Physical,
+    Wind,
+    Fire,
+    Ice,
+    Imaginary,
+    Quantum,
+}
+
+#[derive(PartialEq, Eq)]
+pub enum SkillType {
+    BasicAttack,
+    Skill,
+    Ultimate,
+    FollowUpAttack,
+}
+
+#[derive(PartialEq, Eq)]
+pub enum DamageType {
+    Normal,
+    RealDamage,
+    ExtraDamage,
+    DamageOnTime,
+    BreakDamage,
+    SuperBreakDamage,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
+pub enum CritEnum {
+    Crit,
+    NoCrit,
+    Avg,
+}

@@ -2,40 +2,84 @@ use eyre::{eyre, Result};
 use itertools::Itertools;
 use std::{cmp::min, collections::HashMap};
 
-use super::{battle_condition::BattleConditionEnum, Relic, Stats, Tag};
+use crate::{
+    character::Support,
+    domain::{AttackType, DamageType, Path, SkillType},
+};
+
+use super::{Relic, Stats};
 
 #[derive(Clone, Debug)]
 pub struct Relics {
     pub relics: Vec<Relic>,
+    pub config: RelicSetConfig,
+}
+
+#[derive(Clone, Debug)]
+pub struct RelicSetConfig {
+    pub activate_102: bool,
+    pub activate_104: bool,
+    pub stack_105: u8,
+    pub activate_107: bool,
+    pub activate_108: bool,
+    pub activate_109: bool,
+    pub activate_112_1: bool,
+    pub activate_112_2: bool,
+    pub stack_113: u8,
+    pub stack_115: u8,
+    pub stack_116: u8,
+    pub activate_117_2pcs: bool,
+    pub stack_117: u8,
+    pub activate_117_4pcs_extra: bool,
+    pub activate_120: bool,
+    pub activate_122: bool,
+    pub activate_305: bool,
+    pub stack_313: u8,
+    pub stack_315: u8,
+    pub activate_316: bool,
+    pub activate_318: bool,
 }
 
 impl Relics {
-    pub fn calculate_bonus_before_battle(&self, tags: &[Tag]) -> Result<HashMap<Stats, f64>> {
+    pub fn calculate_bonus_before_battle(
+        &self,
+        attack_type: &AttackType,
+    ) -> Result<HashMap<Stats, f64>> {
         let mut bonus = HashMap::new();
-        self.calculate_bonus(tags, &mut bonus)?;
-        self.calculate_set_bonus(tags, &mut bonus)?;
+        self.calculate_bonus(attack_type, &mut bonus)?;
+        self.calculate_set_bonus(attack_type, &mut bonus)?;
         Ok(bonus)
     }
 
-    pub fn calculate_bonus(&self, tags: &[Tag], bonus: &mut HashMap<Stats, f64>) -> Result<()> {
+    pub fn calculate_bonus(
+        &self,
+        attack_type: &AttackType,
+        bonus: &mut HashMap<Stats, f64>,
+    ) -> Result<()> {
         for relic in &self.relics {
             for substat in &relic.substats {
                 *bonus.entry(substat.key.clone()).or_default() += substat.value;
             }
-            if tags.contains(&Tag::Lightning) && relic.mainstat == Stats::LightningDmgBoost_ {
-                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
-            } else if tags.contains(&Tag::Wind) && relic.mainstat == Stats::WindDmgBoost_ {
-                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
-            } else if tags.contains(&Tag::Fire) && relic.mainstat == Stats::FireDmgBoost_ {
-                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
-            } else if tags.contains(&Tag::Ice) && relic.mainstat == Stats::IceDmgBoost_ {
-                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
-            } else if tags.contains(&Tag::Quantum) && relic.mainstat == Stats::QuantumDmgBoost_ {
-                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
-            } else if tags.contains(&Tag::Imaginary) && relic.mainstat == Stats::ImaginaryDmgBoost_
+            if *attack_type == AttackType::Lightning && relic.mainstat == Stats::LightningDmgBoost_
             {
                 *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
-            } else if tags.contains(&Tag::Physical) && relic.mainstat == Stats::PhysicalDmgBoost_ {
+            } else if *attack_type == AttackType::Wind && relic.mainstat == Stats::WindDmgBoost_ {
+                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
+            } else if *attack_type == AttackType::Fire && relic.mainstat == Stats::FireDmgBoost_ {
+                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
+            } else if *attack_type == AttackType::Ice && relic.mainstat == Stats::IceDmgBoost_ {
+                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
+            } else if *attack_type == AttackType::Quantum
+                && relic.mainstat == Stats::QuantumDmgBoost_
+            {
+                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
+            } else if *attack_type == AttackType::Imaginary
+                && relic.mainstat == Stats::ImaginaryDmgBoost_
+            {
+                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
+            } else if *attack_type == AttackType::Physical
+                && relic.mainstat == Stats::PhysicalDmgBoost_
+            {
                 *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
             } else {
                 *bonus.entry(relic.mainstat.clone()).or_default() += relic.get_mainstat()?;
@@ -44,7 +88,11 @@ impl Relics {
         Ok(())
     }
 
-    pub fn calculate_set_bonus(&self, tags: &[Tag], bonus: &mut HashMap<Stats, f64>) -> Result<()> {
+    pub fn calculate_set_bonus(
+        &self,
+        attack_type: &AttackType,
+        bonus: &mut HashMap<Stats, f64>,
+    ) -> Result<()> {
         let count = self.relics.iter().counts_by(|r| r.set_id.clone());
         for (set_id, num_relics) in count {
             match set_id.as_str() {
@@ -67,23 +115,23 @@ impl Relics {
                     }
                 }
                 "104" => {
-                    if num_relics >= 2 && tags.contains(&Tag::Ice) {
+                    if num_relics >= 2 && *attack_type == AttackType::Ice {
                         *bonus.entry(Stats::DmgBoost_).or_default() += 10.0;
                     }
                 }
                 "105" => {
-                    if num_relics >= 2 && tags.contains(&Tag::Physical) {
+                    if num_relics >= 2 && *attack_type == AttackType::Physical {
                         *bonus.entry(Stats::DmgBoost_).or_default() += 10.0;
                     }
                 }
                 "106" => {}
                 "107" => {
-                    if num_relics >= 2 && tags.contains(&Tag::Fire) {
+                    if num_relics >= 2 && *attack_type == AttackType::Fire {
                         *bonus.entry(Stats::DmgBoost_).or_default() += 10.0;
                     }
                 }
                 "108" => {
-                    if num_relics >= 2 && tags.contains(&Tag::Quantum) {
+                    if num_relics >= 2 && *attack_type == AttackType::Quantum {
                         *bonus.entry(Stats::DmgBoost_).or_default() += 10.0;
                     }
                     if num_relics >= 4 {
@@ -91,12 +139,12 @@ impl Relics {
                     }
                 }
                 "109" => {
-                    if num_relics >= 2 && tags.contains(&Tag::Lightning) {
+                    if num_relics >= 2 && *attack_type == AttackType::Lightning {
                         *bonus.entry(Stats::DmgBoost_).or_default() += 10.0;
                     }
                 }
                 "110" => {
-                    if num_relics >= 2 && tags.contains(&Tag::Wind) {
+                    if num_relics >= 2 && *attack_type == AttackType::Wind {
                         *bonus.entry(Stats::DmgBoost_).or_default() += 10.0;
                     }
                 }
@@ -109,7 +157,7 @@ impl Relics {
                     }
                 }
                 "112" => {
-                    if num_relics >= 2 && tags.contains(&Tag::Imaginary) {
+                    if num_relics >= 2 && *attack_type == AttackType::Imaginary {
                         *bonus.entry(Stats::DmgBoost_).or_default() += 10.0;
                     }
                 }
@@ -256,9 +304,12 @@ impl Relics {
 
     pub fn calculate_bonus_during_battle(
         &self,
-        tags: &[Tag],
+        path: Path,
+        attack_type: &AttackType,
+        skill_type: &SkillType,
+        damage_type: &DamageType,
         base_stats: &HashMap<Stats, f64>,
-        battle_condition: &[BattleConditionEnum],
+        teammates: &[Box<dyn Support>],
     ) -> Result<HashMap<Stats, f64>> {
         let mut bonus = HashMap::new();
         let count = self.relics.iter().counts_by(|r| r.set_id.clone());
@@ -266,236 +317,95 @@ impl Relics {
             match set_id.as_str() {
                 "101" => {}
                 "102" => {
-                    if num_relics >= 4 {
-                        if tags.contains(&Tag::BasicAtk) {
-                            *bonus.entry(Stats::DmgBoost_).or_default() += 10.0;
-                        }
+                    if num_relics >= 4
+                        && self.config.activate_102
+                        && *skill_type == SkillType::BasicAttack
+                    {
+                        *bonus.entry(Stats::DmgBoost_).or_default() += 10.0;
                     }
                 }
                 "103" => {}
                 "104" => {
-                    if num_relics >= 4 {
-                        for condition in battle_condition {
-                            match condition {
-                                BattleConditionEnum::AfterUsingUltimate {
-                                    number_of_turns_since_using_ultimate,
-                                    ..
-                                } => {
-                                    if *number_of_turns_since_using_ultimate <= 2 {
-                                        *bonus.entry(Stats::CritDmg_).or_default() += 25.0;
-                                    }
-                                }
-                                _ => {}
-                            }
-                        }
+                    if num_relics >= 4 && self.config.activate_104 {
+                        *bonus.entry(Stats::CritDmg_).or_default() += 25.0;
                     }
                 }
                 "105" => {
                     if num_relics >= 4 {
-                        let mut stack = 0;
-                        for condition in battle_condition {
-                            match condition {
-                                BattleConditionEnum::AfterWearerIsHit {
-                                    number_of_times, ..
-                                } => stack += number_of_times,
-                                BattleConditionEnum::AfterWearerAttack { number_of_times } => {
-                                    stack += number_of_times
-                                }
-                                _ => (),
-                            }
-                        }
-                        stack = min(5, stack);
+                        let stack = min(5, self.config.stack_105);
                         *bonus.entry(Stats::Atk_).or_default() += 5.0 * stack as f64;
                     }
                 }
                 "107" => {
                     if num_relics >= 4 {
-                        if tags.contains(&Tag::Skill) {
+                        if *skill_type == SkillType::Skill {
                             *bonus.entry(Stats::DmgBoost_).or_default() += 12.0;
                         }
-                        if tags.contains(&Tag::Fire) {
-                            for condition in battle_condition {
-                                match condition {
-                                    BattleConditionEnum::AfterUsingUltimate {
-                                        next_attack_after_ultimate,
-                                        ..
-                                    } => {
-                                        if *next_attack_after_ultimate {
-                                            *bonus.entry(Stats::DmgBoost_).or_default() += 12.0;
-                                        }
-                                    }
-                                    _ => (),
-                                }
-                            }
+                        if *attack_type == AttackType::Fire && self.config.activate_107 {
+                            *bonus.entry(Stats::DmgBoost_).or_default() += 12.0;
                         }
                     }
                 }
                 "108" => {
-                    if num_relics >= 4 {
-                        if battle_condition.contains(&BattleConditionEnum::EnemyHasQuantumWeakness)
-                        {
-                            *bonus.entry(Stats::DefIgnore_).or_default() += 10.0;
-                        }
+                    if num_relics >= 4 && self.config.activate_108 {
+                        *bonus.entry(Stats::DefIgnore_).or_default() += 10.0;
                     }
                 }
                 "109" => {
-                    if num_relics >= 4 {
-                        for condition in battle_condition {
-                            match condition {
-                                BattleConditionEnum::AfterUsingSkill {
-                                    number_of_turns_since_using_the_skill,
-                                } => {
-                                    if *number_of_turns_since_using_the_skill <= 1 {
-                                        *bonus.entry(Stats::Atk_).or_default() += 20.0;
-                                    }
-                                }
-                                _ => {}
-                            }
-                        }
+                    if num_relics >= 4 && self.config.activate_109 {
+                        *bonus.entry(Stats::Atk_).or_default() += 20.0;
                     }
                 }
                 "110" => {}
                 "111" => {}
                 "112" => {
                     if num_relics >= 4 {
-                        if battle_condition
-                            .contains(&BattleConditionEnum::AfterAttackingDebuffedEnemy)
-                        {
+                        if self.config.activate_112_1 {
                             *bonus.entry(Stats::CritRate_).or_default() += 10.0;
                         }
-                        if battle_condition
-                            .contains(&BattleConditionEnum::WhenAttackingImprisonedEnemy)
-                        {
+                        if self.config.activate_112_2 {
                             *bonus.entry(Stats::CritDmg_).or_default() += 20.0;
                         }
                     }
                 }
                 "113" => {
                     if num_relics >= 4 {
-                        let mut stack = 0;
-                        for condition in battle_condition {
-                            match condition {
-                                BattleConditionEnum::AfterWearerIsHit {
-                                    number_of_times,
-                                    within_number_of_turns,
-                                } => {
-                                    if *within_number_of_turns <= 2 {
-                                        stack += number_of_times
-                                    }
-                                }
-                                BattleConditionEnum::WhenWearerLosingHp {
-                                    number_of_times,
-                                    within_number_of_turns,
-                                    ..
-                                } => {
-                                    if *within_number_of_turns <= 2 {
-                                        stack += number_of_times
-                                    }
-                                }
-                                _ => (),
-                            }
-                        }
-                        stack = min(2, stack);
+                        let stack = min(2, self.config.stack_113);
                         *bonus.entry(Stats::CritRate_).or_default() += 8.0 * stack as f64;
                     }
                 }
                 "114" => {}
                 "115" => {
-                    if num_relics >= 2 && tags.contains(&Tag::FollowUpAtk) {
+                    if num_relics >= 2 && *skill_type == SkillType::FollowUpAttack {
                         *bonus.entry(Stats::DmgBoost_).or_default() += 20.0;
                     }
                     if num_relics >= 4 {
-                        let mut stack = 0;
-                        for condition in battle_condition {
-                            match condition {
-                                BattleConditionEnum::AfterFollowUpAtkDealtDmg {
-                                    number_of_hit_in_one_move,
-                                    ..
-                                } => stack += number_of_hit_in_one_move,
-                                _ => (),
-                            }
-                        }
-                        stack = min(8, stack);
+                        let stack = min(8, self.config.stack_115);
                         *bonus.entry(Stats::Atk_).or_default() += 6.0 * stack as f64;
                     }
                 }
                 "116" => {
                     if num_relics >= 4 {
-                        let mut stack = 0;
-                        for condition in battle_condition {
-                            match condition {
-                                BattleConditionEnum::WhenAttackingEnemyWithDot {
-                                    number_of_dots_enemy_has,
-                                    ..
-                                } => stack += number_of_dots_enemy_has,
-                                _ => (),
-                            }
-                        }
-                        stack = min(3, stack);
+                        let stack = min(3, self.config.stack_116);
                         *bonus.entry(Stats::DefIgnore_).or_default() += 6.0 * stack as f64;
                     }
                 }
                 "117" => {
-                    if num_relics >= 2
-                        && battle_condition.iter().any(|c| {
-                            matches!(c, BattleConditionEnum::WhenAttackingEnemyWithDebuff { .. })
-                        })
-                        || battle_condition.iter().any(|c| {
-                            matches!(c, BattleConditionEnum::WhenAttackingEnemyWithDot { .. })
-                        })
-                    // DoTs are considered debuffs as well
-                    {
+                    if num_relics >= 2 && self.config.activate_117_2pcs {
                         *bonus.entry(Stats::DmgBoost_).or_default() += 12.0;
                     }
                     if num_relics >= 4 {
-                        let mut stack = 0;
-                        for condition in battle_condition {
-                            match condition {
-                                BattleConditionEnum::WhenAttackingEnemyWithDebuff {
-                                    number_of_debuffs_enemy_has,
-                                    within_number_of_turns,
-                                } => {
-                                    if *within_number_of_turns <= 1 {
-                                        stack += number_of_debuffs_enemy_has
-                                    }
-                                }
-                                BattleConditionEnum::WhenAttackingEnemyWithDot {
-                                    number_of_dots_enemy_has,
-                                    within_number_of_turns,
-                                    ..
-                                } => {
-                                    if *within_number_of_turns <= 1 {
-                                        stack += number_of_dots_enemy_has
-                                    }
-                                }
-                                _ => (),
+                        if self.config.stack_117 == 2 {
+                            if self.config.activate_117_4pcs_extra {
+                                *bonus.entry(Stats::CritDmg_).or_default() += 16.0;
+                            } else {
+                                *bonus.entry(Stats::CritDmg_).or_default() += 8.0;
                             }
-                        }
-                        if stack == 2 {
-                            for condition in battle_condition {
-                                match condition {
-                                    BattleConditionEnum::AfterWearerInflictingDebuffs {
-                                        ..
-                                    } => {
-                                        *bonus.entry(Stats::CritDmg_).or_default() += 16.0;
-                                    }
-                                    _ => {
-                                        *bonus.entry(Stats::CritDmg_).or_default() += 8.0;
-                                    }
-                                }
-                            }
-                        } else if stack >= 3 {
-                            for condition in battle_condition {
-                                match condition {
-                                    BattleConditionEnum::AfterWearerInflictingDebuffs {
-                                        ..
-                                    } => {
-                                        *bonus.entry(Stats::CritDmg_).or_default() += 24.0;
-                                    }
-                                    _ => {
-                                        *bonus.entry(Stats::CritDmg_).or_default() += 12.0;
-                                    }
-                                }
+                        } else if self.config.stack_117 >= 3 {
+                            if self.config.activate_117_4pcs_extra {
+                                *bonus.entry(Stats::CritDmg_).or_default() += 24.0;
+                            } else {
+                                *bonus.entry(Stats::CritDmg_).or_default() += 12.0;
                             }
                         }
                     }
@@ -507,49 +417,35 @@ impl Relics {
                             .get(&Stats::BreakEffect_)
                             .ok_or(eyre!("Missing break effect"))?
                             >= 150.0
-                            && tags.contains(&Tag::BreakDmg)
+                            && *damage_type == DamageType::BreakDamage
                         {
                             *bonus.entry(Stats::DefIgnore_).or_default() += 10.0;
                         } else if *base_stats
                             .get(&Stats::BreakEffect_)
                             .ok_or(eyre!("Missing break effect"))?
                             >= 250.0
-                            && tags.contains(&Tag::SuperBreakDmg)
+                            && *damage_type == DamageType::SuperBreakDamage
                         {
                             *bonus.entry(Stats::DefIgnore_).or_default() += 25.0;
                         }
                     }
                 }
                 "120" => {
-                    if num_relics >= 4 {
-                        if battle_condition.iter().any(|c| {
-                            matches!(c, BattleConditionEnum::AfterFollowUpAtkDealtDmg { .. })
-                        }) && tags.contains(&Tag::Ultimate)
-                        {
-                            *bonus.entry(Stats::DmgBoost_).or_default() += 36.0;
-                        }
+                    if num_relics >= 4
+                        && self.config.activate_120
+                        && *skill_type == SkillType::Ultimate
+                    {
+                        *bonus.entry(Stats::DmgBoost_).or_default() += 36.0;
                     }
                 }
                 "121" => {}
                 "122" => {
                     if num_relics >= 4 {
-                        if tags.contains(&Tag::Skill) || tags.contains(&Tag::Ultimate) {
+                        if *skill_type == SkillType::Skill || *skill_type == SkillType::Ultimate {
                             *bonus.entry(Stats::DmgBoost_).or_default() += 20.0;
                         }
-                        if tags.contains(&Tag::Skill) {
-                            for condition in battle_condition {
-                                match condition {
-                                    BattleConditionEnum::AfterUsingUltimate {
-                                        next_skill_after_ultimate,
-                                        ..
-                                    } => {
-                                        if *next_skill_after_ultimate {
-                                            *bonus.entry(Stats::DmgBoost_).or_default() += 25.0;
-                                        }
-                                    }
-                                    _ => (),
-                                }
-                            }
+                        if *skill_type == SkillType::Skill && self.config.activate_122 {
+                            *bonus.entry(Stats::DmgBoost_).or_default() += 25.0;
                         }
                     }
                 }
@@ -587,7 +483,7 @@ impl Relics {
                 }
                 "305" => {
                     if num_relics >= 2 {
-                        if battle_condition.contains(&BattleConditionEnum::BeforeFirstAttack)
+                        if self.config.activate_305
                             && *base_stats
                                 .get(&Stats::CritDmg_)
                                 .ok_or(eyre!("Missing CRIT DMG"))?
@@ -603,7 +499,8 @@ impl Relics {
                             .get(&Stats::CritRate_)
                             .ok_or(eyre!("Missing CRIT Rate"))?
                             >= 50.0
-                            && (tags.contains(&Tag::Ultimate) || tags.contains(&Tag::FollowUpAtk))
+                            && *skill_type == SkillType::Ultimate
+                            || *skill_type == SkillType::FollowUpAttack
                         {
                             *bonus.entry(Stats::DmgBoost_).or_default() += 15.0;
                         }
@@ -627,7 +524,8 @@ impl Relics {
                             .get(&Stats::CritRate_)
                             .ok_or(eyre!("Missing CRIT Rate"))?
                             >= 70.0
-                            && (tags.contains(&Tag::BasicAtk) || tags.contains(&Tag::Skill))
+                            && *skill_type == SkillType::BasicAttack
+                            || *skill_type == SkillType::Skill
                         {
                             *bonus.entry(Stats::DmgBoost_).or_default() += 20.0;
                         }
@@ -647,59 +545,34 @@ impl Relics {
                 "312" => {}
                 "313" => {
                     if num_relics >= 2 {
-                        let mut stack = 0;
-                        for condition in battle_condition {
-                            match condition {
-                                BattleConditionEnum::AfterEnemyDefeated {
-                                    number_of_enemies_defeated,
-                                    ..
-                                } => stack += number_of_enemies_defeated,
-                                _ => (),
-                            }
-                        }
-                        *bonus.entry(Stats::CritDmg_).or_default() += 4.0 * stack as f64;
+                        *bonus.entry(Stats::CritDmg_).or_default() +=
+                            4.0 * self.config.stack_313 as f64;
                     }
                 }
                 "314" => {
                     if num_relics >= 2 {
-                        if battle_condition.iter().any(|c| {
-                            matches!(c, BattleConditionEnum::TeammatesSamePathWithWearer { .. })
-                        }) {
+                        if teammates.iter().any(|t| t.get_path() == path) {
                             *bonus.entry(Stats::CritRate_).or_default() += 12.0;
                         }
                     }
                 }
                 "315" => {
-                    if num_relics >= 2 {
-                        let mut stack = 0;
-                        for condition in battle_condition {
-                            match condition {
-                                BattleConditionEnum::AfterFollowUpAtkDealtDmg {
-                                    number_of_times_allies_used_follow_up_atk,
-                                    ..
-                                } => stack += number_of_times_allies_used_follow_up_atk,
-                                _ => (),
-                            }
-                        }
-                        if tags.contains(&Tag::FollowUpAtk) {
-                            let num_stack = min(5, stack);
-                            *bonus.entry(Stats::DmgBoost_).or_default() += 5.0 * num_stack as f64;
-                            if num_stack == 5 {
-                                *bonus.entry(Stats::CritDmg_).or_default() += 25.0
-                            }
+                    if num_relics >= 2 && *skill_type == SkillType::FollowUpAttack {
+                        let num_stack = min(5, self.config.stack_315);
+                        *bonus.entry(Stats::DmgBoost_).or_default() += 5.0 * num_stack as f64;
+                        if num_stack == 5 {
+                            *bonus.entry(Stats::CritDmg_).or_default() += 25.0
                         }
                     }
                 }
                 "316" => {
-                    if num_relics >= 2 {
-                        if battle_condition.contains(&BattleConditionEnum::EnemyHasFireWeakness) {
-                            *bonus.entry(Stats::BreakEffect_).or_default() += 40.0;
-                        }
+                    if num_relics >= 2 && self.config.activate_316 {
+                        *bonus.entry(Stats::BreakEffect_).or_default() += 40.0;
                     }
                 }
                 "317" => {}
                 "318" => {
-                    if battle_condition.contains(&BattleConditionEnum::WearerSummonOnField) {
+                    if num_relics >= 2 && self.config.activate_318 {
                         *bonus.entry(Stats::CritDmg_).or_default() += 32.0;
                     }
                 }

@@ -1,15 +1,21 @@
-use crate::domain::{BattleConditionEnum, Enemy, Relics};
+use crate::domain::{Enemy, Path, Relics};
 use eyre::Result;
 
 mod acheron;
-pub use acheron::Acheron;
+pub use acheron::{Acheron, AcheronEvaluationTarget};
 
 pub trait Evaluator {
+    type Target;
+
     fn evaluate(
         &self,
         relics: &Relics,
         enemy: &Enemy,
-        target: &str,
-        battle_conditions: &[BattleConditionEnum],
+        target: &Self::Target,
+        teammates: &[Box<dyn Support>],
     ) -> Result<f64>;
+}
+
+pub trait Support: Sync + Send {
+    fn get_path(&self) -> Path;
 }

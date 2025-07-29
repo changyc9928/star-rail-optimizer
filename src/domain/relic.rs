@@ -85,7 +85,7 @@ pub enum Stats {
     BreakDmgDefIgnore_,
     #[serde(alias = "Super Break DMG DEF Ignore")]
     SuperBreakDmgDefIgnore_,
-    ResPenalty_,
+    ResPenentration_,
     Vulnerebility_,
     Weaken_,
     #[default]

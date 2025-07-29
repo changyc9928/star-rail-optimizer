@@ -1,324 +1,101 @@
-use crate::domain::{
-    BattleConditionEnum, CharacterEntity, CritEnum, Enemy, LightConeEntity, Relics, Stats, Tag,
-};
-use eyre::{bail, eyre, Result};
-use std::collections::HashMap;
-
 use super::Evaluator;
+use crate::{
+    character::Support,
+    domain::{
+        AttackType, CharacterEntity, CritEnum, DamageType, Enemy, LightConeEntity, Relics,
+        SkillType, Stats,
+    },
+    utils::calculator::{
+        base_stats_and_bonus, crit_dmg, def, dmg_boost, dmg_mit, res, toughness, vul, weaken,
+    },
+};
+use eyre::Result;
+use std::collections::HashMap;
 
 pub struct Acheron {
     pub character: CharacterEntity,
     pub light_cone: Option<LightConeEntity>,
+    pub crimson_knot: u8,
+    pub thunder_core_bonus_stack: u8,
+    pub crit: CritEnum,
+    pub activate_eidolon_1: bool,
+}
+
+#[derive(strum_macros::Display)]
+pub enum AcheronEvaluationTarget {
+    Skill,
+    UltimateSingle,
+    UltimateAoe,
 }
 
 impl Evaluator for Acheron {
+    type Target = AcheronEvaluationTarget;
+
     fn evaluate(
         &self,
         relics: &Relics,
         enemy: &Enemy,
-        target: &str,
-        battle_conditions: &[BattleConditionEnum],
+        target: &Self::Target,
+        teammates: &[Box<dyn Support>],
     ) -> Result<f64> {
         match target {
-            "RAINBLADE" => self.rainblade(&relics, &enemy, battle_conditions),
-            "CRIMSON_KNOT" => self.crimson_knot(&relics, &enemy, battle_conditions),
-            "STYGIAN_RESURGE" => self.stygian_resurge(&relics, &enemy, battle_conditions),
-            "THUNDER_CORE" => self.thunder_core(&relics, &enemy, battle_conditions),
-            "FULL_ULTIMATE_ON_THREE_ENEMIES" => {
-                self.full_ultimate_multiplier_on_three_enemies(&relics, &enemy, battle_conditions)
+            AcheronEvaluationTarget::UltimateSingle => {
+                self.full_ultimate_multiplier_on_single_enemy(&relics, &enemy, teammates)
             }
-            "SKILL_MAIN_TARGET" => self.skill_main_target(relics, enemy, battle_conditions),
-            "SKILL_ADJACENT_TARGET" => self.skill_adjacent_target(relics, enemy, battle_conditions),
-            "BASIC_ATTACK" => self.basic_attack(relics, enemy, battle_conditions),
-            _ => todo!(),
+            AcheronEvaluationTarget::UltimateAoe => {
+                self.full_ultimate_multiplier_on_three_enemies(&relics, &enemy, teammates)
+            }
+            AcheronEvaluationTarget::Skill => self.skill(relics, enemy, teammates),
         }
     }
 }
 
 impl Acheron {
-    fn toughness(&self, battle_conditions: &[BattleConditionEnum]) -> f64 {
-        let mut toughness_break = false;
-        for condition in battle_conditions {
-            match condition {
-                BattleConditionEnum::ToughnessBreak(broken) => toughness_break = *broken,
-                _ => (),
-            }
-        }
-        let toughness_break = match toughness_break {
-            true => 1.0,
-            false => 0.9,
-        };
-        toughness_break
-    }
-
-    fn dmg_mit(&self, enemy: &Enemy) -> Result<f64, eyre::Error> {
-        let dmg_mitigation = if enemy.dmg_mitigation.is_empty() {
-            1.0
-        } else {
-            let mut first = 1.0
-                - enemy
-                    .dmg_mitigation
-                    .first()
-                    .ok_or(eyre!("Unexpected error"))?
-                    / 100.0;
-            for dmg_mit in &enemy.dmg_mitigation[1..] {
-                first *= 1.0 - dmg_mit / 100.0;
-            }
-            first
-        };
-        Ok(dmg_mitigation)
-    }
-
-    fn vul(&self, bonus: &HashMap<Stats, f64>) -> f64 {
-        let vulnerebility = 1.0
-            + bonus
-                .get(&Stats::Vulnerebility_)
-                .cloned()
-                .unwrap_or_default()
-                / 100.0;
-        vulnerebility
-    }
-
-    fn res(&self, enemy: &Enemy, bonus: &HashMap<Stats, f64>, tags: &[Tag]) -> f64 {
-        let res = 1.0
-            - ((enemy.resistance - bonus.get(&Stats::ResPenalty_).cloned().unwrap_or_default())
-                / 100.0
-                - self.eidolon_6(tags));
-        res
-    }
-
-    fn weaken(&self, bonus: &HashMap<Stats, f64>) -> f64 {
-        let weaken = 1.0 - bonus.get(&Stats::Weaken_).cloned().unwrap_or_default() / 100.0;
-        weaken
-    }
-
-    fn dmg_boost(
+    fn calculate_damage(
         &self,
+        teammates: &[Box<dyn Support>],
+        ability_multiplier: f64,
+        base_stats: &mut HashMap<Stats, f64>,
         bonus: &HashMap<Stats, f64>,
-        battle_conditions: &[BattleConditionEnum],
-    ) -> f64 {
-        1.0 + bonus.get(&Stats::DmgBoost_).cloned().unwrap_or_default() / 100.0
-            + self.crinsom_knot_bonus(battle_conditions)
-    }
-
-    fn crit_dmg(
-        &self,
-        battle_conditions: &[BattleConditionEnum],
-        bonus: &HashMap<Stats, f64>,
-    ) -> f64 {
-        let mut crit = CritEnum::Avg;
-        for condition in battle_conditions {
-            match condition {
-                BattleConditionEnum::CriticalHit(crit_enum) => crit = crit_enum.clone(),
-                _ => (),
-            }
-        }
-        let crit_rate = match crit {
-            CritEnum::NoCrit => 0.0,
-            CritEnum::Avg => {
-                (bonus.get(&Stats::CritRate_).cloned().unwrap_or_default()
-                    + self.character.critical_chance)
-                    / 100.0
-                    + self.eidolon_1()
-            }
-            CritEnum::Crit => 1.0,
-        };
-        let ret = crit_rate
-            * (1.0
-                + (bonus.get(&Stats::CritDmg_).cloned().unwrap_or_default()
-                    + self.character.critical_damage)
-                    / 100.0);
-        if crit == CritEnum::NoCrit {
-            1.0
-        } else {
-            ret
-        }
-    }
-
-    fn def(&self, enemy: &Enemy, bonus: &HashMap<Stats, f64>) -> f64 {
-        let def = 1.0
-            - ((self.character._character.level + 20) as f64)
-                / ((enemy.level + 20) as f64
-                    * (1.0
-                        - bonus
-                            .get(&Stats::DefReduction_)
-                            .cloned()
-                            .unwrap_or_default()
-                            / 100.0
-                        - bonus.get(&Stats::DefIgnore_).cloned().unwrap_or_default() / 100.0)
-                    + (self.character._character.level + 20) as f64);
-        def
-    }
-
-    pub fn base_stats_and_bonus(
-        &self,
-        relics: &Relics,
-        tags: &[Tag],
-        battle_conditions: &[BattleConditionEnum],
-    ) -> Result<(HashMap<Stats, f64>, HashMap<Stats, f64>)> {
-        let mut bonus = relics.calculate_bonus_before_battle(&tags)?;
-        for (s, b) in &self.character.stat_bonus {
-            *bonus.entry(s.clone()).or_default() += b;
-        }
-        let initial_light_cone_bonus = self
-            .light_cone
-            .as_ref()
-            .map(|lc| lc.get_bonus_before_battle())
-            .transpose()?;
-        if let Some(lc_bonus) = initial_light_cone_bonus {
-            for (s, b) in lc_bonus {
-                *bonus.entry(s.clone()).or_default() += b;
-            }
-        }
-        let base_stats = self.calculate_stats(&bonus);
-        let bonus_during_battle =
-            relics.calculate_bonus_during_battle(&tags, &base_stats, &battle_conditions)?;
-        for (stat, value) in bonus_during_battle {
-            *bonus.entry(stat).or_default() += value;
-        }
-        let light_cone_bonus = self
-            .light_cone
-            .as_ref()
-            .map(|lc| lc.get_bonus_during_battle(&tags, &base_stats, &battle_conditions))
-            .transpose()?;
-        if let Some(lc_bonus) = light_cone_bonus {
-            for (stat, val) in lc_bonus {
-                *bonus.entry(stat).or_default() += val;
-            }
-        }
-        Ok((self.calculate_stats(&bonus), bonus))
-    }
-
-    fn calculate_stats(&self, bonus: &HashMap<Stats, f64>) -> HashMap<Stats, f64> {
-        let hp = (self.character.base_hp
-            + self
-                .light_cone
-                .as_ref()
-                .map(|lc| lc.base_hp)
-                .unwrap_or_default())
-            * (1.0 + bonus.get(&Stats::Hp_).cloned().unwrap_or_default() / 100.0)
-            + bonus.get(&Stats::Hp).cloned().unwrap_or_default();
-        let atk = (self.character.base_atk
-            + self
-                .light_cone
-                .as_ref()
-                .map(|lc| lc.base_atk)
-                .unwrap_or_default())
-            * (1.0 + bonus.get(&Stats::Atk_).cloned().unwrap_or_default() / 100.0)
-            + bonus.get(&Stats::Atk).cloned().unwrap_or_default();
-        let def = (self.character.base_def
-            + self
-                .light_cone
-                .as_ref()
-                .map(|lc| lc.base_def)
-                .unwrap_or_default())
-            * (1.0 + bonus.get(&Stats::Def_).cloned().unwrap_or_default() / 100.0)
-            + bonus.get(&Stats::Def).cloned().unwrap_or_default();
-        let spd = self.character.base_spd
-            * (1.0 + bonus.get(&Stats::Spd_).cloned().unwrap_or_default() / 100.0)
-            + bonus.get(&Stats::Spd).cloned().unwrap_or_default();
-        let crit_rate = self.character.critical_chance
-            + bonus.get(&Stats::CritRate_).cloned().unwrap_or_default();
-        let crit_dmg = self.character.critical_damage
-            + bonus.get(&Stats::CritDmg_).cloned().unwrap_or_default();
-        let energy_regen_rate = 100.0
-            + bonus
-                .get(&Stats::EnergyRegenerationRate_)
-                .cloned()
-                .unwrap_or_default();
-        let effect_hit_rate = bonus
-            .get(&Stats::EffectHitRate_)
-            .cloned()
-            .unwrap_or_default();
-        let break_effect = bonus.get(&Stats::BreakEffect_).cloned().unwrap_or_default();
-        let effect_res = bonus.get(&Stats::EffectRes_).cloned().unwrap_or_default();
-        let outgoing_healing_boost = bonus
-            .get(&Stats::OutgoingHealingBoost_)
-            .cloned()
-            .unwrap_or_default();
-        let base_stats = HashMap::from([
-            (Stats::Hp, hp),
-            (Stats::Atk, atk),
-            (Stats::Def, def),
-            (Stats::Spd, spd),
-            (Stats::CritRate_, crit_rate),
-            (Stats::CritDmg_, crit_dmg),
-            (Stats::EnergyRegenerationRate_, energy_regen_rate),
-            (Stats::EffectHitRate_, effect_hit_rate),
-            (Stats::BreakEffect_, break_effect),
-            (Stats::EffectRes_, effect_res),
-            (Stats::OutgoingHealingBoost_, outgoing_healing_boost),
-        ]);
-        base_stats
-    }
-
-    fn eidolon_1(&self) -> f64 {
-        if self.character._character.eidolon >= 1 {
-            return 0.18;
-        } else {
-            return 0.0;
-        }
-    }
-
-    fn eidolon_4(&self) -> f64 {
-        if self.character._character.eidolon >= 4 {
-            return 0.08;
-        } else {
-            return 0.0;
-        }
-    }
-
-    fn eidolon_6(&self, tags: &[Tag]) -> f64 {
-        if self.character._character.eidolon >= 6 && tags.contains(&Tag::Ultimate) {
-            return 20.0;
-        } else {
-            return 0.0;
-        }
-    }
-
-    fn eidolon_6_tags(&self, tags: &mut Vec<Tag>) {
-        if self.character._character.eidolon >= 6 {
-            tags.push(Tag::Ultimate);
-        }
-    }
-
-    fn rainblade(
-        &self,
-        relics: &Relics,
         enemy: &Enemy,
-        battle_conditions: &[BattleConditionEnum],
     ) -> Result<f64> {
-        let tags = vec![Tag::Lightning, Tag::Ultimate];
-        let (base_stats, mut bonus) =
-            self.base_stats_and_bonus(relics, &tags, battle_conditions)?;
-        let ability_multiplier = [
-            0.0, 0.1440, 0.1536, 0.1632, 0.1728, 0.1824, 0.1920, 0.2040, 0.2160, 0.2280, 0.2400,
-            0.2496, 0.2592, 0.2688, 0.2784, 0.2880,
-        ][self.character._character.skills.ult as usize];
-        let the_abyss = self.the_abyss_multiplier(battle_conditions);
+        let the_abyss = self.the_abyss_multiplier(teammates);
         let base_dmg = ability_multiplier
             * base_stats.get(&Stats::Atk).cloned().unwrap_or_default()
             * the_abyss;
-        let crit = self.crit_dmg(battle_conditions, &bonus);
-        let dmg_boost = self.dmg_boost(&bonus, battle_conditions);
-        let weaken = self.weaken(&bonus);
-        let def = self.def(enemy, &bonus);
-        *bonus.entry(Stats::ResPenalty_).or_default() += self.talent();
-        let res = self.res(enemy, &bonus, &tags);
-        let vul = self.vul(&bonus) + self.eidolon_4();
-        let dmg_mit = self.dmg_mit(enemy)?;
-        let broken = self.toughness(battle_conditions);
+        *base_stats.entry(Stats::CritRate_).or_default() += self.eidolon_1();
+        let crit = crit_dmg(self.crit, &base_stats, &self.character);
+        let dmg_boost = dmg_boost(&bonus);
+        let def = def(enemy, &bonus, &self.character);
+        let res = res(enemy, &bonus);
+        let vul = vul(enemy);
+        let dmg_mit = dmg_mit(enemy)?;
+        let weaken = weaken(enemy);
+        let broken = toughness(enemy);
         Ok(base_dmg * crit * dmg_boost * weaken * def * res * vul * dmg_mit * broken)
     }
 
-    fn the_abyss_multiplier(&self, battle_conditions: &[BattleConditionEnum]) -> f64 {
+    fn talent(&self) -> f64 {
+        let resistance_penalty_scale = vec![
+            0.0, 10.00, 11.00, 12.00, 13.00, 14.00, 15.00, 16.25, 17.50, 18.75, 20.00, 21.00,
+            22.00, 23.00, 24.00, 25.00,
+        ];
+        resistance_penalty_scale[self.character._character.skills.talent as usize]
+    }
+
+    fn crinsom_knot_bonus(&self) -> f64 {
+        if self.character._character.traces.ability_3 {
+            return 30.0 * std::cmp::min(3, self.thunder_core_bonus_stack) as f64;
+        } else {
+            return 0.0;
+        }
+    }
+
+    fn the_abyss_multiplier(&self, teammates: &[Box<dyn Support>]) -> f64 {
         let mut num_same_path = 0;
-        for condition in battle_conditions {
-            match condition {
-                BattleConditionEnum::TeammatesSamePathWithWearer {
-                    number_of_teammates_having_same_path: number_of_teammated_having_same_path,
-                } => num_same_path += number_of_teammated_having_same_path,
-                _ => (),
+        for teammate in teammates {
+            if teammate.get_path() == self.character._character.path {
+                num_same_path += 1;
             }
         }
         if self.character._character.eidolon >= 2 {
@@ -332,321 +109,308 @@ impl Acheron {
         the_abyss
     }
 
+    fn eidolon_1(&self) -> f64 {
+        if self.character._character.eidolon >= 1 && self.activate_eidolon_1 {
+            return 18.0;
+        } else {
+            return 0.0;
+        }
+    }
+
+    fn eidolon_4(&self, enemy: &mut Enemy) {
+        if self.character._character.eidolon >= 4 {
+            enemy.vulnerability += 0.08;
+        }
+    }
+
+    fn eidolon_6(&self) -> f64 {
+        if self.character._character.eidolon >= 6 {
+            return 20.0;
+        } else {
+            return 0.0;
+        }
+    }
+
+    fn eidolon_6_skill_type(&self, skill_type: SkillType) -> SkillType {
+        if self.character._character.eidolon >= 6 {
+            return SkillType::Ultimate;
+        }
+        return skill_type;
+    }
+
     fn crimson_knot(
         &self,
         relics: &Relics,
         enemy: &Enemy,
-        battle_conditions: &[BattleConditionEnum],
+        teammates: &[Box<dyn Support>],
     ) -> Result<f64> {
-        let tags = vec![Tag::Lightning, Tag::Ultimate];
-        let (base_stats, mut bonus) =
-            self.base_stats_and_bonus(relics, &tags, battle_conditions)?;
+        let skill_type = self.eidolon_6_skill_type(SkillType::Ultimate);
+        let (mut base_stats, mut bonus) = base_stats_and_bonus(
+            &self.character,
+            &self.light_cone,
+            relics,
+            &AttackType::Lightning,
+            &skill_type,
+            &DamageType::Normal,
+            teammates,
+        )?;
         let ability_multiplier = [
             0.0, 0.0900, 0.0960, 0.1020, 0.1080, 0.1140, 0.1200, 0.1275, 0.1350, 0.1425, 0.1500,
             0.1560, 0.1620, 0.1680, 0.1740, 0.1800,
         ][self.character._character.skills.ult as usize];
-        let mut crimson_knot = 0;
-        for condition in battle_conditions {
-            match condition {
-                BattleConditionEnum::HittingEnemyWithCrimsonKnot {
-                    number_of_crinsom_knot_enemy_has,
-                } => crimson_knot += number_of_crinsom_knot_enemy_has,
-                _ => (),
-            }
-        }
-        let ability_multiplier = match crimson_knot {
-            1 | 2 | 3 => ability_multiplier + ability_multiplier * crimson_knot as f64,
+        let ability_multiplier = match self.crimson_knot {
+            1 | 2 => ability_multiplier + ability_multiplier * self.crimson_knot as f64,
             0 => ability_multiplier,
-            _ => bail!("Invalid number of stack of Crimson Knot"),
+            _ => ability_multiplier + ability_multiplier * 3.0,
         };
-        let the_abyss = self.the_abyss_multiplier(battle_conditions);
-        let base_dmg = ability_multiplier
-            * base_stats.get(&Stats::Atk).cloned().unwrap_or_default()
-            * the_abyss;
-        let crit = self.crit_dmg(battle_conditions, &bonus);
-        let dmg_boost = self.dmg_boost(&bonus, battle_conditions);
-        let weaken = self.weaken(&bonus);
-        let def = self.def(enemy, &bonus);
-        *bonus.entry(Stats::ResPenalty_).or_default() += self.talent();
-        let res = self.res(enemy, &bonus, &tags);
-        let vul = self.vul(&bonus) + self.eidolon_4();
-        let dmg_mit = self.dmg_mit(enemy)?;
-        let broken = self.toughness(battle_conditions);
-        Ok(base_dmg * crit * dmg_boost * weaken * def * res * vul * dmg_mit * broken)
+        let mut enemy = enemy.clone();
+        self.eidolon_4(&mut enemy);
+        *bonus.entry(Stats::ResPenentration_).or_default() += self.talent() + self.eidolon_6();
+        *bonus.entry(Stats::DmgBoost_).or_default() += self.crinsom_knot_bonus();
+        self.calculate_damage(
+            teammates,
+            ability_multiplier,
+            &mut base_stats,
+            &bonus,
+            &enemy,
+        )
+    }
+
+    fn rainblade(
+        &self,
+        relics: &Relics,
+        enemy: &Enemy,
+        teammates: &[Box<dyn Support>],
+    ) -> Result<f64> {
+        let skill_type = self.eidolon_6_skill_type(SkillType::Ultimate);
+        let (mut base_stats, mut bonus) = base_stats_and_bonus(
+            &self.character,
+            &self.light_cone,
+            relics,
+            &AttackType::Lightning,
+            &skill_type,
+            &DamageType::Normal,
+            teammates,
+        )?;
+        let ability_multiplier = [
+            0.0, 0.1440, 0.1536, 0.1632, 0.1728, 0.1824, 0.1920, 0.2040, 0.2160, 0.2280, 0.2400,
+            0.2496, 0.2592, 0.2688, 0.2784, 0.2880,
+        ][self.character._character.skills.ult as usize];
+        let mut enemy = enemy.clone();
+        self.eidolon_4(&mut enemy);
+        *bonus.entry(Stats::ResPenentration_).or_default() += self.talent() + self.eidolon_6();
+        *bonus.entry(Stats::DmgBoost_).or_default() += self.crinsom_knot_bonus();
+        self.calculate_damage(
+            teammates,
+            ability_multiplier,
+            &mut base_stats,
+            &bonus,
+            &enemy,
+        )
     }
 
     fn stygian_resurge(
         &self,
         relics: &Relics,
         enemy: &Enemy,
-        battle_conditions: &[BattleConditionEnum],
+        teammates: &[Box<dyn Support>],
     ) -> Result<f64> {
-        let tags = vec![Tag::Lightning, Tag::Ultimate];
-        let (base_stats, mut bonus) =
-            self.base_stats_and_bonus(relics, &tags, battle_conditions)?;
+        let skill_type = self.eidolon_6_skill_type(SkillType::Ultimate);
+        let (mut base_stats, mut bonus) = base_stats_and_bonus(
+            &self.character,
+            &self.light_cone,
+            relics,
+            &AttackType::Lightning,
+            &skill_type,
+            &DamageType::Normal,
+            teammates,
+        )?;
         let ability_multiplier = [
             0.0, 0.7200, 0.7680, 0.8160, 0.8640, 0.9120, 0.9600, 1.0200, 1.0800, 1.1400, 1.2000,
             1.2480, 1.2960, 1.3440, 1.3920, 1.4400,
         ][self.character._character.skills.ult as usize];
-        let the_abyss = self.the_abyss_multiplier(battle_conditions);
-        let base_dmg = ability_multiplier
-            * base_stats.get(&Stats::Atk).cloned().unwrap_or_default()
-            * the_abyss;
-        let crit = self.crit_dmg(battle_conditions, &bonus);
-        let dmg_boost = self.dmg_boost(&bonus, battle_conditions);
-        let weaken = self.weaken(&bonus);
-        let def = self.def(enemy, &bonus);
-        *bonus.entry(Stats::ResPenalty_).or_default() += self.talent();
-        let res = self.res(enemy, &bonus, &tags);
-        let vul = self.vul(&bonus) + self.eidolon_4();
-        let dmg_mit = self.dmg_mit(enemy)?;
-        let broken = self.toughness(battle_conditions);
-        Ok(base_dmg * crit * dmg_boost * weaken * def * res * vul * dmg_mit * broken)
+        let mut enemy = enemy.clone();
+        self.eidolon_4(&mut enemy);
+        *bonus.entry(Stats::ResPenentration_).or_default() += self.talent() + self.eidolon_6();
+        *bonus.entry(Stats::DmgBoost_).or_default() += self.crinsom_knot_bonus();
+        self.calculate_damage(
+            teammates,
+            ability_multiplier,
+            &mut base_stats,
+            &bonus,
+            &enemy,
+        )
     }
 
     fn thunder_core(
         &self,
         relics: &Relics,
         enemy: &Enemy,
-        battle_conditions: &[BattleConditionEnum],
+        teammates: &[Box<dyn Support>],
     ) -> Result<f64> {
-        let tags = vec![Tag::Lightning, Tag::Ultimate];
-        let (base_stats, mut bonus) =
-            self.base_stats_and_bonus(relics, &tags, battle_conditions)?;
+        let skill_type = self.eidolon_6_skill_type(SkillType::Ultimate);
+        let (mut base_stats, mut bonus) = base_stats_and_bonus(
+            &self.character,
+            &self.light_cone,
+            relics,
+            &AttackType::Lightning,
+            &skill_type,
+            &DamageType::Normal,
+            teammates,
+        )?;
         let ability_multiplier = if self.character._character.traces.ability_3 {
             0.25
         } else {
             0.0
         };
-        let the_abyss = self.the_abyss_multiplier(battle_conditions);
-        let base_dmg = ability_multiplier
-            * base_stats.get(&Stats::Atk).cloned().unwrap_or_default()
-            * the_abyss;
-        let crit = self.crit_dmg(battle_conditions, &bonus);
-        let dmg_boost = self.dmg_boost(&bonus, battle_conditions);
-        let weaken = self.weaken(&bonus);
-        let def = self.def(enemy, &bonus);
-        *bonus.entry(Stats::ResPenalty_).or_default() += self.talent();
-        let res = self.res(enemy, &bonus, &tags);
-        let vul = self.vul(&bonus) + self.eidolon_4();
-        let dmg_mit = self.dmg_mit(enemy)?;
-        let broken = self.toughness(battle_conditions);
-        Ok(base_dmg * crit * dmg_boost * weaken * def * res * vul * dmg_mit * broken)
+        let mut enemy = enemy.clone();
+        self.eidolon_4(&mut enemy);
+        *bonus.entry(Stats::ResPenentration_).or_default() += self.talent() + self.eidolon_6();
+        *bonus.entry(Stats::DmgBoost_).or_default() += self.crinsom_knot_bonus();
+        self.calculate_damage(
+            teammates,
+            ability_multiplier,
+            &mut base_stats,
+            &bonus,
+            &enemy,
+        )
     }
 
     fn full_ultimate_multiplier_on_three_enemies(
         &self,
         relics: &Relics,
         enemy: &Enemy,
-        battle_conditions: &[BattleConditionEnum],
+        teammates: &[Box<dyn Support>],
     ) -> Result<f64> {
-        let rainblade = self.rainblade(relics, enemy, battle_conditions)?;
-        let crinsom_knot = self.crimson_knot(relics, enemy, battle_conditions)?;
-        let bounce_atk = self.thunder_core(relics, enemy, battle_conditions)?;
-        let stygian_resurge = self.stygian_resurge(relics, enemy, battle_conditions)?;
+        let rainblade = self.rainblade(relics, enemy, teammates)?;
+        let crinsom_knot = self.crimson_knot(relics, enemy, teammates)?;
+        let bounce_atk = self.thunder_core(relics, enemy, teammates)?;
+        let stygian_resurge = self.stygian_resurge(relics, enemy, teammates)?;
         Ok(rainblade * 3.0 + crinsom_knot * 9.0 + bounce_atk * 6.0 + stygian_resurge * 3.0)
     }
 
-    fn crinsom_knot_bonus(&self, battle_conditions: &[BattleConditionEnum]) -> f64 {
-        let mut crinsom_knot_bonus_stack = 0;
-        for condition in battle_conditions {
-            match condition {
-                BattleConditionEnum::AfterHittingEnemyWithCrinsomKnot { number_of_times } => {
-                    crinsom_knot_bonus_stack += number_of_times
-                }
-                _ => (),
-            }
-        }
-        if self.character._character.traces.ability_3 {
-            return 0.3 * std::cmp::min(3, crinsom_knot_bonus_stack) as f64;
-        } else {
-            return 0.0;
-        }
-    }
-
-    fn talent(&self) -> f64 {
-        let resistance_penalty_scale = vec![
-            0.0, 10.00, 11.00, 12.00, 13.00, 14.00, 15.00, 16.25, 17.50, 18.75, 20.00, 21.00,
-            22.00, 23.00, 24.00, 25.00,
-        ];
-        resistance_penalty_scale[self.character._character.skills.talent as usize]
+    fn full_ultimate_multiplier_on_single_enemy(
+        &self,
+        relics: &Relics,
+        enemy: &Enemy,
+        teammates: &[Box<dyn Support>],
+    ) -> Result<f64> {
+        let rainblade = self.rainblade(relics, enemy, teammates)?;
+        let crinsom_knot = self.crimson_knot(relics, enemy, teammates)?;
+        let bounce_atk = self.thunder_core(relics, enemy, teammates)?;
+        let stygian_resurge = self.stygian_resurge(relics, enemy, teammates)?;
+        Ok(rainblade * 3.0 + crinsom_knot * 3.0 + bounce_atk * 6.0 + stygian_resurge)
     }
 
     fn skill_main_target(
         &self,
         relics: &Relics,
         enemy: &Enemy,
-        battle_conditions: &[BattleConditionEnum],
+        teammates: &[Box<dyn Support>],
     ) -> Result<f64> {
-        let mut tags = vec![Tag::Lightning, Tag::Skill];
-        self.eidolon_6_tags(&mut tags);
-        let (base_stats, bonus) = self.base_stats_and_bonus(relics, &tags, battle_conditions)?;
+        let skill_type = self.eidolon_6_skill_type(SkillType::Skill);
+        let (mut base_stats, bonus) = base_stats_and_bonus(
+            &self.character,
+            &self.light_cone,
+            relics,
+            &AttackType::Lightning,
+            &skill_type,
+            &DamageType::Normal,
+            teammates,
+        )?;
         let ability_multiplier = [
             0.0, 0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.3, 1.4, 1.5, 1.6, 1.68, 1.76, 1.84, 1.92, 2.0,
         ][self.character._character.skills.skill as usize];
-        let the_abyss = self.the_abyss_multiplier(battle_conditions);
-        let base_dmg = ability_multiplier
-            * base_stats.get(&Stats::Atk).cloned().unwrap_or_default()
-            * the_abyss;
-        let crit = self.crit_dmg(battle_conditions, &bonus);
-        let dmg_boost = self.dmg_boost(&bonus, battle_conditions);
-        let weaken = self.weaken(&bonus);
-        let def = self.def(enemy, &bonus);
-        let res = self.res(enemy, &bonus, &tags);
-        let vul = self.vul(&bonus);
-        let dmg_mit = self.dmg_mit(enemy)?;
-        let broken = self.toughness(battle_conditions);
-        Ok(base_dmg * crit * dmg_boost * weaken * def * res * vul * dmg_mit * broken)
+        self.calculate_damage(
+            teammates,
+            ability_multiplier,
+            &mut base_stats,
+            &bonus,
+            enemy,
+        )
     }
 
     fn skill_adjacent_target(
         &self,
         relics: &Relics,
         enemy: &Enemy,
-        battle_conditions: &[BattleConditionEnum],
+        teammates: &[Box<dyn Support>],
     ) -> Result<f64> {
-        let mut tags = vec![Tag::Lightning, Tag::Skill];
-        self.eidolon_6_tags(&mut tags);
-        let (base_stats, bonus) = self.base_stats_and_bonus(relics, &tags, battle_conditions)?;
+        let skill_type = self.eidolon_6_skill_type(SkillType::Skill);
+        let (mut base_stats, bonus) = base_stats_and_bonus(
+            &self.character,
+            &self.light_cone,
+            relics,
+            &AttackType::Lightning,
+            &skill_type,
+            &DamageType::Normal,
+            teammates,
+        )?;
         let ability_multiplier = [
             0.0, 0.3, 0.33, 0.36, 0.39, 0.42, 0.45, 0.4875, 0.525, 0.5625, 0.6, 0.63, 0.66, 0.69,
             0.72, 0.75,
         ][self.character._character.skills.skill as usize];
-        let the_abyss = self.the_abyss_multiplier(battle_conditions);
-        let base_dmg = ability_multiplier
-            * base_stats.get(&Stats::Atk).cloned().unwrap_or_default()
-            * the_abyss;
-        let crit = self.crit_dmg(battle_conditions, &bonus);
-        let dmg_boost = self.dmg_boost(&bonus, battle_conditions);
-        let weaken = self.weaken(&bonus);
-        let def = self.def(enemy, &bonus);
-        let res = self.res(enemy, &bonus, &tags);
-        let vul = self.vul(&bonus);
-        let dmg_mit = self.dmg_mit(enemy)?;
-        let broken = self.toughness(battle_conditions);
-        Ok(base_dmg * crit * dmg_boost * weaken * def * res * vul * dmg_mit * broken)
+        self.calculate_damage(
+            teammates,
+            ability_multiplier,
+            &mut base_stats,
+            &bonus,
+            enemy,
+        )
     }
 
-    fn basic_attack(
-        &self,
-        relics: &Relics,
-        enemy: &Enemy,
-        battle_conditions: &[BattleConditionEnum],
-    ) -> Result<f64> {
-        let mut tags = vec![Tag::Lightning, Tag::BasicAtk];
-        self.eidolon_6_tags(&mut tags);
-        let (base_stats, bonus) = self.base_stats_and_bonus(relics, &tags, battle_conditions)?;
-        let ability_multiplier = [0.0, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3]
-            [self.character._character.skills.skill as usize];
-        let the_abyss = self.the_abyss_multiplier(battle_conditions);
-        let base_dmg = ability_multiplier
-            * base_stats.get(&Stats::Atk).cloned().unwrap_or_default()
-            * the_abyss;
-        let crit = self.crit_dmg(battle_conditions, &bonus);
-        let dmg_boost = self.dmg_boost(&bonus, battle_conditions);
-        let weaken = self.weaken(&bonus);
-        let def = self.def(enemy, &bonus);
-        let res = self.res(enemy, &bonus, &tags);
-        let vul = self.vul(&bonus);
-        let dmg_mit = self.dmg_mit(enemy)?;
-        let broken = self.toughness(battle_conditions);
-        Ok(base_dmg * crit * dmg_boost * weaken * def * res * vul * dmg_mit * broken)
+    fn skill(&self, relics: &Relics, enemy: &Enemy, teammates: &[Box<dyn Support>]) -> Result<f64> {
+        Ok(self.skill_adjacent_target(relics, enemy, teammates)? * 2.0
+            + self.skill_main_target(relics, enemy, teammates)?)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::domain::{
-        Character, CharacterSkills, CharacterTraces, LightCone, Path, Relic, Slot, SubStats,
+        Character, CharacterSkills, CharacterTraces, LightCone, LightConePassiveConfig, Path,
+        Relic, RelicSetConfig, Slot, SubStats,
     };
 
     use super::*;
 
     #[test]
-    fn test_rainblade() -> Result<()> {
-        let (acheron, relics, enemy, battle_conditions) = setup();
-        let target = "RAINBLADE".to_string();
+    fn test_ultimate_single() -> Result<()> {
+        let (acheron, relics, enemy, teammates) = setup();
+        let target = AcheronEvaluationTarget::UltimateSingle;
 
         assert_eq!(
-            acheron.evaluate(&relics, &enemy, &target, &battle_conditions)?,
-            4257.843767583633
+            acheron.evaluate(&relics, &enemy, &target, &teammates)?,
+            85726.33817263198
         );
         Ok(())
     }
 
     #[test]
-    fn test_crimson_knot() -> Result<()> {
-        let (acheron, relics, enemy, battle_conditions) = setup();
-        let target = "CRIMSON_KNOT".to_string();
+    fn test_ultimate_aoe() -> Result<()> {
+        let (acheron, relics, enemy, teammates) = setup();
+        let target = AcheronEvaluationTarget::UltimateAoe;
 
         assert_eq!(
-            acheron.evaluate(&relics, &enemy, &target, &battle_conditions)?,
-            10644.609418959079
+            acheron.evaluate(&relics, &enemy, &target, &teammates)?,
+            182794.30153854424
         );
         Ok(())
     }
 
     #[test]
-    fn test_stygian_resurge() -> Result<()> {
-        let (acheron, relics, enemy, battle_conditions) = setup();
-        let target = "STYGIAN_RESURGE".to_string();
+    fn test_skill() -> Result<()> {
+        let (acheron, relics, enemy, teammates) = setup();
+        let target = AcheronEvaluationTarget::Skill;
 
         assert_eq!(
-            acheron.evaluate(&relics, &enemy, &target, &battle_conditions)?,
-            21289.218837918157
+            acheron.evaluate(&relics, &enemy, &target, &teammates)?,
+            25228.503678599274
         );
         Ok(())
     }
 
-    #[test]
-    fn test_thunder_core() -> Result<()> {
-        let (acheron, relics, enemy, battle_conditions) = setup();
-        let target = "THUNDER_CORE".to_string();
-
-        assert_eq!(
-            acheron.evaluate(&relics, &enemy, &target, &battle_conditions)?,
-            4668.68834164872
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn test_skill_main_target() -> Result<()> {
-        let (acheron, relics, enemy, battle_conditions) = setup();
-        let target = "SKILL_MAIN_TARGET".to_string();
-
-        assert_eq!(
-            acheron.evaluate(&relics, &enemy, &target, &battle_conditions)?,
-            23589.162147277733
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn test_skill_adjacent_target() -> Result<()> {
-        let (acheron, relics, enemy, battle_conditions) = setup();
-        let target = "SKILL_ADJACENT_TARGET".to_string();
-
-        assert_eq!(
-            acheron.evaluate(&relics, &enemy, &target, &battle_conditions)?,
-            8845.935805229152
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn test_basic_attack() -> Result<()> {
-        let (acheron, relics, enemy, battle_conditions) = setup();
-        let target = "BASIC_ATTACK".to_string();
-
-        assert_eq!(
-            acheron.evaluate(&relics, &enemy, &target, &battle_conditions)?,
-            20443.940527640705
-        );
-        Ok(())
-    }
-
-    fn setup() -> (Acheron, Relics, Enemy, Vec<BattleConditionEnum>) {
+    fn setup() -> (Acheron, Relics, Enemy, Vec<Box<dyn Support>>) {
         let character = CharacterEntity {
             base_hp: 1125.43,
             base_atk: 698.54,
@@ -703,6 +467,10 @@ mod tests {
                 location: Some("1308".to_string()),
                 lock: true,
                 _uid: "light_cone_1".to_string(),
+            },
+            config: LightConePassiveConfig {
+                stack_21001: 2,
+                ..Default::default()
             },
         };
         let relics = Relics {
@@ -888,49 +656,68 @@ mod tests {
                     _uid: "relic_6".to_string(),
                 },
             ],
+            config: RelicSetConfig {
+                activate_102: true,
+                activate_104: true,
+                stack_105: 5,
+                activate_107: true,
+                activate_108: true,
+                activate_109: true,
+                activate_112_1: true,
+                activate_112_2: true,
+                stack_113: 5,
+                stack_115: 5,
+                stack_116: 5,
+                activate_117_2pcs: true,
+                stack_117: 5,
+                activate_117_4pcs_extra: true,
+                activate_120: true,
+                activate_122: true,
+                activate_305: true,
+                stack_313: 5,
+                stack_315: 5,
+                activate_316: true,
+                activate_318: true,
+            },
         };
         let enemy = Enemy {
-            level: 82,
+            level: 80,
             resistance: 0.0,
             dmg_mitigation: vec![],
+            def_bonus: 0.0,
+            vulnerability: 0.0,
+            toughness_break: false,
+            weaken: 0.0,
         };
-        let battle_conditions = vec![
-            BattleConditionEnum::AfterUsingSkill {
-                number_of_turns_since_using_the_skill: 1,
-            },
-            BattleConditionEnum::AfterUsingUltimate {
-                next_attack_after_ultimate: false,
-                number_of_turns_since_using_ultimate: 0,
-                next_skill_after_ultimate: false,
-            },
-            BattleConditionEnum::AfterWearerAttack { number_of_times: 3 },
-            BattleConditionEnum::AfterWearerIsHit {
-                number_of_times: 2,
-                within_number_of_turns: 1,
-            },
-            BattleConditionEnum::AfterAttackingDebuffedEnemy,
-            BattleConditionEnum::AfterWearerInflictingDebuffs {
-                number_of_times: 1,
-                within_number_of_turns: 1,
-            },
-            BattleConditionEnum::WhenAttackingEnemyWithDebuff {
-                number_of_debuffs_enemy_has: 3,
-                within_number_of_turns: 1,
-            },
-            BattleConditionEnum::TeammatesSamePathWithWearer {
-                number_of_teammates_having_same_path: 1,
-            },
-            BattleConditionEnum::HittingEnemyWithCrimsonKnot {
-                number_of_crinsom_knot_enemy_has: 3,
-            },
-            BattleConditionEnum::CriticalHit(CritEnum::Crit),
-            BattleConditionEnum::ToughnessBreak(true),
-            BattleConditionEnum::AfterHittingEnemyWithCrinsomKnot { number_of_times: 3 },
-        ];
         let acheron = Acheron {
             character,
             light_cone: Some(light_cone),
+            crimson_knot: 9,
+            crit: CritEnum::Avg,
+            thunder_core_bonus_stack: 3,
+            activate_eidolon_1: false,
         };
-        (acheron, relics, enemy, battle_conditions)
+        (
+            acheron,
+            relics,
+            enemy,
+            vec![Box::new(Pela {}), Box::new(Jiaoqiu {})],
+        )
+    }
+
+    struct Pela {}
+
+    impl Support for Pela {
+        fn get_path(&self) -> Path {
+            Path::Nihility
+        }
+    }
+
+    struct Jiaoqiu {}
+
+    impl Support for Jiaoqiu {
+        fn get_path(&self) -> Path {
+            Path::Nihility
+        }
     }
 }
