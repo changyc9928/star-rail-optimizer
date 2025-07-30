@@ -33,6 +33,10 @@ pub struct RelicSetConfig {
     pub activate_117_4pcs_extra: bool,
     pub activate_120: bool,
     pub activate_122: bool,
+    pub activate_123_1: bool,
+    pub activate_123_2: bool,
+    pub activate_125: bool,
+    pub activate_126: bool,
     pub activate_305: bool,
     pub stack_313: u8,
     pub stack_315: u8,
@@ -210,6 +214,29 @@ impl Relics {
                         *bonus.entry(Stats::CritRate_).or_default() += 8.0;
                     }
                 }
+                "123" => {
+                    if num_relics >= 2 {
+                        *bonus.entry(Stats::Atk_).or_default() += 12.0;
+                    }
+                }
+                "124" => {
+                    if num_relics >= 2 && *attack_type == AttackType::Quantum {
+                        *bonus.entry(Stats::DmgBoost_).or_default() += 10.0;
+                    }
+                    if num_relics >= 4 {
+                        *bonus.entry(Stats::Spd_).or_default() -= 8.0;
+                    }
+                }
+                "125" => {
+                    if num_relics >= 2 {
+                        *bonus.entry(Stats::Spd_).or_default() += 6.0;
+                    }
+                }
+                "126" => {
+                    if num_relics >= 2 {
+                        *bonus.entry(Stats::CritDmg_).or_default() += 16.0;
+                    }
+                }
                 "301" => {
                     if num_relics >= 2 {
                         *bonus.entry(Stats::Atk_).or_default() += 12.0;
@@ -294,6 +321,11 @@ impl Relics {
                 "318" => {
                     if num_relics >= 2 {
                         *bonus.entry(Stats::CritDmg_).or_default() += 16.0;
+                    }
+                }
+                "319" => {
+                    if num_relics >= 2 {
+                        *bonus.entry(Stats::Hp_).or_default() += 12.0;
                     }
                 }
                 _ => todo!(),
@@ -449,6 +481,39 @@ impl Relics {
                         }
                     }
                 }
+                "123" => {
+                    if num_relics >= 4 {
+                        if self.config.activate_123_1 {
+                            *bonus.entry(Stats::Spd_).or_default() += 6.0;
+                        }
+                        if self.config.activate_123_2 {
+                            *bonus.entry(Stats::CritDmg_).or_default() += 30.0;
+                        }
+                    }
+                }
+                "124" => {
+                    if num_relics >= 4 {
+                        if *base_stats.get(&Stats::Spd).ok_or(eyre!("Missing SPD"))? < 110.0 {
+                            *bonus.entry(Stats::CritRate_).or_default() += 20.0;
+                        } else if *base_stats.get(&Stats::Spd).ok_or(eyre!("Missing SPD"))? < 95.0 {
+                            *bonus.entry(Stats::CritRate_).or_default() += 32.0;
+                        }
+                    }
+                }
+                "125" => {
+                    if num_relics >= 4 && self.config.activate_125 {
+                        *bonus.entry(Stats::Spd_).or_default() += 6.0;
+                        *bonus.entry(Stats::CritDmg_).or_default() += 15.0;
+                    }
+                }
+                "126" => {
+                    if num_relics >= 4
+                        && self.config.activate_126
+                        && *skill_type == SkillType::Ultimate
+                    {
+                        *bonus.entry(Stats::Atk_).or_default() += 48.0;
+                    }
+                }
                 "301" => {
                     if num_relics >= 2 {
                         if *base_stats.get(&Stats::Spd).ok_or(eyre!("Missing SPD"))? >= 120.0 {
@@ -574,6 +639,13 @@ impl Relics {
                 "318" => {
                     if num_relics >= 2 && self.config.activate_318 {
                         *bonus.entry(Stats::CritDmg_).or_default() += 32.0;
+                    }
+                }
+                "319" => {
+                    if num_relics >= 2
+                        && *base_stats.get(&Stats::Hp).ok_or(eyre!("Missing HP"))? >= 5000.0
+                    {
+                        *bonus.entry(Stats::CritDmg_).or_default() += 28.0;
                     }
                 }
                 _ => todo!(),

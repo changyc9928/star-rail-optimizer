@@ -38,7 +38,7 @@ async fn main() -> Result<()> {
         },
     }));
     let mut scanner_parser_service = ScannerParserService { data_fetcher };
-    let input = load_input_data("scanned_data/HSRScanData_20241014_152542.json").await?;
+    let input = load_input_data("scanned_data/HSRScanData_20250730_111506.json").await?;
     let (characters, light_cones, relic_pool) =
         scanner_parser_service.parse_scanner_input(&input).await?;
     // let evaluator = create_evaluator(
