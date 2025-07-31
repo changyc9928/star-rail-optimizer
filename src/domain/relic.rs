@@ -1,4 +1,6 @@
-use eyre::{bail, Result};
+use std::{collections::HashMap, fs::File, path::Path};
+
+use eyre::{bail, eyre, Result};
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
@@ -164,7 +166,7 @@ pub enum RelicSetName {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-pub struct Relic {
+pub struct RawRelic {
     pub set_id: String,
     pub name: String,
     pub slot: Slot,
@@ -179,12 +181,28 @@ pub struct Relic {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct Relic {
+    pub set_id: String,
+    pub name: String,
+    pub slot: Slot,
+    pub rarity: u8,
+    pub level: u8,
+    pub mainstat: Stats,
+    pub mainstat_value: f64,
+    pub substats: Vec<SubStats>,
+    pub location: Option<String>,
+    pub lock: bool,
+    pub discard: bool,
+    pub uid: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct SubStats {
     pub key: Stats,
     pub value: f64,
 }
 
-impl Relic {
+impl RawRelic {
     pub fn get_mainstat(&self) -> Result<f64> {
         let stat = match &self.mainstat {
             &Stats::Atk if self.slot != Slot::Hands => Stats::Atk_,
@@ -270,5 +288,191 @@ impl Relic {
             (2, Stats::CritDmg_) => 4.1472 + 1.4515 * self.level as f64,
             other => bail!("Invalid rarity or stats: {other:?}"),
         })
+    }
+}
+
+pub type RelicMainAffixesData = HashMap<String, MainAffixes>;
+pub type RelicSubAffixesData = HashMap<String, SubAffixes>;
+
+#[derive(serde::Deserialize)]
+pub struct MainAffixes {
+    pub id: String,
+    pub affixes: HashMap<String, MainAffix>,
+}
+
+#[derive(serde::Deserialize)]
+pub struct SubAffixes {
+    pub id: String,
+    pub affixes: HashMap<String, SubAffix>,
+}
+
+#[derive(serde::Deserialize, Debug)]
+pub struct MainAffix {
+    pub affix_id: String,
+    pub property: String,
+    pub base: f64,
+    pub step: f64,
+}
+
+#[derive(serde::Deserialize, Debug)]
+pub struct SubAffix {
+    pub affix_id: String,
+    pub property: String,
+    pub base: f64,
+    pub step: f64,
+    pub step_num: u8,
+}
+
+impl TryFrom<RawRelic> for Relic {
+    fn try_from(value: RawRelic) -> Result<Self> {
+        let data_path = Path::new("database/index_new/en/relic_main_affixes.json");
+        let data = File::open(data_path)?;
+        let parsed_data: RelicMainAffixesData = serde_json::from_reader(data)?;
+        let key = value.rarity.to_string()
+            + match value.slot {
+                Slot::Head => "1",
+                Slot::Feet => "4",
+                Slot::Body => "3",
+                Slot::Hands => "2",
+                Slot::LinkRope => "6",
+                Slot::PlanarSphere => "5",
+                Slot::Dummy => todo!(),
+            };
+        let affixes = parsed_data
+            .get(&key)
+            .ok_or(eyre!("Missing data for {key}"))?
+            .affixes
+            .iter()
+            .filter_map(|(_, a)| {
+                let predicate = match (a.property.as_str(), &value.mainstat) {
+                    ("HPDelta", Stats::Hp) => true,
+                    ("HPAddedRatio", Stats::Hp_) => true,
+                    ("AttackDelta", Stats::Atk) => true,
+                    ("AttackAddedRatio", Stats::Atk_) => true,
+                    ("DefenceAddedRatio", Stats::Def_) => true,
+                    ("SpeedDelta", Stats::Spd) => true,
+                    ("CriticalChanceBase", Stats::CritRate_) => true,
+                    ("CriticalDamageBase", Stats::CritDmg_) => true,
+                    ("HealRatioBase", Stats::OutgoingHealingBoost_) => true,
+                    ("StatusProbabilityBase", Stats::EffectHitRate_) => true,
+                    ("BreakDamageAddedRatioBase", Stats::BreakEffect_) => true,
+                    ("SPRatioBase", Stats::EnergyRegenerationRate_) => true,
+                    ("PhysicalAddedRatio", Stats::PhysicalDmgBoost_) => true,
+                    ("FireAddedRatio", Stats::FireDmgBoost_) => true,
+                    ("ThunderAddedRatio", Stats::LightningDmgBoost_) => true,
+                    ("WindAddedRatio", Stats::WindDmgBoost_) => true,
+                    ("QuantumAddedRatio", Stats::QuantumDmgBoost_) => true,
+                    ("ImaginaryAddedRatio", Stats::ImaginaryDmgBoost_) => true,
+                    ("IceAddedRatio", Stats::IceDmgBoost_) => true,
+                    _ => false,
+                };
+                if predicate {
+                    Some(a)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+        let affix = affixes.first().ok_or(eyre!(
+            "Can't find the main affix data for {:?}",
+            value.mainstat
+        ))?;
+        let mainstat_value = (affix.base + (value.level as f64 * affix.step))
+            * if value.mainstat != Stats::Atk
+                && value.mainstat != Stats::Hp
+                && value.mainstat != Stats::Def
+                && value.mainstat != Stats::Spd
+            {
+                100.0
+            } else {
+                1.0
+            };
+
+        let data_path = Path::new("database/index_new/en/relic_sub_affixes.json");
+        let data = File::open(data_path)?;
+        let parsed_data: RelicSubAffixesData = serde_json::from_reader(data)?;
+        let key = value.rarity.to_string();
+        let affixes = parsed_data
+            .get(&key)
+            .ok_or(eyre!("Missing data for {key}"))?;
+        let mut substats = value.substats.clone();
+        for substat in &mut substats {
+            let key = match substat.key {
+                Stats::Atk => "2",
+                Stats::Atk_ => "5",
+                Stats::Def => "3",
+                Stats::Def_ => "6",
+                Stats::Hp => "1",
+                Stats::Hp_ => "4",
+                Stats::CritRate_ => "8",
+                Stats::CritDmg_ => "9",
+                Stats::Spd => "7",
+                Stats::EffectHitRate_ => "10",
+                Stats::EffectRes_ => "11",
+                Stats::BreakEffect_ => "12",
+                _ => todo!(),
+            };
+            let affix = affixes
+                .affixes
+                .get(key)
+                .ok_or(eyre!("Can't find the sub affix data for {:?}", key))?;
+            let mut rolls = vec![0.0];
+            for i in 0..affix.step_num + 1 {
+                rolls.push(affix.base + i as f64 * affix.step);
+            }
+            match_rolls(substat, rolls);
+        }
+        Ok(Self {
+            set_id: value.set_id,
+            name: value.name,
+            slot: value.slot,
+            rarity: value.rarity,
+            level: value.level,
+            mainstat: value.mainstat,
+            mainstat_value,
+            substats,
+            location: value.location,
+            lock: value.lock,
+            discard: value.discard,
+            uid: value._uid,
+        })
+    }
+
+    type Error = eyre::Report;
+}
+
+fn match_rolls(substat: &mut SubStats, rolls: Vec<f64>) {
+    for a in &rolls {
+        for b in &rolls {
+            for c in &rolls {
+                for d in &rolls {
+                    for e in &rolls {
+                        let value = (a + b + c + d + e)
+                            * if substat.key != Stats::Atk
+                                && substat.key != Stats::Hp
+                                && substat.key != Stats::Def
+                                && substat.key != Stats::Spd
+                            {
+                                100.0
+                            } else {
+                                1.0
+                            };
+                        if (substat.key == Stats::Atk
+                            || substat.key == Stats::Def
+                            || substat.key == Stats::Hp)
+                            && substat.value - 1.0 < value
+                            && value < substat.value + 1.0
+                        {
+                            substat.value = value;
+                            return;
+                        }
+                        if substat.value - 0.1 < value && value < substat.value + 0.1 {
+                            substat.value = value;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
     }
 }

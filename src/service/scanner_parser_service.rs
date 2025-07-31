@@ -1,6 +1,8 @@
 use crate::{
     data_fetcher::DataFetcher,
-    domain::{Character, LightCone, LightConeEntity, RawCharacter, Relic, ScannerInput, Slot},
+    domain::{
+        Character, LightCone, LightConeEntity, RawCharacter, RawRelic, Relic, ScannerInput, Slot,
+    },
 };
 use eyre::Result;
 use futures::future::try_join_all;
@@ -80,15 +82,15 @@ impl ScannerParserService {
             .collect())
     }
 
-    fn categorise_relics(&self, relics: &[Relic]) -> HashMap<Slot, Vec<Relic>> {
+    fn categorise_relics(&self, relics: &[RawRelic]) -> Result<HashMap<Slot, Vec<Relic>>> {
         let mut relic_pool = HashMap::new();
         for relic in relics {
             relic_pool
                 .entry(relic.slot.clone())
                 .or_insert_with(Vec::new)
-                .push(relic.clone());
+                .push(relic.clone().try_into()?);
         }
-        relic_pool
+        Ok(relic_pool)
     }
 
     pub async fn parse_scanner_input(
@@ -104,7 +106,7 @@ impl ScannerParserService {
         let relics = &scanner_input.relics;
         let character_entities = self.populate_characters(characters).await?;
         let light_cone_entities = self.populate_light_cone(light_cones).await?;
-        let relics = self.categorise_relics(relics);
+        let relics = self.categorise_relics(relics)?;
         Ok((character_entities, light_cone_entities, relics))
     }
 }

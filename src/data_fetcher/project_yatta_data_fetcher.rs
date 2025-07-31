@@ -120,12 +120,15 @@ impl ProjectYattaDataFetcher {
             attack_type: match combat_type {
                 "Wind" => crate::domain::AttackType::Wind,
                 "Fire" => crate::domain::AttackType::Fire,
-                "Lightning" => crate::domain::AttackType::Lightning,
+                "Lightning" | "Thunder" => crate::domain::AttackType::Lightning,
                 "Ice" => crate::domain::AttackType::Ice,
                 "Physical" => crate::domain::AttackType::Physical,
                 "Quantum" => crate::domain::AttackType::Quantum,
                 "Imaginary" => crate::domain::AttackType::Imaginary,
-                _ => todo!(),
+                other => {
+                    println!("Missing {}", other);
+                    todo!()
+                }
             },
             level: character.level,
             ascension: character.ascension,

@@ -67,27 +67,27 @@ impl Relics {
             }
             if *attack_type == AttackType::Lightning && relic.mainstat == Stats::LightningDmgBoost_
             {
-                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
+                *bonus.entry(Stats::DmgBoost_).or_default() += relic.mainstat_value;
             } else if *attack_type == AttackType::Wind && relic.mainstat == Stats::WindDmgBoost_ {
-                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
+                *bonus.entry(Stats::DmgBoost_).or_default() += relic.mainstat_value;
             } else if *attack_type == AttackType::Fire && relic.mainstat == Stats::FireDmgBoost_ {
-                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
+                *bonus.entry(Stats::DmgBoost_).or_default() += relic.mainstat_value;
             } else if *attack_type == AttackType::Ice && relic.mainstat == Stats::IceDmgBoost_ {
-                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
+                *bonus.entry(Stats::DmgBoost_).or_default() += relic.mainstat_value;
             } else if *attack_type == AttackType::Quantum
                 && relic.mainstat == Stats::QuantumDmgBoost_
             {
-                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
+                *bonus.entry(Stats::DmgBoost_).or_default() += relic.mainstat_value;
             } else if *attack_type == AttackType::Imaginary
                 && relic.mainstat == Stats::ImaginaryDmgBoost_
             {
-                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
+                *bonus.entry(Stats::DmgBoost_).or_default() += relic.mainstat_value;
             } else if *attack_type == AttackType::Physical
                 && relic.mainstat == Stats::PhysicalDmgBoost_
             {
-                *bonus.entry(Stats::DmgBoost_).or_default() += relic.get_mainstat()?;
+                *bonus.entry(Stats::DmgBoost_).or_default() += relic.mainstat_value;
             } else {
-                *bonus.entry(relic.mainstat.clone()).or_default() += relic.get_mainstat()?;
+                *bonus.entry(relic.mainstat.clone()).or_default() += relic.mainstat_value;
             }
         }
         Ok(())
