@@ -2,7 +2,8 @@ use super::DataFetcher;
 use crate::{
     client::hoyowiki_client::HoyowikiClient,
     domain::{
-        Character, CharacterEntity, LightCone, LightConeEntity, LightConePassiveConfig, Path, Stats,
+        BaseStats, Character, LightCone, LightConeEntity, LightConePassiveConfig, Path,
+        RawCharacter, Stats,
     },
     engine::StatBonusMap,
     utils::trace_title_mapper::title_mapper,
@@ -80,7 +81,7 @@ pub struct HoyowikiDataFetcherService {
 #[allow(deprecated)]
 #[async_trait]
 impl DataFetcher for HoyowikiDataFetcherService {
-    async fn fetch_character_data(&self, character: &Character) -> Result<CharacterEntity> {
+    async fn fetch_character_data(&self, character: &RawCharacter) -> Result<Character> {
         let components: Vec<Ascensions> = self.client.fetch_data("Ascend", &character.id).await?;
         let ascensions = components
             .first()
@@ -208,9 +209,9 @@ impl HoyowikiDataFetcherService {
         lo: &str,
         hi: &str,
         ascensions: &Ascensions,
-        character: &Character,
+        character: &RawCharacter,
         stat_bonus: &StatBonusMap,
-    ) -> Result<CharacterEntity> {
+    ) -> Result<Character> {
         let lower_bound = ascensions
             .list
             .iter()
@@ -263,16 +264,24 @@ impl HoyowikiDataFetcherService {
             def_lo[1] = def_lo[0];
             spd_lo[1] = spd_lo[0];
         }
-        Ok(CharacterEntity {
+        Ok(Character {
             base_hp: calc_base_stat(hp_lo, hp_hi, lo)?,
             base_atk: calc_base_stat(atk_lo, atk_hi, lo)?,
             base_def: calc_base_stat(def_lo, def_hi, lo)?,
             base_spd: calc_base_stat(spd_lo, spd_hi, lo)?,
-            _base_aggro: 0,
+            base_aggro: 0,
             critical_chance: 5.0,
             critical_damage: 50.0,
-            stat_bonus: stat_bonus.clone(),
-            _character: character.clone(),
+            stat_bonus: BaseStats::default(),
+            id: character.id.clone(),
+            name: character.name.clone(),
+            path: character.path.clone(),
+            attack_type: todo!(),
+            level: character.level,
+            ascension: character.ascension,
+            eidolon: character.eidolon,
+            skills: character.skills,
+            traces: character.traces,
         })
     }
 
@@ -436,7 +445,7 @@ impl HoyowikiDataFetcherService {
         .to_string())
     }
 
-    async fn calculate_trace_bonus(&self, character: &Character) -> Result<StatBonusMap> {
+    async fn calculate_trace_bonus(&self, character: &RawCharacter) -> Result<StatBonusMap> {
         let components: Vec<Traces> = self.client.fetch_data("Traces", &character.id).await?;
         let traces = components
             .first()

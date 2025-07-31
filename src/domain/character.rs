@@ -1,21 +1,29 @@
-use crate::engine::StatBonusMap;
+use crate::domain::base_stats::BaseStats;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug)]
-pub struct CharacterEntity {
+pub struct Character {
+    pub id: String,
+    pub name: String,
+    pub path: Path,
+    pub attack_type: AttackType,
+    pub level: u8,
+    pub ascension: u8,
+    pub eidolon: u8,
+    pub skills: CharacterSkills,
+    pub traces: CharacterTraces,
     pub base_hp: f64,
     pub base_atk: f64,
     pub base_def: f64,
     pub base_spd: f64,
-    pub _base_aggro: u64,
+    pub base_aggro: u64,
     pub critical_chance: f64,
     pub critical_damage: f64,
-    pub stat_bonus: StatBonusMap,
-    pub _character: Character,
+    pub stat_bonus: BaseStats,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Character {
+pub struct RawCharacter {
     pub id: String,
     pub name: String,
     pub path: Path,
@@ -87,7 +95,7 @@ impl CharacterTraces {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum AttackType {
     Lightning,
     Physical,

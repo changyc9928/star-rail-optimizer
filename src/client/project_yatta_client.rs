@@ -42,6 +42,17 @@ pub struct ProjectYattaCharacterResponse {
 pub struct CharacterData {
     pub traces: Traces,
     pub upgrade: Vec<CharacterUpgrade>,
+    pub types: Types,
+}
+
+#[derive(Deserialize)]
+pub struct Types {
+    pub combat_type: CombatType,
+}
+
+#[derive(Deserialize)]
+pub struct CombatType {
+    pub id: String,
 }
 
 #[derive(Deserialize)]

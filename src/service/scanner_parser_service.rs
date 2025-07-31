@@ -1,6 +1,6 @@
 use crate::{
     data_fetcher::DataFetcher,
-    domain::{Character, CharacterEntity, LightCone, LightConeEntity, Relic, ScannerInput, Slot},
+    domain::{Character, LightCone, LightConeEntity, RawCharacter, Relic, ScannerInput, Slot},
 };
 use eyre::Result;
 use futures::future::try_join_all;
@@ -15,8 +15,8 @@ pub struct ScannerParserService {
 impl ScannerParserService {
     async fn populate_characters(
         &self,
-        characters: &[Character],
-    ) -> Result<HashMap<String, CharacterEntity>> {
+        characters: &[RawCharacter],
+    ) -> Result<HashMap<String, Character>> {
         let futures = characters
             .iter()
             .map(|character| {
@@ -38,7 +38,7 @@ impl ScannerParserService {
             .into_par_iter()
             .map(|r| {
                 let character_entity = r?;
-                Ok::<_, eyre::Report>((character_entity._character.id.clone(), character_entity))
+                Ok::<_, eyre::Report>((character_entity.id.clone(), character_entity))
             })
             .collect::<Result<Vec<_>>>()?
             .into_iter()
@@ -95,7 +95,7 @@ impl ScannerParserService {
         &mut self,
         scanner_input: &ScannerInput,
     ) -> Result<(
-        HashMap<String, CharacterEntity>,
+        HashMap<String, Character>,
         HashMap<String, LightConeEntity>,
         HashMap<Slot, Vec<Relic>>,
     )> {
