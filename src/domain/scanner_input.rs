@@ -1,4 +1,4 @@
-use super::{RawCharacter, LightCone, Relic, Slot, Stats};
+use super::{RawCharacter, LightCone, RawRelic, Slot, Stats};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -6,7 +6,7 @@ pub struct ScannerInput {
     pub source: String,
     pub version: u8,
     pub light_cones: Vec<LightCone>,
-    pub relics: Vec<Relic>,
+    pub relics: Vec<RawRelic>,
     pub characters: Vec<RawCharacter>,
 }
 

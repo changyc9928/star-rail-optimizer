@@ -369,48 +369,48 @@ impl Acheron {
 mod tests {
     use crate::domain::{
         BaseStats, CharacterSkills, CharacterTraces, LightCone, LightConePassiveConfig, Path,
-        Relic, RelicSetConfig, Slot, SubStats,
+        RawRelic, RelicSetConfig, Slot, SubStats,
     };
 
     use super::*;
 
     #[test]
     fn test_ultimate_single() -> Result<()> {
-        let (acheron, relics, enemy, teammates) = setup();
+        let (acheron, relics, enemy, teammates) = setup()?;
         let target = AcheronEvaluationTarget::UltimateSingle;
 
         assert_eq!(
             acheron.evaluate(&relics, &enemy, &target, &teammates)?,
-            85726.33817263198
+            86053.53299468735
         );
         Ok(())
     }
 
     #[test]
     fn test_ultimate_aoe() -> Result<()> {
-        let (acheron, relics, enemy, teammates) = setup();
+        let (acheron, relics, enemy, teammates) = setup()?;
         let target = AcheronEvaluationTarget::UltimateAoe;
 
         assert_eq!(
             acheron.evaluate(&relics, &enemy, &target, &teammates)?,
-            182794.30153854424
+            183491.9791746075
         );
         Ok(())
     }
 
     #[test]
     fn test_skill() -> Result<()> {
-        let (acheron, relics, enemy, teammates) = setup();
+        let (acheron, relics, enemy, teammates) = setup()?;
         let target = AcheronEvaluationTarget::Skill;
 
         assert_eq!(
             acheron.evaluate(&relics, &enemy, &target, &teammates)?,
-            25228.503678599274
+            25324.79422299673
         );
         Ok(())
     }
 
-    fn setup() -> (Acheron, Relics, Enemy, Vec<Box<dyn Support>>) {
+    fn setup() -> Result<(Acheron, Relics, Enemy, Vec<Box<dyn Support>>)> {
         let character = Character {
             id: "1308".to_string(),
             name: "Acheron".to_string(),
@@ -475,7 +475,7 @@ mod tests {
         };
         let relics = Relics {
             relics: vec![
-                Relic {
+                RawRelic {
                     set_id: "117".to_string(),
                     name: "Pioneer's Heatproof Shell".to_string(),
                     slot: Slot::Head,
@@ -504,8 +504,9 @@ mod tests {
                     lock: true,
                     discard: false,
                     _uid: "relic_1".to_string(),
-                },
-                Relic {
+                }
+                .try_into()?,
+                RawRelic {
                     set_id: "117".to_string(),
                     name: "Pioneer's Lacuna Compass".to_string(),
                     slot: Slot::Hands,
@@ -534,8 +535,9 @@ mod tests {
                     lock: true,
                     discard: false,
                     _uid: "relic_2".to_string(),
-                },
-                Relic {
+                }
+                .try_into()?,
+                RawRelic {
                     set_id: "117".to_string(),
                     name: "Pioneer's Sealed Lead Apron".to_string(),
                     slot: Slot::Body,
@@ -564,8 +566,9 @@ mod tests {
                     lock: true,
                     discard: false,
                     _uid: "relic_3".to_string(),
-                },
-                Relic {
+                }
+                .try_into()?,
+                RawRelic {
                     set_id: "117".to_string(),
                     name: "Pioneer's Starfaring Anchor".to_string(),
                     slot: Slot::Feet,
@@ -594,8 +597,9 @@ mod tests {
                     lock: true,
                     discard: false,
                     _uid: "relic_4".to_string(),
-                },
-                Relic {
+                }
+                .try_into()?,
+                RawRelic {
                     set_id: "314".to_string(),
                     name: "Izumo's Magatsu no Morokami".to_string(),
                     slot: Slot::PlanarSphere,
@@ -624,8 +628,9 @@ mod tests {
                     lock: true,
                     discard: false,
                     _uid: "relic_5".to_string(),
-                },
-                Relic {
+                }
+                .try_into()?,
+                RawRelic {
                     set_id: "314".to_string(),
                     name: "Izumo's Blades of Origin and End".to_string(),
                     slot: Slot::LinkRope,
@@ -654,7 +659,8 @@ mod tests {
                     lock: true,
                     discard: false,
                     _uid: "relic_6".to_string(),
-                },
+                }
+                .try_into()?,
             ],
             config: RelicSetConfig {
                 activate_102: true,
@@ -702,12 +708,12 @@ mod tests {
             thunder_core_bonus_stack: 3,
             activate_eidolon_1: false,
         };
-        (
+        Ok((
             acheron,
             relics,
             enemy,
             vec![Box::new(Pela {}), Box::new(Jiaoqiu {})],
-        )
+        ))
     }
 
     struct Pela {}

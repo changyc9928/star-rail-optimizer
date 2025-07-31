@@ -46,6 +46,7 @@ pub struct CharacterData {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Types {
     pub combat_type: CombatType,
 }
