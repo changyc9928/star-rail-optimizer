@@ -42,6 +42,7 @@ pub struct RelicSetConfig {
     pub stack_315: u8,
     pub activate_316: bool,
     pub activate_318: bool,
+    pub stack_321: u8,
 }
 
 impl Relics {
@@ -328,6 +329,17 @@ impl Relics {
                         *bonus.entry(Stats::Hp_).or_default() += 12.0;
                     }
                 }
+                "320" => {
+                    if num_relics >= 2 {
+                        *bonus.entry(Stats::Spd_).or_default() += 6.0;
+                    }
+                }
+                "321" => {}
+                "322" => {
+                    if num_relics >= 2 {
+                        *bonus.entry(Stats::Atk_).or_default() += 12.0;
+                    }
+                }
                 _ => todo!(),
             }
         }
@@ -493,10 +505,11 @@ impl Relics {
                 }
                 "124" => {
                     if num_relics >= 4 {
-                        if *base_stats.get(&Stats::Spd).ok_or(eyre!("Missing SPD"))? < 110.0 {
-                            *bonus.entry(Stats::CritRate_).or_default() += 20.0;
-                        } else if *base_stats.get(&Stats::Spd).ok_or(eyre!("Missing SPD"))? < 95.0 {
+                        if *base_stats.get(&Stats::Spd).ok_or(eyre!("Missing SPD"))? < 95.0 {
                             *bonus.entry(Stats::CritRate_).or_default() += 32.0;
+                        } else if *base_stats.get(&Stats::Spd).ok_or(eyre!("Missing SPD"))? < 110.0
+                        {
+                            *bonus.entry(Stats::CritRate_).or_default() += 20.0;
                         }
                     }
                 }
@@ -599,11 +612,11 @@ impl Relics {
                 "310" => {}
                 "311" => {
                     if num_relics >= 2 {
-                        if *base_stats.get(&Stats::Spd).ok_or(eyre!("Missing SPD"))? >= 135.0 {
-                            *bonus.entry(Stats::DmgBoost_).or_default() += 12.0;
-                        } else if *base_stats.get(&Stats::Spd).ok_or(eyre!("Missing SPD"))? >= 160.0
-                        {
+                        if *base_stats.get(&Stats::Spd).ok_or(eyre!("Missing SPD"))? >= 160.0 {
                             *bonus.entry(Stats::DmgBoost_).or_default() += 18.0;
+                        } else if *base_stats.get(&Stats::Spd).ok_or(eyre!("Missing SPD"))? >= 135.0
+                        {
+                            *bonus.entry(Stats::DmgBoost_).or_default() += 12.0;
                         }
                     }
                 }
@@ -646,6 +659,38 @@ impl Relics {
                         && *base_stats.get(&Stats::Hp).ok_or(eyre!("Missing HP"))? >= 5000.0
                     {
                         *bonus.entry(Stats::CritDmg_).or_default() += 28.0;
+                    }
+                }
+                "320" => {
+                    if num_relics >= 2 {
+                        if *base_stats.get(&Stats::Spd).ok_or(eyre!("Missing SPD"))? >= 180.0 {
+                            *bonus.entry(Stats::OutgoingHealingBoost_).or_default() += 20.0;
+                        } else if *base_stats.get(&Stats::Spd).ok_or(eyre!("Missing SPD"))? >= 135.0
+                        {
+                            *bonus.entry(Stats::OutgoingHealingBoost_).or_default() += 12.0;
+                        }
+                    }
+                }
+                "321" => {
+                    if num_relics >= 2 {
+                        if self.config.stack_321 > 4 {
+                            *bonus.entry(Stats::DmgBoost_).or_default() +=
+                                9.0 * std::cmp::min(4, self.config.stack_321) as f64;
+                        } else if self.config.stack_321 < 4 {
+                            *bonus.entry(Stats::DmgBoost_).or_default() +=
+                                12.0 * std::cmp::min(3, 4 - self.config.stack_321) as f64;
+                        }
+                    }
+                }
+                "322" => {
+                    if num_relics >= 2 && *damage_type == DamageType::DamageOnTime {
+                        if *base_stats.get(&Stats::Atk).ok_or(eyre!("Missing ATK"))? >= 3600.0 {
+                            *bonus.entry(Stats::DmgBoost_).or_default() += 24.0
+                        } else if *base_stats.get(&Stats::Atk).ok_or(eyre!("Missing ATK"))?
+                            >= 2400.0
+                        {
+                            *bonus.entry(Stats::DmgBoost_).or_default() += 12.0
+                        }
                     }
                 }
                 _ => todo!(),

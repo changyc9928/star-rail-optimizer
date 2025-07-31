@@ -51,7 +51,7 @@ async fn main() -> Result<()> {
     // )
     // .await?;
     let mut light_cone = light_cones
-        .get("light_cone_10")
+        .get("light_cone_15")
         .ok_or_else(|| eyre!("Acheron's light cone not found"))?
         .clone();
     light_cone.config = LightConePassiveConfig {
@@ -144,9 +144,9 @@ async fn main() -> Result<()> {
 
     let optimizer = Optimizer {
         relic_pool,
-        generation: 50,
+        generation: 100,
         population_size: 1000,
-        mutation_rate: 0.2,
+        mutation_rate: 0.1,
         crossover_rate: 0.7,
         evaluator: a_evaluator,
         enable_sa: false,
@@ -171,11 +171,16 @@ async fn main() -> Result<()> {
             activate_117_4pcs_extra: true,
             activate_120: true,
             activate_122: true,
+            activate_123_1: true,
+            activate_123_2: true,
+            activate_125: true,
+            activate_126: true,
             activate_305: true,
             stack_313: 5,
             stack_315: 5,
             activate_316: true,
             activate_318: true,
+            stack_321: 4,
         },
     };
 

@@ -4,36 +4,33 @@ use crate::{
         CharacterUpgrade, LightConeUpgrade, ProjectYattaClient, Traces, Upgrade,
     },
     domain::{
-        Character, CharacterEntity, LightCone, LightConeEntity, LightConePassiveConfig, Stats,
+        BaseStats, Character, LightCone, LightConeEntity, LightConePassiveConfig, RawCharacter,
     },
-    engine::StatBonusMap,
-    utils::trace_title_mapper::title_mapper,
 };
 use async_trait::async_trait;
 use eyre::{eyre, Result};
-use std::collections::HashMap;
 
 pub struct ProjectYattaDataFetcher {
     pub client: ProjectYattaClient,
 }
 
 impl ProjectYattaDataFetcher {
-    fn calculate_trace_bonus(&self, character: &Character, trace: &Traces) -> Result<StatBonusMap> {
-        let mut bonus: HashMap<Stats, f64> = HashMap::new();
+    fn calculate_trace_bonus(&self, character: &RawCharacter, trace: &Traces) -> Result<BaseStats> {
+        let mut base_stats = BaseStats::default();
 
         for i in 1..=10 {
             let id = format!("{:03}", 200 + i);
             if character.traces.get_stat(i) {
-                self.insert_trace_bonus(&mut bonus, trace, &character.id, &id)?;
+                self.insert_trace_bonus(&mut base_stats, trace, &character.id, &id)?;
             }
         }
 
-        Ok(bonus)
+        Ok(base_stats)
     }
 
     fn insert_trace_bonus(
         &self,
-        bonus: &mut HashMap<Stats, f64>,
+        base_stats: &mut BaseStats,
         trace: &Traces,
         character_id: &str,
         id: &str,
@@ -43,14 +40,48 @@ impl ProjectYattaDataFetcher {
             .get(&format!("{}{}", character_id, id))
             .ok_or_else(|| eyre!("Trace not found"))?;
 
-        *bonus.entry(title_mapper(&subskill.name)).or_default() += subskill
-            .status_list
-            .clone()
-            .ok_or_else(|| eyre!("Missing trace info"))?
-            .first()
-            .ok_or_else(|| eyre!("No entry in subskill status list"))?
-            .value
-            * 100.0;
+        let extract = || {
+            Ok::<f64, eyre::Report>(
+                subskill
+                    .status_list
+                    .clone()
+                    .ok_or_else(|| eyre!("Missing trace info"))?
+                    .first()
+                    .ok_or_else(|| eyre!("No entry in subskill status list"))?
+                    .value
+                    * 100.0,
+            )
+        };
+
+        match subskill.name.as_str() {
+            "HP Boost" => base_stats.hp_percentage += extract()?,
+            "ATK Boost" => base_stats.atk_percentage += extract()?,
+            "DEF Boost" => base_stats.def_percentage += extract()?,
+            "SPD Boost" => base_stats.spd_percentage += extract()?,
+            "CRIT Rate Boost" => base_stats.crit_rate += extract()?,
+            "CRIT DMG Boost" => base_stats.crit_damage += extract()?,
+            "Effect RES Boost" => base_stats.effect_resistance += extract()?,
+            "Break Boost" | "Break Enhance" => base_stats.break_effect += extract()?,
+            "Energy Regeneration Boost" => base_stats.energy_regeneration_rate += extract()?,
+            "Effect Hit Rate Boost" => base_stats.effect_hit_rate += extract()?,
+            "DMG Boost" => {
+                base_stats.fire_damage_boost += extract()?;
+                base_stats.ice_damage_boost += extract()?;
+                base_stats.wind_damage_boost += extract()?;
+                base_stats.lightning_damage_boost += extract()?;
+                base_stats.physical_damage_boost += extract()?;
+                base_stats.quantum_damage_boost += extract()?;
+                base_stats.imaginary_damage_boost += extract()?;
+            }
+            "DMG Boost: Ice" => base_stats.ice_damage_boost += extract()?,
+            "DMG Boost: Fire" | "DMG Boost Fire" => base_stats.fire_damage_boost += extract()?,
+            "DMG Boost: Wind" => base_stats.wind_damage_boost += extract()?,
+            "DMG Boost: Lightning" => base_stats.lightning_damage_boost += extract()?,
+            "DMG Boost: Imaginary" => base_stats.imaginary_damage_boost += extract()?,
+            "DMG Boost: Quantum" => base_stats.quantum_damage_boost += extract()?,
+            "DMG Boost: Physical" => base_stats.physical_damage_boost += extract()?,
+            _ => todo!(),
+        };
 
         Ok(())
     }
@@ -67,22 +98,40 @@ impl ProjectYattaDataFetcher {
 
     fn calculate_character_base_stats(
         &self,
-        character: &Character,
+        character: &RawCharacter,
         upgrades: &[CharacterUpgrade],
-    ) -> CharacterEntity {
+        combat_type: &str,
+    ) -> Character {
         let upgrade = &upgrades[character.ascension as usize];
         let (hp, atk, def) = self.calculate_base_stats(upgrade, character.level);
 
-        CharacterEntity {
+        Character {
             base_hp: hp,
             base_atk: atk,
             base_def: def,
             base_spd: upgrade.skill_base.speed_base.unwrap_or(0.0), // Handle optional
-            _base_aggro: upgrade.skill_base.base_aggro.unwrap_or(0), // Handle optional
+            base_aggro: upgrade.skill_base.base_aggro.unwrap_or(0), // Handle optional
             critical_chance: upgrade.skill_base.critical_chance.unwrap_or(0.0) * 100.0,
             critical_damage: upgrade.skill_base.critical_damage.unwrap_or(0.0) * 100.0,
-            stat_bonus: HashMap::new(),
-            _character: character.clone(),
+            stat_bonus: BaseStats::default(),
+            id: character.id.clone(),
+            name: character.name.clone(),
+            path: character.path.clone(),
+            attack_type: match combat_type {
+                "Wind" => crate::domain::AttackType::Wind,
+                "Fire" => crate::domain::AttackType::Fire,
+                "Lightning" => crate::domain::AttackType::Lightning,
+                "Ice" => crate::domain::AttackType::Ice,
+                "Physical" => crate::domain::AttackType::Physical,
+                "Quantum" => crate::domain::AttackType::Quantum,
+                "Imaginary" => crate::domain::AttackType::Imaginary,
+                _ => todo!(),
+            },
+            level: character.level,
+            ascension: character.ascension,
+            eidolon: character.eidolon,
+            skills: character.skills.clone(),
+            traces: character.traces.clone(),
         }
     }
 
@@ -106,10 +155,13 @@ impl ProjectYattaDataFetcher {
 
 #[async_trait]
 impl DataFetcher for ProjectYattaDataFetcher {
-    async fn fetch_character_data(&self, character: &Character) -> Result<CharacterEntity> {
+    async fn fetch_character_data(&self, character: &RawCharacter) -> Result<Character> {
         let response = self.client.fetch_character_data(&character.id).await?;
-        let mut character_entity =
-            self.calculate_character_base_stats(character, &response.data.upgrade);
+        let mut character_entity = self.calculate_character_base_stats(
+            character,
+            &response.data.upgrade,
+            &response.data.types.combat_type.id,
+        );
         character_entity.stat_bonus =
             self.calculate_trace_bonus(character, &response.data.traces)?;
         Ok(character_entity)

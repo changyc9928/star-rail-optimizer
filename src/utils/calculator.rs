@@ -1,8 +1,8 @@
 use crate::{
     character::Support,
     domain::{
-        AttackType, CharacterEntity, CritEnum, DamageType, Enemy, LightConeEntity, Relics,
-        SkillType, Stats,
+        AttackType, Character, CritEnum, DamageType, Enemy, LightConeEntity, Relics, SkillType,
+        Stats,
     },
 };
 use eyre::{eyre, Result};
@@ -10,7 +10,7 @@ use std::collections::HashMap;
 
 pub fn calculate_stats(
     bonus: &HashMap<Stats, f64>,
-    character: &CharacterEntity,
+    character: &Character,
     light_cone: &Option<LightConeEntity>,
 ) -> HashMap<Stats, f64> {
     let hp = (character.base_hp + light_cone.as_ref().map(|lc| lc.base_hp).unwrap_or_default())
@@ -69,7 +69,7 @@ pub fn calculate_stats(
 }
 
 pub fn base_stats_and_bonus(
-    character: &CharacterEntity,
+    character: &Character,
     light_cone: &Option<LightConeEntity>,
     relics: &Relics,
     attack_type: &AttackType,
@@ -78,21 +78,38 @@ pub fn base_stats_and_bonus(
     teammates: &[Box<dyn Support>],
 ) -> Result<(HashMap<Stats, f64>, HashMap<Stats, f64>)> {
     let mut bonus = relics.calculate_bonus_before_battle(attack_type)?;
-    for (s, b) in &character.stat_bonus {
-        *bonus.entry(s.clone()).or_default() += b;
-        match (attack_type, s) {
-            (AttackType::Lightning, Stats::LightningDmgBoost_)
-            | (AttackType::Physical, Stats::PhysicalDmgBoost_)
-            | (AttackType::Wind, Stats::WindDmgBoost_)
-            | (AttackType::Fire, Stats::FireDmgBoost_)
-            | (AttackType::Ice, Stats::IceDmgBoost_)
-            | (AttackType::Imaginary, Stats::ImaginaryDmgBoost_)
-            | (AttackType::Quantum, Stats::QuantumDmgBoost_) => {
-                *bonus.entry(Stats::DmgBoost_).or_default() += b
-            }
-            _ => (),
-        }
-    }
+    *bonus.entry(Stats::DmgBoost_).or_default() += if character.attack_type == AttackType::Lightning
+    {
+        character.stat_bonus.lightning_damage_boost
+    } else if character.attack_type == AttackType::Fire {
+        character.stat_bonus.fire_damage_boost
+    } else if character.attack_type == AttackType::Ice {
+        character.stat_bonus.ice_damage_boost
+    } else if character.attack_type == AttackType::Wind {
+        character.stat_bonus.wind_damage_boost
+    } else if character.attack_type == AttackType::Physical {
+        character.stat_bonus.physical_damage_boost
+    } else if character.attack_type == AttackType::Quantum {
+        character.stat_bonus.quantum_damage_boost
+    } else {
+        character.stat_bonus.imaginary_damage_boost
+    };
+    *bonus.entry(Stats::Atk).or_default() += character.stat_bonus.atk;
+    *bonus.entry(Stats::Atk_).or_default() += character.stat_bonus.atk_percentage;
+    *bonus.entry(Stats::Hp).or_default() += character.stat_bonus.hp;
+    *bonus.entry(Stats::Hp_).or_default() += character.stat_bonus.hp_percentage;
+    *bonus.entry(Stats::Def).or_default() += character.stat_bonus.def;
+    *bonus.entry(Stats::Def_).or_default() += character.stat_bonus.def_percentage;
+    *bonus.entry(Stats::Spd).or_default() += character.stat_bonus.spd;
+    *bonus.entry(Stats::Spd_).or_default() += character.stat_bonus.spd_percentage;
+    *bonus.entry(Stats::CritRate_).or_default() += character.stat_bonus.crit_rate;
+    *bonus.entry(Stats::CritDmg_).or_default() += character.stat_bonus.crit_damage;
+    *bonus.entry(Stats::EnergyRegenerationRate_).or_default() +=
+        character.stat_bonus.energy_regeneration_rate;
+    *bonus.entry(Stats::BreakEffect_).or_default() += character.stat_bonus.break_effect;
+    *bonus.entry(Stats::EffectRes_).or_default() += character.stat_bonus.effect_resistance;
+    *bonus.entry(Stats::EffectHitRate_).or_default() += character.stat_bonus.effect_hit_rate;
+    *bonus.entry(Stats::OutgoingHealingBoost_).or_default() += character.stat_bonus.ougoing_healing_boost;
     let initial_light_cone_bonus = light_cone
         .as_ref()
         .map(|lc| lc.get_bonus_before_battle())
@@ -104,7 +121,7 @@ pub fn base_stats_and_bonus(
     }
     let base_stats = calculate_stats(&bonus, &character, &light_cone);
     let bonus_during_battle = relics.calculate_bonus_during_battle(
-        character._character.path.clone(),
+        character.path.clone(),
         attack_type,
         skill_type,
         damage_type,
@@ -177,7 +194,7 @@ pub fn dmg_boost(bonus: &HashMap<Stats, f64>) -> f64 {
     1.0 + bonus.get(&Stats::DmgBoost_).cloned().unwrap_or_default() / 100.0
 }
 
-pub fn crit_dmg(crit: CritEnum, bonus: &HashMap<Stats, f64>, character: &CharacterEntity) -> f64 {
+pub fn crit_dmg(crit: CritEnum, bonus: &HashMap<Stats, f64>, character: &Character) -> f64 {
     let crit_rate = match crit {
         CritEnum::NoCrit => 0.0,
         CritEnum::Avg => {
@@ -186,8 +203,7 @@ pub fn crit_dmg(crit: CritEnum, bonus: &HashMap<Stats, f64>, character: &Charact
         }
         CritEnum::Crit => 1.0,
     };
-    let ret =
-        crit_rate * (bonus.get(&Stats::CritDmg_).cloned().unwrap_or_default() / 100.0) + 1.0;
+    let ret = crit_rate * (bonus.get(&Stats::CritDmg_).cloned().unwrap_or_default() / 100.0) + 1.0;
     if crit == CritEnum::NoCrit {
         1.0
     } else {
@@ -195,7 +211,7 @@ pub fn crit_dmg(crit: CritEnum, bonus: &HashMap<Stats, f64>, character: &Charact
     }
 }
 
-pub fn def(enemy: &Enemy, bonus: &HashMap<Stats, f64>, character: &CharacterEntity) -> f64 {
+pub fn def(enemy: &Enemy, bonus: &HashMap<Stats, f64>, character: &Character) -> f64 {
     let denom = 1.0 + enemy.def_bonus
         - bonus
             .get(&Stats::DefReduction_)
@@ -203,8 +219,8 @@ pub fn def(enemy: &Enemy, bonus: &HashMap<Stats, f64>, character: &CharacterEnti
             .unwrap_or_default()
             / 100.0
         - bonus.get(&Stats::DefIgnore_).cloned().unwrap_or_default() / 100.0;
-    let def = ((character._character.level + 20) as f64)
+    let def = ((character.level + 20) as f64)
         / ((enemy.level + 20) as f64 * (if denom < 0.0 { 0.0 } else { denom })
-            + (character._character.level + 20) as f64);
+            + (character.level + 20) as f64);
     def
 }

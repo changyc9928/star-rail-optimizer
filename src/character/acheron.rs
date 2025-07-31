@@ -2,8 +2,8 @@ use super::Evaluator;
 use crate::{
     character::Support,
     domain::{
-        AttackType, CharacterEntity, CritEnum, DamageType, Enemy, LightConeEntity, Relics,
-        SkillType, Stats,
+        AttackType, Character, CritEnum, DamageType, Enemy, LightConeEntity, Relics, SkillType,
+        Stats,
     },
     utils::calculator::{
         base_stats_and_bonus, crit_dmg, def, dmg_boost, dmg_mit, res, toughness, vul, weaken,
@@ -13,7 +13,7 @@ use eyre::Result;
 use std::collections::HashMap;
 
 pub struct Acheron {
-    pub character: CharacterEntity,
+    pub character: Character,
     pub light_cone: Option<LightConeEntity>,
     pub crimson_knot: u8,
     pub thunder_core_bonus_stack: u8,
@@ -80,11 +80,11 @@ impl Acheron {
             0.0, 10.00, 11.00, 12.00, 13.00, 14.00, 15.00, 16.25, 17.50, 18.75, 20.00, 21.00,
             22.00, 23.00, 24.00, 25.00,
         ];
-        resistance_penalty_scale[self.character._character.skills.talent as usize]
+        resistance_penalty_scale[self.character.skills.talent as usize]
     }
 
     fn crinsom_knot_bonus(&self) -> f64 {
-        if self.character._character.traces.ability_3 {
+        if self.character.traces.ability_3 {
             return 30.0 * std::cmp::min(3, self.thunder_core_bonus_stack) as f64;
         } else {
             return 0.0;
@@ -94,15 +94,15 @@ impl Acheron {
     fn the_abyss_multiplier(&self, teammates: &[Box<dyn Support>]) -> f64 {
         let mut num_same_path = 0;
         for teammate in teammates {
-            if teammate.get_path() == self.character._character.path {
+            if teammate.get_path() == self.character.path {
                 num_same_path += 1;
             }
         }
-        if self.character._character.eidolon >= 2 {
+        if self.character.eidolon >= 2 {
             num_same_path += 1;
         }
         num_same_path = std::cmp::min(2, num_same_path);
-        let the_abyss = match self.character._character.traces.ability_2 {
+        let the_abyss = match self.character.traces.ability_2 {
             true => [1.0, 1.15, 1.6][num_same_path as usize],
             false => 1.0,
         };
@@ -110,7 +110,7 @@ impl Acheron {
     }
 
     fn eidolon_1(&self) -> f64 {
-        if self.character._character.eidolon >= 1 && self.activate_eidolon_1 {
+        if self.character.eidolon >= 1 && self.activate_eidolon_1 {
             return 18.0;
         } else {
             return 0.0;
@@ -118,13 +118,13 @@ impl Acheron {
     }
 
     fn eidolon_4(&self, enemy: &mut Enemy) {
-        if self.character._character.eidolon >= 4 {
+        if self.character.eidolon >= 4 {
             enemy.vulnerability += 0.08;
         }
     }
 
     fn eidolon_6(&self) -> f64 {
-        if self.character._character.eidolon >= 6 {
+        if self.character.eidolon >= 6 {
             return 20.0;
         } else {
             return 0.0;
@@ -132,7 +132,7 @@ impl Acheron {
     }
 
     fn eidolon_6_skill_type(&self, skill_type: SkillType) -> SkillType {
-        if self.character._character.eidolon >= 6 {
+        if self.character.eidolon >= 6 {
             return SkillType::Ultimate;
         }
         return skill_type;
@@ -157,7 +157,7 @@ impl Acheron {
         let ability_multiplier = [
             0.0, 0.0900, 0.0960, 0.1020, 0.1080, 0.1140, 0.1200, 0.1275, 0.1350, 0.1425, 0.1500,
             0.1560, 0.1620, 0.1680, 0.1740, 0.1800,
-        ][self.character._character.skills.ult as usize];
+        ][self.character.skills.ult as usize];
         let ability_multiplier = match self.crimson_knot {
             1 | 2 => ability_multiplier + ability_multiplier * self.crimson_knot as f64,
             0 => ability_multiplier,
@@ -195,7 +195,7 @@ impl Acheron {
         let ability_multiplier = [
             0.0, 0.1440, 0.1536, 0.1632, 0.1728, 0.1824, 0.1920, 0.2040, 0.2160, 0.2280, 0.2400,
             0.2496, 0.2592, 0.2688, 0.2784, 0.2880,
-        ][self.character._character.skills.ult as usize];
+        ][self.character.skills.ult as usize];
         let mut enemy = enemy.clone();
         self.eidolon_4(&mut enemy);
         *bonus.entry(Stats::ResPenentration_).or_default() += self.talent() + self.eidolon_6();
@@ -228,7 +228,7 @@ impl Acheron {
         let ability_multiplier = [
             0.0, 0.7200, 0.7680, 0.8160, 0.8640, 0.9120, 0.9600, 1.0200, 1.0800, 1.1400, 1.2000,
             1.2480, 1.2960, 1.3440, 1.3920, 1.4400,
-        ][self.character._character.skills.ult as usize];
+        ][self.character.skills.ult as usize];
         let mut enemy = enemy.clone();
         self.eidolon_4(&mut enemy);
         *bonus.entry(Stats::ResPenentration_).or_default() += self.talent() + self.eidolon_6();
@@ -258,7 +258,7 @@ impl Acheron {
             &DamageType::Normal,
             teammates,
         )?;
-        let ability_multiplier = if self.character._character.traces.ability_3 {
+        let ability_multiplier = if self.character.traces.ability_3 {
             0.25
         } else {
             0.0
@@ -320,7 +320,7 @@ impl Acheron {
         )?;
         let ability_multiplier = [
             0.0, 0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.3, 1.4, 1.5, 1.6, 1.68, 1.76, 1.84, 1.92, 2.0,
-        ][self.character._character.skills.skill as usize];
+        ][self.character.skills.skill as usize];
         self.calculate_damage(
             teammates,
             ability_multiplier,
@@ -349,7 +349,7 @@ impl Acheron {
         let ability_multiplier = [
             0.0, 0.3, 0.33, 0.36, 0.39, 0.42, 0.45, 0.4875, 0.525, 0.5625, 0.6, 0.63, 0.66, 0.69,
             0.72, 0.75,
-        ][self.character._character.skills.skill as usize];
+        ][self.character.skills.skill as usize];
         self.calculate_damage(
             teammates,
             ability_multiplier,
@@ -368,7 +368,7 @@ impl Acheron {
 #[cfg(test)]
 mod tests {
     use crate::domain::{
-        Character, CharacterSkills, CharacterTraces, LightCone, LightConePassiveConfig, Path,
+        BaseStats, CharacterSkills, CharacterTraces, LightCone, LightConePassiveConfig, Path,
         Relic, RelicSetConfig, Slot, SubStats,
     };
 
@@ -411,47 +411,47 @@ mod tests {
     }
 
     fn setup() -> (Acheron, Relics, Enemy, Vec<Box<dyn Support>>) {
-        let character = CharacterEntity {
+        let character = Character {
+            id: "1308".to_string(),
+            name: "Acheron".to_string(),
+            path: Path::Nihility,
+            attack_type: AttackType::Lightning,
+            level: 80,
+            ascension: 6,
+            eidolon: 0,
+            skills: CharacterSkills {
+                basic: 1,
+                skill: 9,
+                ult: 9,
+                talent: 9,
+            },
+            traces: CharacterTraces {
+                ability_1: true,
+                ability_2: true,
+                ability_3: true,
+                stat_1: true,
+                stat_2: true,
+                stat_3: true,
+                stat_4: true,
+                stat_5: true,
+                stat_6: true,
+                stat_7: true,
+                stat_8: true,
+                stat_9: true,
+                stat_10: true,
+            },
             base_hp: 1125.43,
             base_atk: 698.54,
             base_def: 436.59,
             base_spd: 101.00,
-            _base_aggro: 100,
+            base_aggro: 100,
             critical_chance: 5.0,
             critical_damage: 50.0,
-            stat_bonus: HashMap::from([
-                (Stats::LightningDmgBoost_, 8.0),
-                (Stats::CritDmg_, 24.0),
-                (Stats::Atk_, 28.0),
-            ]),
-            _character: Character {
-                id: "1308".to_string(),
-                name: "Acheron".to_string(),
-                path: Path::Nihility,
-                level: 80,
-                ascension: 6,
-                eidolon: 0,
-                skills: CharacterSkills {
-                    basic: 1,
-                    skill: 9,
-                    ult: 9,
-                    talent: 9,
-                },
-                traces: CharacterTraces {
-                    ability_1: true,
-                    ability_2: true,
-                    ability_3: true,
-                    stat_1: true,
-                    stat_2: true,
-                    stat_3: true,
-                    stat_4: true,
-                    stat_5: true,
-                    stat_6: true,
-                    stat_7: true,
-                    stat_8: true,
-                    stat_9: true,
-                    stat_10: true,
-                },
+            stat_bonus: BaseStats {
+                atk_percentage: 28.0,
+                crit_damage: 24.0,
+                lightning_damage_boost: 8.0,
+                ..Default::default()
             },
         };
         let light_cone = LightConeEntity {
@@ -673,11 +673,16 @@ mod tests {
                 activate_117_4pcs_extra: true,
                 activate_120: true,
                 activate_122: true,
+                activate_123_1: true,
+                activate_123_2: true,
+                activate_125: true,
+                activate_126: true,
                 activate_305: true,
                 stack_313: 5,
                 stack_315: 5,
                 activate_316: true,
                 activate_318: true,
+                stack_321: 4,
             },
         };
         let enemy = Enemy {
