@@ -515,20 +515,20 @@ mod tests {
                     mainstat: Stats::Atk,
                     substats: vec![
                         SubStats {
-                            key: Stats::Def_,
-                            value: 4.3,
-                        },
-                        SubStats {
                             key: Stats::Spd,
-                            value: 6.0,
+                            value: 4.0,
                         },
                         SubStats {
                             key: Stats::CritRate_,
-                            value: 8.7,
+                            value: 11.9,
                         },
                         SubStats {
                             key: Stats::CritDmg_,
-                            value: 11.6,
+                            value: 5.8,
+                        },
+                        SubStats {
+                            key: Stats::EffectHitRate_,
+                            value: 4.3,
                         },
                     ],
                     location: Some("1308".to_string()),
@@ -546,20 +546,20 @@ mod tests {
                     mainstat: Stats::CritDmg_,
                     substats: vec![
                         SubStats {
+                            key: Stats::Hp_,
+                            value: 11.6,
+                        },
+                        SubStats {
+                            key: Stats::Atk_,
+                            value: 12.5,
+                        },
+                        SubStats {
                             key: Stats::Def_,
                             value: 5.4,
                         },
                         SubStats {
                             key: Stats::CritRate_,
-                            value: 9.3,
-                        },
-                        SubStats {
-                            key: Stats::EffectRes_,
-                            value: 7.7,
-                        },
-                        SubStats {
-                            key: Stats::BreakEffect_,
-                            value: 11.6,
+                            value: 6.1,
                         },
                     ],
                     location: Some("1308".to_string()),
@@ -639,20 +639,20 @@ mod tests {
                     mainstat: Stats::Atk_,
                     substats: vec![
                         SubStats {
-                            key: Stats::Hp,
-                            value: 118.0,
-                        },
-                        SubStats {
                             key: Stats::Atk,
-                            value: 38.0,
+                            value: 55.0,
                         },
                         SubStats {
-                            key: Stats::Def,
-                            value: 40.0,
+                            key: Stats::CritRate_,
+                            value: 2.5,
                         },
                         SubStats {
                             key: Stats::CritDmg_,
-                            value: 11.0,
+                            value: 5.1,
+                        },
+                        SubStats {
+                            key: Stats::EffectHitRate_,
+                            value: 12.9,
                         },
                     ],
                     location: Some("1308".to_string()),
