@@ -1,0 +1,294 @@
+/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home/bin/java -XX:TieredStopAtLevel=1 -Dspring.output.ansi.enabled=always -javaagent:/Applications/IntelliJ IDEA.app/Contents/lib/idea_rt.jar=51554 -Dfile.encoding=UTF-8 -classpath /Users/yincheng.chang/hsrOptimiser/target/classes:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-data-redis/3.3.4/spring-boot-starter-data-redis-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter/3.3.4/spring-boot-starter-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot/3.3.4/spring-boot-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/3.3.4/spring-boot-autoconfigure-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-logging/3.3.4/spring-boot-starter-logging-3.3.4.jar:/Users/yincheng.chang/.m2/repository/ch/qos/logback/logback-classic/1.5.8/logback-classic-1.5.8.jar:/Users/yincheng.chang/.m2/repository/ch/qos/logback/logback-core/1.5.8/logback-core-1.5.8.jar:/Users/yincheng.chang/.m2/repository/org/apache/logging/log4j/log4j-to-slf4j/2.23.1/log4j-to-slf4j-2.23.1.jar:/Users/yincheng.chang/.m2/repository/org/apache/logging/log4j/log4j-api/2.23.1/log4j-api-2.23.1.jar:/Users/yincheng.chang/.m2/repository/org/slf4j/jul-to-slf4j/2.0.16/jul-to-slf4j-2.0.16.jar:/Users/yincheng.chang/.m2/repository/jakarta/annotation/jakarta.annotation-api/2.1.1/jakarta.annotation-api-2.1.1.jar:/Users/yincheng.chang/.m2/repository/org/yaml/snakeyaml/2.2/snakeyaml-2.2.jar:/Users/yincheng.chang/.m2/repository/io/lettuce/lettuce-core/6.3.2.RELEASE/lettuce-core-6.3.2.RELEASE.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-common/4.1.113.Final/netty-common-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-handler/4.1.113.Final/netty-handler-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-resolver/4.1.113.Final/netty-resolver-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-buffer/4.1.113.Final/netty-buffer-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-transport-native-unix-common/4.1.113.Final/netty-transport-native-unix-common-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-codec/4.1.113.Final/netty-codec-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-transport/4.1.113.Final/netty-transport-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/projectreactor/reactor-core/3.6.10/reactor-core-3.6.10.jar:/Users/yincheng.chang/.m2/repository/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/data/spring-data-redis/3.3.4/spring-data-redis-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/data/spring-data-keyvalue/3.3.4/spring-data-keyvalue-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/data/spring-data-commons/3.3.4/spring-data-commons-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-tx/6.1.13/spring-tx-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-oxm/6.1.13/spring-oxm-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-aop/6.1.13/spring-aop-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-context-support/6.1.13/spring-context-support-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-web/3.3.4/spring-boot-starter-web-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-json/3.3.4/spring-boot-starter-json-3.3.4.jar:/Users/yincheng.chang/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.17.2/jackson-databind-2.17.2.jar:/Users/yincheng.chang/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.17.2/jackson-annotations-2.17.2.jar:/Users/yincheng.chang/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.17.2/jackson-core-2.17.2.jar:/Users/yincheng.chang/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.17.2/jackson-datatype-jdk8-2.17.2.jar:/Users/yincheng.chang/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.17.2/jackson-datatype-jsr310-2.17.2.jar:/Users/yincheng.chang/.m2/repository/com/fasterxml/jackson/module/jackson-module-parameter-names/2.17.2/jackson-module-parameter-names-2.17.2.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-tomcat/3.3.4/spring-boot-starter-tomcat-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/apache/tomcat/embed/tomcat-embed-core/10.1.30/tomcat-embed-core-10.1.30.jar:/Users/yincheng.chang/.m2/repository/org/apache/tomcat/embed/tomcat-embed-el/10.1.30/tomcat-embed-el-10.1.30.jar:/Users/yincheng.chang/.m2/repository/org/apache/tomcat/embed/tomcat-embed-websocket/10.1.30/tomcat-embed-websocket-10.1.30.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-web/6.1.13/spring-web-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-beans/6.1.13/spring-beans-6.1.13.jar:/Users/yincheng.chang/.m2/repository/io/micrometer/micrometer-observation/1.13.4/micrometer-observation-1.13.4.jar:/Users/yincheng.chang/.m2/repository/io/micrometer/micrometer-commons/1.13.4/micrometer-commons-1.13.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-webmvc/6.1.13/spring-webmvc-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-context/6.1.13/spring-context-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-expression/6.1.13/spring-expression-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/mybatis/spring/boot/mybatis-spring-boot-starter/3.0.3/mybatis-spring-boot-starter-3.0.3.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-jdbc/3.3.4/spring-boot-starter-jdbc-3.3.4.jar:/Users/yincheng.chang/.m2/repository/com/zaxxer/HikariCP/5.1.0/HikariCP-5.1.0.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-jdbc/6.1.13/spring-jdbc-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/mybatis/spring/boot/mybatis-spring-boot-autoconfigure/3.0.3/mybatis-spring-boot-autoconfigure-3.0.3.jar:/Users/yincheng.chang/.m2/repository/org/mybatis/mybatis/3.5.14/mybatis-3.5.14.jar:/Users/yincheng.chang/.m2/repository/org/mybatis/mybatis-spring/3.0.3/mybatis-spring-3.0.3.jar:/Users/yincheng.chang/.m2/repository/org/projectlombok/lombok/1.18.34/lombok-1.18.34.jar:/Users/yincheng.chang/.m2/repository/org/springframework/session/spring-session-data-redis/3.3.2/spring-session-data-redis-3.3.2.jar:/Users/yincheng.chang/.m2/repository/org/springframework/session/spring-session-core/3.3.2/spring-session-core-3.3.2.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-jcl/6.1.13/spring-jcl-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/postgresql/postgresql/42.7.4/postgresql-42.7.4.jar:/Users/yincheng.chang/.m2/repository/org/checkerframework/checker-qual/3.42.0/checker-qual-3.42.0.jar:/Users/yincheng.chang/.m2/repository/net/objecthunter/exp4j/0.4.8/exp4j-0.4.8.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-webflux/3.3.4/spring-boot-starter-webflux-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-reactor-netty/3.3.4/spring-boot-starter-reactor-netty-3.3.4.jar:/Users/yincheng.chang/.m2/repository/io/projectreactor/netty/reactor-netty-http/1.1.22/reactor-netty-http-1.1.22.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-codec-http/4.1.113.Final/netty-codec-http-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-codec-http2/4.1.113.Final/netty-codec-http2-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-resolver-dns/4.1.113.Final/netty-resolver-dns-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-codec-dns/4.1.113.Final/netty-codec-dns-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-resolver-dns-native-macos/4.1.113.Final/netty-resolver-dns-native-macos-4.1.113.Final-osx-x86_64.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-resolver-dns-classes-macos/4.1.113.Final/netty-resolver-dns-classes-macos-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-transport-native-epoll/4.1.113.Final/netty-transport-native-epoll-4.1.113.Final-linux-x86_64.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-transport-classes-epoll/4.1.113.Final/netty-transport-classes-epoll-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/projectreactor/netty/reactor-netty-core/1.1.22/reactor-netty-core-1.1.22.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-handler-proxy/4.1.113.Final/netty-handler-proxy-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-codec-socks/4.1.113.Final/netty-codec-socks-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-webflux/6.1.13/spring-webflux-6.1.13.jar:/Users/yincheng.chang/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/4.0.2/jakarta.xml.bind-api-4.0.2.jar:/Users/yincheng.chang/.m2/repository/jakarta/activation/jakarta.activation-api/2.1.3/jakarta.activation-api-2.1.3.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-core/6.1.13/spring-core-6.1.13.jar com.hsrOptimiser.HsrOptimiserApplication
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.4)
+
+2026-05-25T13:46:39.061+08:00  INFO 7375 --- [hsrOptimiser] [           main] c.hsrOptimiser.HsrOptimiserApplication   : Starting HsrOptimiserApplication using Java 17.0.5 with PID 7375 (/Users/yincheng.chang/hsrOptimiser/target/classes started by yincheng.chang in /Users/yincheng.chang/hsrOptimiser)
+2026-05-25T13:46:39.063+08:00  INFO 7375 --- [hsrOptimiser] [           main] c.hsrOptimiser.HsrOptimiserApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-05-25T13:46:39.371+08:00  INFO 7375 --- [hsrOptimiser] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-25T13:46:39.372+08:00  INFO 7375 --- [hsrOptimiser] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-05-25T13:46:39.384+08:00  INFO 7375 --- [hsrOptimiser] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2026-05-25T13:46:39.661+08:00  INFO 7375 --- [hsrOptimiser] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-05-25T13:46:39.667+08:00  INFO 7375 --- [hsrOptimiser] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-25T13:46:39.667+08:00  INFO 7375 --- [hsrOptimiser] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.30]
+2026-05-25T13:46:39.693+08:00  INFO 7375 --- [hsrOptimiser] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-05-25T13:46:39.693+08:00  INFO 7375 --- [hsrOptimiser] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 610 ms
+2026-05-25T13:46:39.911+08:00 ERROR 7375 --- [hsrOptimiser] [           main] i.n.r.d.DnsServerAddressStreamProviders  : Unable to load io.netty.resolver.dns.macos.MacOSDnsServerAddressStreamProvider, fallback to system defaults. This may result in incorrect DNS resolutions on MacOS. Check whether you have a dependency on 'io.netty:netty-resolver-dns-native-macos'. Use DEBUG level to see the full stack: java.lang.UnsatisfiedLinkError: failed to load the required native library
+2026-05-25T13:46:40.316+08:00  INFO 7375 --- [hsrOptimiser] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2026-05-25T13:46:40.321+08:00  INFO 7375 --- [hsrOptimiser] [           main] c.hsrOptimiser.HsrOptimiserApplication   : Started HsrOptimiserApplication in 1.485 seconds (process running for 1.647)
+2026-05-25T13:46:42.536+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-3] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-25T13:46:42.536+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-25T13:46:42.537+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-05-25T13:46:43.969+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Starting Simulated Annealing optimization. Target Epochs: 100, Initial Temp: 10.0
+Warning: Skipping Light Cone ID 20000 -> Unknown internal key: Arrows
+Warning: Skipping Light Cone ID 20001 -> Unknown internal key: Cornucopia
+Warning: Skipping Light Cone ID 20002 -> Unknown internal key: CollapsingSky
+Warning: Skipping Light Cone ID 20003 -> Unknown internal key: Amber
+Warning: Skipping Light Cone ID 20004 -> Unknown internal key: Void
+Warning: Skipping Light Cone ID 20005 -> Unknown internal key: Chorus
+Warning: Skipping Light Cone ID 20006 -> Unknown internal key: DataBank
+Warning: Skipping Light Cone ID 20007 -> Unknown internal key: DartingArrow
+Warning: Skipping Light Cone ID 20008 -> Unknown internal key: FineFruit
+Warning: Skipping Light Cone ID 20009 -> Unknown internal key: ShatteredHome
+Warning: Skipping Light Cone ID 20010 -> Unknown internal key: Defense
+Warning: Skipping Light Cone ID 20011 -> Unknown internal key: Loop
+Warning: Skipping Light Cone ID 20014 -> Unknown internal key: Adversarial
+Warning: Skipping Light Cone ID 20016 -> Unknown internal key: MutualDemise
+Warning: Skipping Light Cone ID 20017 -> Unknown internal key: Pioneering
+Warning: Skipping Light Cone ID 20018 -> Unknown internal key: HiddenShadow
+Warning: Skipping Light Cone ID 20019 -> Unknown internal key: Mediation
+Warning: Skipping Light Cone ID 20020 -> Unknown internal key: Sagacity
+Warning: Skipping Light Cone ID 20023 -> Unknown internal key: Sneering
+Warning: Skipping Light Cone ID 20024 -> Unknown internal key: LingeringTear
+2026-05-25T13:46:51.641+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [1/100], Step [1] | Temp: 10.0000 | Accepted Damage: 20376829.38 (Delta: +20376829.38)
+2026-05-25T13:47:14.296+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [2/100], Step [6] | Temp: 9.0000 | Accepted Damage: 20036008.21 (Delta: -340821.16)
+2026-05-25T13:47:18.187+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [3/100], Step [7] | Temp: 8.1000 | Accepted Damage: 19736963.97 (Delta: -299044.25)
+2026-05-25T13:47:24.539+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [4/100], Step [8] | Temp: 7.2900 | Accepted Damage: 19748855.32 (Delta: +11891.36)
+2026-05-25T13:47:27.908+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [5/100], Step [9] | Temp: 6.5610 | Accepted Damage: 19646094.50 (Delta: -102760.82)
+2026-05-25T13:47:39.800+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [6/100], Step [12] | Temp: 5.9049 | Accepted Damage: 19507744.47 (Delta: -138350.03)
+2026-05-25T13:47:43.827+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [7/100], Step [13] | Temp: 5.3144 | Accepted Damage: 19355483.73 (Delta: -152260.74)
+Server rejected request: Internal Server Error
+2026-05-25T13:47:58.558+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T13:48:07.071+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [8/100], Step [18] | Temp: 4.7830 | Accepted Damage: 19419294.59 (Delta: +63810.86)
+2026-05-25T13:48:15.164+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [9/100], Step [20] | Temp: 4.3047 | Accepted Damage: 19418892.12 (Delta: -402.47)
+2026-05-25T13:48:25.791+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [10/100], Step [22] | Temp: 3.8742 | Accepted Damage: 19418612.73 (Delta: -279.39)
+2026-05-25T13:48:35.400+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [11/100], Step [24] | Temp: 3.4868 | Accepted Damage: 19465448.75 (Delta: +46836.02)
+2026-05-25T13:49:02.372+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [12/100], Step [28] | Temp: 3.1381 | Accepted Damage: 19470137.92 (Delta: +4689.17)
+2026-05-25T13:49:23.765+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [13/100], Step [32] | Temp: 2.8243 | Accepted Damage: 19276241.20 (Delta: -193896.71)
+2026-05-25T13:49:47.572+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [14/100], Step [36] | Temp: 2.5419 | Accepted Damage: 19331085.18 (Delta: +54843.98)
+2026-05-25T13:50:12.796+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [15/100], Step [42] | Temp: 2.2877 | Accepted Damage: 19360026.54 (Delta: +28941.36)
+2026-05-25T13:50:32.227+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [16/100], Step [46] | Temp: 2.0589 | Accepted Damage: 19359587.56 (Delta: -438.98)
+2026-05-25T13:50:54.114+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [17/100], Step [50] | Temp: 1.8530 | [Skipped] Current Baseline: 19359587.56
+2026-05-25T13:51:31.579+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [17/100], Step [55] | Temp: 1.8530 | Accepted Damage: 19360799.90 (Delta: +1212.34)
+2026-05-25T13:51:47.077+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [18/100], Step [58] | Temp: 1.6677 | Accepted Damage: 19360581.28 (Delta: -218.62)
+2026-05-25T13:51:52.970+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [19/100], Step [59] | Temp: 1.5009 | Accepted Damage: 19360581.28 (Delta: +0.00)
+2026-05-25T13:52:28.396+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [20/100], Step [67] | Temp: 1.3509 | Accepted Damage: 19359149.92 (Delta: -1431.37)
+2026-05-25T13:52:32.361+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [21/100], Step [68] | Temp: 1.2158 | Accepted Damage: 19754022.92 (Delta: +394873.01)
+2026-05-25T13:52:38.576+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [22/100], Step [69] | Temp: 1.0942 | Accepted Damage: 19753827.24 (Delta: -195.68)
+2026-05-25T13:52:53.582+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [23/100], Step [73] | Temp: 0.9848 | Accepted Damage: 19755415.63 (Delta: +1588.39)
+2026-05-25T13:53:00.601+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [24/100], Step [74] | Temp: 0.8863 | Accepted Damage: 19780851.58 (Delta: +25435.95)
+Server rejected request: Internal Server Error
+2026-05-25T13:53:02.369+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+Server rejected request: Internal Server Error
+2026-05-25T13:53:48.142+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 2
+Server rejected request: Internal Server Error
+2026-05-25T13:54:26.950+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 3
+2026-05-25T13:54:40.537+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [25/100], Step [98] | Temp: 0.7977 | Accepted Damage: 19773589.73 (Delta: -7261.84)
+Server rejected request: Internal Server Error
+2026-05-25T13:54:50.399+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T13:54:55.492+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [26/100], Step [101] | Temp: 0.7179 | Accepted Damage: 19774394.61 (Delta: +804.88)
+2026-05-25T13:55:19.966+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [27/100], Step [107] | Temp: 0.6461 | Accepted Damage: 19788886.09 (Delta: +14491.47)
+2026-05-25T13:55:24.070+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [28/100], Step [108] | Temp: 0.5815 | Accepted Damage: 19788886.09 (Delta: +0.00)
+2026-05-25T13:55:37.601+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [29/100], Step [110] | Temp: 0.5233 | Accepted Damage: 19794391.11 (Delta: +5505.02)
+2026-05-25T13:55:42.802+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [30/100], Step [111] | Temp: 0.4710 | Accepted Damage: 19794391.11 (Delta: -0.00)
+2026-05-25T13:56:08.243+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [31/100], Step [116] | Temp: 0.4239 | Accepted Damage: 19794491.34 (Delta: +100.23)
+Server rejected request: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted)
+2026-05-25T13:56:19.080+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted). Consecutive failures: 1
+Server rejected request: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted)
+2026-05-25T13:56:30.090+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted). Consecutive failures: 2
+2026-05-25T13:56:40.171+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [32/100], Step [120] | Temp: 0.3815 | Accepted Damage: 19794491.34 (Delta: -0.00)
+2026-05-25T13:56:51.396+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [33/100], Step [122] | Temp: 0.3434 | Accepted Damage: 19848974.39 (Delta: +54483.06)
+2026-05-25T13:57:05.925+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [34/100], Step [126] | Temp: 0.3090 | Accepted Damage: 19903457.45 (Delta: +54483.06)
+Server rejected request: Internal Server Error
+2026-05-25T13:57:31.066+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T13:57:35.415+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [35/100], Step [133] | Temp: 0.2781 | Accepted Damage: 19947040.01 (Delta: +43582.56)
+2026-05-25T13:57:39.345+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [36/100], Step [134] | Temp: 0.2503 | Accepted Damage: 19947040.01 (Delta: +0.00)
+2026-05-25T13:58:00.697+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [37/100], Step [139] | Temp: 0.2253 | Accepted Damage: 19979461.31 (Delta: +32421.29)
+Server rejected request: Internal Server Error
+2026-05-25T13:58:37.011+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T13:59:01.949+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [38/100], Step [150] | Temp: 0.2028 | [Skipped] Current Baseline: 19979461.31
+2026-05-25T13:59:17.577+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [38/100], Step [153] | Temp: 0.2028 | Accepted Damage: 19979741.53 (Delta: +280.22)
+2026-05-25T13:59:21.548+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [39/100], Step [154] | Temp: 0.1825 | Accepted Damage: 19979741.53 (Delta: +0.00)
+2026-05-25T13:59:34.738+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [40/100], Step [157] | Temp: 0.1642 | Accepted Damage: 19981485.87 (Delta: +1744.34)
+Server rejected request: Internal Server Error
+2026-05-25T13:59:50.020+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T13:59:58.170+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [41/100], Step [162] | Temp: 0.1478 | Accepted Damage: 19981485.87 (Delta: +0.00)
+Server rejected request: Internal Server Error
+2026-05-25T14:00:02.616+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T14:00:35.109+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [42/100], Step [167] | Temp: 0.1330 | Accepted Damage: 20014781.61 (Delta: +33295.74)
+2026-05-25T14:00:38.958+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [43/100], Step [168] | Temp: 0.1197 | Accepted Damage: 20014781.61 (Delta: +0.00)
+2026-05-25T14:01:12.195+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [44/100], Step [175] | Temp: 0.1078 | Accepted Damage: 20014497.53 (Delta: -284.07)
+2026-05-25T14:01:28.087+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [45/100], Step [179] | Temp: 0.0970 | Accepted Damage: 20014497.53 (Delta: +0.00)
+2026-05-25T14:02:00.449+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [46/100], Step [186] | Temp: 0.0873 | Accepted Damage: 20014497.53 (Delta: +0.00)
+2026-05-25T14:02:42.637+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [47/100], Step [195] | Temp: 0.0786 | Accepted Damage: 20014497.53 (Delta: +0.00)
+2026-05-25T14:03:08.155+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [48/100], Step [200] | Temp: 0.0707 | [Skipped] Current Baseline: 20014497.53
+2026-05-25T14:03:17.829+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [48/100], Step [202] | Temp: 0.0707 | Accepted Damage: 20014497.53 (Delta: +0.00)
+Server rejected request: Internal Server Error
+2026-05-25T14:04:33.464+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+Server rejected request: Internal Server Error
+2026-05-25T14:04:35.080+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 2
+2026-05-25T14:04:41.416+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [49/100], Step [213] | Temp: 0.0636 | Accepted Damage: 20014727.86 (Delta: +230.33)
+2026-05-25T14:04:45.589+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [50/100], Step [214] | Temp: 0.0573 | Accepted Damage: 20141320.45 (Delta: +126592.59)
+Server rejected request: Internal Server Error
+2026-05-25T14:04:53.841+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T14:05:05.706+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [51/100], Step [218] | Temp: 0.0515 | Accepted Damage: 20142143.45 (Delta: +823.00)
+2026-05-25T14:05:21.114+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [52/100], Step [221] | Temp: 0.0464 | Accepted Damage: 20142143.45 (Delta: +0.00)
+2026-05-25T14:05:29.384+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [53/100], Step [223] | Temp: 0.0417 | Accepted Damage: 20139997.78 (Delta: -2145.66)
+Server rejected request: Internal Server Error
+2026-05-25T14:06:08.902+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+Server rejected request: Internal Server Error
+2026-05-25T14:06:09.614+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 2
+2026-05-25T14:06:14.263+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [54/100], Step [234] | Temp: 0.0376 | Accepted Damage: 20142851.79 (Delta: +2854.00)
+Server rejected request: Internal Server Error
+2026-05-25T14:06:25.482+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+Server rejected request: Internal Server Error
+2026-05-25T14:06:32.721+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 2
+Server rejected request: Internal Server Error
+2026-05-25T14:06:58.668+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 3
+Server rejected request: Internal Server Error
+2026-05-25T14:07:03.381+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 4
+2026-05-25T14:07:22.029+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [55/100], Step [250] | Temp: 0.0338 | [Skipped] Current Baseline: 20142851.79
+2026-05-25T14:08:54.115+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [55/100], Step [271] | Temp: 0.0338 | Accepted Damage: 20140387.86 (Delta: -2463.93)
+Server rejected request: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted)
+2026-05-25T14:09:43.741+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted). Consecutive failures: 1
+Server rejected request: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted)
+2026-05-25T14:09:54.388+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted). Consecutive failures: 2
+Server rejected request: Internal Server Error
+2026-05-25T14:09:55.921+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 3
+2026-05-25T14:11:15.749+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [56/100], Step [295] | Temp: 0.0304 | Accepted Damage: 20140387.86 (Delta: +0.00)
+2026-05-25T14:11:23.638+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [57/100], Step [296] | Temp: 0.0274 | Accepted Damage: 20140387.86 (Delta: +0.00)
+2026-05-25T14:11:44.034+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [58/100], Step [300] | Temp: 0.0247 | [Skipped] Current Baseline: 20140387.86
+2026-05-25T14:11:52.147+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [58/100], Step [302] | Temp: 0.0247 | Accepted Damage: 20140387.86 (Delta: +0.00)
+2026-05-25T14:11:56.852+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [59/100], Step [303] | Temp: 0.0222 | Accepted Damage: 20140387.86 (Delta: +0.00)
+2026-05-25T14:12:06.988+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [60/100], Step [305] | Temp: 0.0200 | Accepted Damage: 20140387.86 (Delta: -0.00)
+2026-05-25T14:12:27.839+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [61/100], Step [309] | Temp: 0.0180 | Accepted Damage: 20141085.80 (Delta: +697.94)
+2026-05-25T14:12:51.235+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [62/100], Step [315] | Temp: 0.0162 | Accepted Damage: 20141085.80 (Delta: +0.00)
+2026-05-25T14:13:16.291+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [63/100], Step [320] | Temp: 0.0146 | Accepted Damage: 20141085.80 (Delta: +0.00)
+2026-05-25T14:13:29.133+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [64/100], Step [323] | Temp: 0.0131 | Accepted Damage: 20141085.80 (Delta: +0.00)
+Server rejected request: Internal Server Error
+2026-05-25T14:13:46.316+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T14:13:54.526+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [65/100], Step [329] | Temp: 0.0118 | Accepted Damage: 20141085.80 (Delta: +0.00)
+2026-05-25T14:14:07.269+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [66/100], Step [332] | Temp: 0.0106 | Accepted Damage: 20141085.80 (Delta: +0.00)
+2026-05-25T14:15:25.254+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [67/100], Step [350] | Temp: 0.0096 | [Skipped] Current Baseline: 20141085.80
+2026-05-25T14:15:51.014+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [67/100], Step [356] | Temp: 0.0096 | Accepted Damage: 20140551.08 (Delta: -534.71)
+2026-05-25T14:16:11.145+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [68/100], Step [361] | Temp: 0.0086 | Accepted Damage: 20214883.51 (Delta: +74332.43)
+2026-05-25T14:16:23.140+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [69/100], Step [364] | Temp: 0.0077 | Accepted Damage: 20214883.51 (Delta: +0.00)
+2026-05-25T14:16:45.907+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [70/100], Step [369] | Temp: 0.0070 | Accepted Damage: 20214883.51 (Delta: +0.00)
+2026-05-25T14:17:01.931+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [71/100], Step [373] | Temp: 0.0063 | Accepted Damage: 20214883.51 (Delta: +0.00)
+2026-05-25T14:17:05.465+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [72/100], Step [374] | Temp: 0.0056 | Accepted Damage: 20214883.51 (Delta: +0.00)
+Server rejected request: Internal Server Error
+2026-05-25T14:17:20.953+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T14:17:45.968+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [73/100], Step [383] | Temp: 0.0051 | Accepted Damage: 20215489.43 (Delta: +605.91)
+2026-05-25T14:18:20.008+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [74/100], Step [390] | Temp: 0.0046 | Accepted Damage: 20215489.43 (Delta: +0.00)
+2026-05-25T14:18:39.179+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [75/100], Step [395] | Temp: 0.0041 | Accepted Damage: 20215669.22 (Delta: +179.79)
+2026-05-25T14:18:52.900+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [76/100], Step [398] | Temp: 0.0037 | Accepted Damage: 20215669.22 (Delta: +0.00)
+2026-05-25T14:18:59.783+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [77/100], Step [400] | Temp: 0.0033 | [Skipped] Current Baseline: 20215669.22
+2026-05-25T14:20:04.999+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [77/100], Step [415] | Temp: 0.0033 | Accepted Damage: 20598549.90 (Delta: +382880.68)
+Server rejected request: Internal Server Error
+2026-05-25T14:20:15.306+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T14:20:20.644+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [78/100], Step [419] | Temp: 0.0030 | Accepted Damage: 20597773.39 (Delta: -776.51)
+2026-05-25T14:20:29.541+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [79/100], Step [421] | Temp: 0.0027 | Accepted Damage: 20628033.05 (Delta: +30259.66)
+2026-05-25T14:21:13.004+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [80/100], Step [430] | Temp: 0.0024 | Accepted Damage: 20628033.05 (Delta: +0.00)
+2026-05-25T14:21:42.072+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [81/100], Step [436] | Temp: 0.0022 | Accepted Damage: 21002732.76 (Delta: +374699.71)
+2026-05-25T14:22:43.643+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [82/100], Step [450] | Temp: 0.0020 | [Skipped] Current Baseline: 21002732.76
+2026-05-25T14:23:06.614+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [82/100], Step [455] | Temp: 0.0020 | Accepted Damage: 21052132.52 (Delta: +49399.77)
+Server rejected request: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted)
+2026-05-25T14:23:45.818+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted). Consecutive failures: 1
+Server rejected request: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted)
+2026-05-25T14:24:07.073+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted). Consecutive failures: 2
+Server rejected request: Internal Server Error
+2026-05-25T14:24:09.932+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 3
+Server rejected request: Internal Server Error
+2026-05-25T14:24:12.602+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 4
+2026-05-25T14:25:25.332+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [83/100], Step [479] | Temp: 0.0018 | Accepted Damage: 21052708.03 (Delta: +575.51)
+Server rejected request: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted)
+2026-05-25T14:25:47.115+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted). Consecutive failures: 1
+Server rejected request: Internal Server Error
+2026-05-25T14:25:59.717+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 2
+Server rejected request: Internal Server Error
+2026-05-25T14:26:35.511+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 3
+2026-05-25T14:26:43.006+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [84/100], Step [492] | Temp: 0.0016 | Accepted Damage: 21060526.39 (Delta: +7818.36)
+2026-05-25T14:26:50.315+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [85/100], Step [494] | Temp: 0.0014 | Accepted Damage: 21117392.97 (Delta: +56866.58)
+2026-05-25T14:26:59.205+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [86/100], Step [496] | Temp: 0.0013 | Accepted Damage: 21117744.47 (Delta: +351.50)
+2026-05-25T14:27:17.869+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [87/100], Step [500] | Temp: 0.0012 | Accepted Damage: 21118454.64 (Delta: +710.17)
+2026-05-25T14:27:25.849+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [88/100], Step [502] | Temp: 0.0010 | Accepted Damage: 21118454.64 (Delta: +0.00)
+2026-05-25T14:28:52.850+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [89/100], Step [520] | Temp: 0.0009 | Accepted Damage: 21118568.38 (Delta: +113.73)
+2026-05-25T14:30:58.835+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [90/100], Step [545] | Temp: 0.0008 | Accepted Damage: 21118608.86 (Delta: +40.48)
+2026-05-25T14:31:18.454+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [91/100], Step [549] | Temp: 0.0008 | Accepted Damage: 21243168.69 (Delta: +124559.84)
+2026-05-25T14:31:22.631+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [92/100], Step [550] | Temp: 0.0007 | [Skipped] Current Baseline: 21243168.69
+2026-05-25T14:31:45.774+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [92/100], Step [555] | Temp: 0.0007 | Accepted Damage: 21243168.69 (Delta: +0.00)
+2026-05-25T14:32:45.949+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [93/100], Step [568] | Temp: 0.0006 | Accepted Damage: 21243168.69 (Delta: +0.00)
+Server rejected request: Internal Server Error
+2026-05-25T14:33:22.998+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+Server rejected request: Internal Server Error
+2026-05-25T14:33:36.008+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 2
+Server rejected request: Internal Server Error
+2026-05-25T14:34:56.388+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 3
+2026-05-25T14:35:11.476+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [94/100], Step [594] | Temp: 0.0006 | Accepted Damage: 21243963.89 (Delta: +795.19)
+Server rejected request: Internal Server Error
+2026-05-25T14:35:25.152+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T14:35:43.519+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [95/100], Step [600] | Temp: 0.0005 | [Skipped] Current Baseline: 21243963.89
+Server rejected request: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted)
+2026-05-25T14:36:36.620+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted). Consecutive failures: 2
+2026-05-25T14:37:15.311+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [95/100], Step [614] | Temp: 0.0005 | Accepted Damage: 21244023.81 (Delta: +59.93)
+Server rejected request: Internal Server Error
+2026-05-25T14:37:32.346+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T14:37:36.738+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [96/100], Step [618] | Temp: 0.0004 | Accepted Damage: 21244023.81 (Delta: +0.00)
+Server rejected request: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted)
+2026-05-25T14:38:21.056+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted). Consecutive failures: 1
+Server rejected request: Internal Server Error
+2026-05-25T14:38:29.795+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 2
+Server rejected request: Internal Server Error
+2026-05-25T14:39:02.971+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 3
+Server rejected request: Internal Server Error
+2026-05-25T14:39:12.855+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 4
+Server rejected request: Internal Server Error
+2026-05-25T14:39:39.630+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 5
+Server rejected request: Internal Server Error
+2026-05-25T14:39:56.115+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 6
+Server rejected request: Internal Server Error
+2026-05-25T14:40:42.507+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 7
+Server rejected request: Internal Server Error
+2026-05-25T14:41:03.413+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 8
+Server rejected request: Internal Server Error
+2026-05-25T14:42:26.575+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 9
+2026-05-25T14:42:56.284+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [97/100], Step [670] | Temp: 0.0004 | Accepted Damage: 21244023.81 (Delta: +0.00)
+Server rejected request: Internal Server Error
+2026-05-25T14:43:10.110+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+Server rejected request: Internal Server Error
+2026-05-25T14:43:15.059+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 2
+Server rejected request: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted)
+2026-05-25T14:43:39.032+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted). Consecutive failures: 3
+Server rejected request: Internal Server Error
+2026-05-25T14:43:42.184+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 4
+Server rejected request: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted)
+2026-05-25T14:43:53.633+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted). Consecutive failures: 5
+Server rejected request: Internal Server Error
+2026-05-25T14:44:21.383+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 6
+Server rejected request: Internal Server Error
+2026-05-25T14:44:49.439+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 7
+Server rejected request: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted)
+2026-05-25T14:45:15.555+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted). Consecutive failures: 8
+Server rejected request: Internal Server Error
+2026-05-25T14:45:22.516+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 9
+Server rejected request: Internal Server Error
+2026-05-25T14:45:29.176+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 10
+Server rejected request: Internal Server Error
+2026-05-25T14:45:40.304+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 11
+2026-05-25T14:45:54.403+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [98/100], Step [698] | Temp: 0.0004 | Accepted Damage: 21244023.81 (Delta: +0.00)
+2026-05-25T14:46:03.188+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [99/100], Step [700] | Temp: 0.0003 | [Skipped] Current Baseline: 21244023.81
+Server rejected request: Internal Server Error
+2026-05-25T14:46:16.174+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+Server rejected request: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted)
+2026-05-25T14:46:39.932+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted). Consecutive failures: 2
+Server rejected request: Internal Server Error
+2026-05-25T14:47:19.563+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 3
+2026-05-25T14:47:24.967+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [99/100], Step [713] | Temp: 0.0003 | Accepted Damage: 21244023.81 (Delta: +0.00)
+Server rejected request: Internal Server Error
+2026-05-25T14:47:58.267+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+Server rejected request: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted)
+2026-05-25T14:48:08.832+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: HTTP 504 504 GATEWAY_TIMEOUT (HTML Response intercepted). Consecutive failures: 2
+Server rejected request: Internal Server Error
+2026-05-25T14:48:22.946+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 3
+Server rejected request: Internal Server Error
+2026-05-25T14:48:27.966+08:00  WARN 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 4
+2026-05-25T14:49:40.127+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Epoch [100/100], Step [736] | Temp: 0.0003 | Accepted Damage: 21253974.68 (Delta: +9950.87)
+2026-05-25T14:49:40.127+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : ================================================================
+2026-05-25T14:49:40.127+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : Optimization Completed! Final Damage: 21253974.68 after 736 total mutations.
+2026-05-25T14:49:40.127+08:00  INFO 7375 --- [hsrOptimiser] [nio-8080-exec-2] c.h.engine.SimulatedAnnealing            : ================================================================

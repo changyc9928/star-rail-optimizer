@@ -1,0 +1,427 @@
+/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home/bin/java -XX:TieredStopAtLevel=1 -Dspring.output.ansi.enabled=always -javaagent:/Applications/IntelliJ IDEA.app/Contents/lib/idea_rt.jar=51201 -Dfile.encoding=UTF-8 -classpath /Users/yincheng.chang/hsrOptimiser/target/classes:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-data-redis/3.3.4/spring-boot-starter-data-redis-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter/3.3.4/spring-boot-starter-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot/3.3.4/spring-boot-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/3.3.4/spring-boot-autoconfigure-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-logging/3.3.4/spring-boot-starter-logging-3.3.4.jar:/Users/yincheng.chang/.m2/repository/ch/qos/logback/logback-classic/1.5.8/logback-classic-1.5.8.jar:/Users/yincheng.chang/.m2/repository/ch/qos/logback/logback-core/1.5.8/logback-core-1.5.8.jar:/Users/yincheng.chang/.m2/repository/org/apache/logging/log4j/log4j-to-slf4j/2.23.1/log4j-to-slf4j-2.23.1.jar:/Users/yincheng.chang/.m2/repository/org/apache/logging/log4j/log4j-api/2.23.1/log4j-api-2.23.1.jar:/Users/yincheng.chang/.m2/repository/org/slf4j/jul-to-slf4j/2.0.16/jul-to-slf4j-2.0.16.jar:/Users/yincheng.chang/.m2/repository/jakarta/annotation/jakarta.annotation-api/2.1.1/jakarta.annotation-api-2.1.1.jar:/Users/yincheng.chang/.m2/repository/org/yaml/snakeyaml/2.2/snakeyaml-2.2.jar:/Users/yincheng.chang/.m2/repository/io/lettuce/lettuce-core/6.3.2.RELEASE/lettuce-core-6.3.2.RELEASE.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-common/4.1.113.Final/netty-common-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-handler/4.1.113.Final/netty-handler-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-resolver/4.1.113.Final/netty-resolver-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-buffer/4.1.113.Final/netty-buffer-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-transport-native-unix-common/4.1.113.Final/netty-transport-native-unix-common-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-codec/4.1.113.Final/netty-codec-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-transport/4.1.113.Final/netty-transport-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/projectreactor/reactor-core/3.6.10/reactor-core-3.6.10.jar:/Users/yincheng.chang/.m2/repository/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/data/spring-data-redis/3.3.4/spring-data-redis-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/data/spring-data-keyvalue/3.3.4/spring-data-keyvalue-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/data/spring-data-commons/3.3.4/spring-data-commons-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-tx/6.1.13/spring-tx-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-oxm/6.1.13/spring-oxm-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-aop/6.1.13/spring-aop-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-context-support/6.1.13/spring-context-support-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-web/3.3.4/spring-boot-starter-web-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-json/3.3.4/spring-boot-starter-json-3.3.4.jar:/Users/yincheng.chang/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.17.2/jackson-databind-2.17.2.jar:/Users/yincheng.chang/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.17.2/jackson-annotations-2.17.2.jar:/Users/yincheng.chang/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.17.2/jackson-core-2.17.2.jar:/Users/yincheng.chang/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.17.2/jackson-datatype-jdk8-2.17.2.jar:/Users/yincheng.chang/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.17.2/jackson-datatype-jsr310-2.17.2.jar:/Users/yincheng.chang/.m2/repository/com/fasterxml/jackson/module/jackson-module-parameter-names/2.17.2/jackson-module-parameter-names-2.17.2.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-tomcat/3.3.4/spring-boot-starter-tomcat-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/apache/tomcat/embed/tomcat-embed-core/10.1.30/tomcat-embed-core-10.1.30.jar:/Users/yincheng.chang/.m2/repository/org/apache/tomcat/embed/tomcat-embed-el/10.1.30/tomcat-embed-el-10.1.30.jar:/Users/yincheng.chang/.m2/repository/org/apache/tomcat/embed/tomcat-embed-websocket/10.1.30/tomcat-embed-websocket-10.1.30.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-web/6.1.13/spring-web-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-beans/6.1.13/spring-beans-6.1.13.jar:/Users/yincheng.chang/.m2/repository/io/micrometer/micrometer-observation/1.13.4/micrometer-observation-1.13.4.jar:/Users/yincheng.chang/.m2/repository/io/micrometer/micrometer-commons/1.13.4/micrometer-commons-1.13.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-webmvc/6.1.13/spring-webmvc-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-context/6.1.13/spring-context-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-expression/6.1.13/spring-expression-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/mybatis/spring/boot/mybatis-spring-boot-starter/3.0.3/mybatis-spring-boot-starter-3.0.3.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-jdbc/3.3.4/spring-boot-starter-jdbc-3.3.4.jar:/Users/yincheng.chang/.m2/repository/com/zaxxer/HikariCP/5.1.0/HikariCP-5.1.0.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-jdbc/6.1.13/spring-jdbc-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/mybatis/spring/boot/mybatis-spring-boot-autoconfigure/3.0.3/mybatis-spring-boot-autoconfigure-3.0.3.jar:/Users/yincheng.chang/.m2/repository/org/mybatis/mybatis/3.5.14/mybatis-3.5.14.jar:/Users/yincheng.chang/.m2/repository/org/mybatis/mybatis-spring/3.0.3/mybatis-spring-3.0.3.jar:/Users/yincheng.chang/.m2/repository/org/projectlombok/lombok/1.18.34/lombok-1.18.34.jar:/Users/yincheng.chang/.m2/repository/org/springframework/session/spring-session-data-redis/3.3.2/spring-session-data-redis-3.3.2.jar:/Users/yincheng.chang/.m2/repository/org/springframework/session/spring-session-core/3.3.2/spring-session-core-3.3.2.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-jcl/6.1.13/spring-jcl-6.1.13.jar:/Users/yincheng.chang/.m2/repository/org/postgresql/postgresql/42.7.4/postgresql-42.7.4.jar:/Users/yincheng.chang/.m2/repository/org/checkerframework/checker-qual/3.42.0/checker-qual-3.42.0.jar:/Users/yincheng.chang/.m2/repository/net/objecthunter/exp4j/0.4.8/exp4j-0.4.8.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-webflux/3.3.4/spring-boot-starter-webflux-3.3.4.jar:/Users/yincheng.chang/.m2/repository/org/springframework/boot/spring-boot-starter-reactor-netty/3.3.4/spring-boot-starter-reactor-netty-3.3.4.jar:/Users/yincheng.chang/.m2/repository/io/projectreactor/netty/reactor-netty-http/1.1.22/reactor-netty-http-1.1.22.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-codec-http/4.1.113.Final/netty-codec-http-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-codec-http2/4.1.113.Final/netty-codec-http2-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-resolver-dns/4.1.113.Final/netty-resolver-dns-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-codec-dns/4.1.113.Final/netty-codec-dns-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-resolver-dns-native-macos/4.1.113.Final/netty-resolver-dns-native-macos-4.1.113.Final-osx-x86_64.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-resolver-dns-classes-macos/4.1.113.Final/netty-resolver-dns-classes-macos-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-transport-native-epoll/4.1.113.Final/netty-transport-native-epoll-4.1.113.Final-linux-x86_64.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-transport-classes-epoll/4.1.113.Final/netty-transport-classes-epoll-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/projectreactor/netty/reactor-netty-core/1.1.22/reactor-netty-core-1.1.22.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-handler-proxy/4.1.113.Final/netty-handler-proxy-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/io/netty/netty-codec-socks/4.1.113.Final/netty-codec-socks-4.1.113.Final.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-webflux/6.1.13/spring-webflux-6.1.13.jar:/Users/yincheng.chang/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/4.0.2/jakarta.xml.bind-api-4.0.2.jar:/Users/yincheng.chang/.m2/repository/jakarta/activation/jakarta.activation-api/2.1.3/jakarta.activation-api-2.1.3.jar:/Users/yincheng.chang/.m2/repository/org/springframework/spring-core/6.1.13/spring-core-6.1.13.jar com.hsrOptimiser.HsrOptimiserApplication
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.4)
+
+2026-05-25T11:40:13.316+08:00  INFO 4648 --- [hsrOptimiser] [           main] c.hsrOptimiser.HsrOptimiserApplication   : Starting HsrOptimiserApplication using Java 17.0.5 with PID 4648 (/Users/yincheng.chang/hsrOptimiser/target/classes started by yincheng.chang in /Users/yincheng.chang/hsrOptimiser)
+2026-05-25T11:40:13.318+08:00  INFO 4648 --- [hsrOptimiser] [           main] c.hsrOptimiser.HsrOptimiserApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-05-25T11:40:13.623+08:00  INFO 4648 --- [hsrOptimiser] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-25T11:40:13.624+08:00  INFO 4648 --- [hsrOptimiser] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-05-25T11:40:13.637+08:00  INFO 4648 --- [hsrOptimiser] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 6 ms. Found 0 Redis repository interfaces.
+2026-05-25T11:40:13.913+08:00  INFO 4648 --- [hsrOptimiser] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-05-25T11:40:13.919+08:00  INFO 4648 --- [hsrOptimiser] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-25T11:40:13.919+08:00  INFO 4648 --- [hsrOptimiser] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.30]
+2026-05-25T11:40:13.944+08:00  INFO 4648 --- [hsrOptimiser] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-05-25T11:40:13.944+08:00  INFO 4648 --- [hsrOptimiser] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 606 ms
+2026-05-25T11:40:14.162+08:00 ERROR 4648 --- [hsrOptimiser] [           main] i.n.r.d.DnsServerAddressStreamProviders  : Unable to load io.netty.resolver.dns.macos.MacOSDnsServerAddressStreamProvider, fallback to system defaults. This may result in incorrect DNS resolutions on MacOS. Check whether you have a dependency on 'io.netty:netty-resolver-dns-native-macos'. Use DEBUG level to see the full stack: java.lang.UnsatisfiedLinkError: failed to load the required native library
+2026-05-25T11:40:14.563+08:00  INFO 4648 --- [hsrOptimiser] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2026-05-25T11:40:14.568+08:00  INFO 4648 --- [hsrOptimiser] [           main] c.hsrOptimiser.HsrOptimiserApplication   : Started HsrOptimiserApplication in 1.47 seconds (process running for 1.635)
+2026-05-25T11:40:16.853+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-25T11:40:16.853+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-25T11:40:16.854+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-05-25T11:40:18.715+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Starting Simulated Annealing optimization. Target Epochs: 100, Initial Temp: 10.0
+Warning: Skipping Light Cone ID 20000 -> Unknown internal key: Arrows
+Warning: Skipping Light Cone ID 20001 -> Unknown internal key: Cornucopia
+Warning: Skipping Light Cone ID 20002 -> Unknown internal key: CollapsingSky
+Warning: Skipping Light Cone ID 20003 -> Unknown internal key: Amber
+Warning: Skipping Light Cone ID 20004 -> Unknown internal key: Void
+Warning: Skipping Light Cone ID 20005 -> Unknown internal key: Chorus
+Warning: Skipping Light Cone ID 20006 -> Unknown internal key: DataBank
+Warning: Skipping Light Cone ID 20007 -> Unknown internal key: DartingArrow
+Warning: Skipping Light Cone ID 20008 -> Unknown internal key: FineFruit
+Warning: Skipping Light Cone ID 20009 -> Unknown internal key: ShatteredHome
+Warning: Skipping Light Cone ID 20010 -> Unknown internal key: Defense
+Warning: Skipping Light Cone ID 20011 -> Unknown internal key: Loop
+Warning: Skipping Light Cone ID 20014 -> Unknown internal key: Adversarial
+Warning: Skipping Light Cone ID 20016 -> Unknown internal key: MutualDemise
+Warning: Skipping Light Cone ID 20017 -> Unknown internal key: Pioneering
+Warning: Skipping Light Cone ID 20018 -> Unknown internal key: HiddenShadow
+Warning: Skipping Light Cone ID 20019 -> Unknown internal key: Mediation
+Warning: Skipping Light Cone ID 20020 -> Unknown internal key: Sagacity
+Warning: Skipping Light Cone ID 20023 -> Unknown internal key: Sneering
+Warning: Skipping Light Cone ID 20024 -> Unknown internal key: LingeringTear
+2026-05-25T11:40:23.517+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [1/100], Step [1] | Temp: 9.0000 | Accepted Damage: 20376829.38 (Delta: +20376829.38)
+2026-05-25T11:40:30.875+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [2/100], Step [3] | Temp: 8.1000 | Accepted Damage: 20376829.38 (Delta: +0.00)
+2026-05-25T11:40:34.625+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [3/100], Step [4] | Temp: 7.2900 | Accepted Damage: 20355455.89 (Delta: -21373.48)
+2026-05-25T11:40:41.983+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [4/100], Step [6] | Temp: 6.5610 | Accepted Damage: 20549045.60 (Delta: +193589.71)
+2026-05-25T11:40:48.742+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [5/100], Step [8] | Temp: 5.9049 | Accepted Damage: 20484447.65 (Delta: -64597.95)
+2026-05-25T11:40:52.678+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [6/100], Step [9] | Temp: 5.3144 | Accepted Damage: 20297482.31 (Delta: -186965.34)
+2026-05-25T11:40:55.815+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [7/100], Step [10] | Temp: 4.7830 | Accepted Damage: 20294059.06 (Delta: -3423.25)
+2026-05-25T11:41:11.358+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [8/100], Step [14] | Temp: 4.3047 | Accepted Damage: 20292947.53 (Delta: -1111.53)
+2026-05-25T11:41:15.343+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [9/100], Step [15] | Temp: 3.8742 | Accepted Damage: 19827607.93 (Delta: -465339.60)
+2026-05-25T11:41:25.684+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [10/100], Step [18] | Temp: 3.4868 | Accepted Damage: 19765157.32 (Delta: -62450.61)
+2026-05-25T11:41:32.613+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [11/100], Step [20] | Temp: 3.1381 | Accepted Damage: 19918945.18 (Delta: +153787.86)
+2026-05-25T11:41:39.751+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [12/100], Step [22] | Temp: 2.8243 | Accepted Damage: 20369567.48 (Delta: +450622.30)
+2026-05-25T11:41:52.863+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [13/100], Step [25] | Temp: 2.5419 | Accepted Damage: 20370059.63 (Delta: +492.14)
+2026-05-25T11:42:04.601+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [14/100], Step [28] | Temp: 2.2877 | Accepted Damage: 20369821.13 (Delta: -238.50)
+2026-05-25T11:42:35.304+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [15/100], Step [36] | Temp: 2.0589 | Accepted Damage: 20025711.61 (Delta: -344109.52)
+2026-05-25T11:42:49.113+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [16/100], Step [40] | Temp: 1.8530 | Accepted Damage: 20026356.60 (Delta: +645.00)
+2026-05-25T11:42:53.016+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [17/100], Step [41] | Temp: 1.6677 | Accepted Damage: 20034994.60 (Delta: +8638.00)
+2026-05-25T11:43:00.011+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [18/100], Step [43] | Temp: 1.5009 | Accepted Damage: 20036720.84 (Delta: +1726.24)
+2026-05-25T11:43:07.154+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [19/100], Step [45] | Temp: 1.3509 | Accepted Damage: 20040567.69 (Delta: +3846.85)
+2026-05-25T11:43:19.867+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [20/100], Step [48] | Temp: 1.2158 | Accepted Damage: 20103870.43 (Delta: +63302.74)
+2026-05-25T11:43:31.193+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [21/100], Step [51] | Temp: 1.0942 | Accepted Damage: 20074561.00 (Delta: -29309.43)
+2026-05-25T11:43:38.301+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [22/100], Step [53] | Temp: 0.9848 | Accepted Damage: 20059728.82 (Delta: -14832.18)
+2026-05-25T11:43:56.739+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [23/100], Step [58] | Temp: 0.8863 | Accepted Damage: 20060285.06 (Delta: +556.24)
+2026-05-25T11:44:04.460+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [24/100], Step [60] | Temp: 0.7977 | Accepted Damage: 20744917.11 (Delta: +684632.04)
+2026-05-25T11:44:30.888+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [25/100], Step [67] | Temp: 0.7179 | Accepted Damage: 20745332.19 (Delta: +415.08)
+2026-05-25T11:44:48.832+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [26/100], Step [72] | Temp: 0.6461 | Accepted Damage: 20744845.05 (Delta: -487.14)
+Server rejected request: Internal Server Error
+2026-05-25T11:45:00.728+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+Server rejected request: Internal Server Error
+2026-05-25T11:45:12.069+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 2
+2026-05-25T11:45:22.382+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [27/100], Step [79] | Temp: 0.5815 | Accepted Damage: 20744972.16 (Delta: +127.11)
+2026-05-25T11:45:39.345+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [28/100], Step [83] | Temp: 0.5233 | Accepted Damage: 20929805.11 (Delta: +184832.95)
+2026-05-25T11:46:09.200+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [29/100], Step [91] | Temp: 0.4710 | Accepted Damage: 20929805.11 (Delta: +0.00)
+2026-05-25T11:46:32.116+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [30/100], Step [96] | Temp: 0.4239 | Accepted Damage: 20929805.11 (Delta: +0.00)
+Server rejected request: Internal Server Error
+2026-05-25T11:46:49.091+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T11:46:56.935+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [31/100], Step [102] | Temp: 0.3815 | Accepted Damage: 20929805.11 (Delta: +0.00)
+2026-05-25T11:47:05.347+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [32/100], Step [104] | Temp: 0.3434 | Accepted Damage: 20929805.11 (Delta: +0.00)
+2026-05-25T11:47:51.100+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [33/100], Step [116] | Temp: 0.3090 | Accepted Damage: 20929805.11 (Delta: +0.00)
+2026-05-25T11:48:05.059+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [34/100], Step [120] | Temp: 0.2781 | Accepted Damage: 20929596.55 (Delta: -208.56)
+2026-05-25T11:48:26.483+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [35/100], Step [126] | Temp: 0.2503 | Accepted Damage: 20927372.51 (Delta: -2224.04)
+2026-05-25T11:48:38.252+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [36/100], Step [129] | Temp: 0.2253 | Accepted Damage: 20916089.52 (Delta: -11282.98)
+2026-05-25T11:49:09.749+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [37/100], Step [138] | Temp: 0.2028 | Accepted Damage: 21104539.70 (Delta: +188450.18)
+2026-05-25T11:49:34.574+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [38/100], Step [144] | Temp: 0.1825 | Accepted Damage: 21108647.12 (Delta: +4107.42)
+2026-05-25T11:49:49.000+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [39/100], Step [148] | Temp: 0.1642 | Accepted Damage: 21108647.12 (Delta: +0.00)
+2026-05-25T11:49:56.602+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [40/100], Step [150] | Temp: 0.1478 | Accepted Damage: 21481048.70 (Delta: +372401.58)
+2026-05-25T11:50:16.712+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [41/100], Step [155] | Temp: 0.1330 | Accepted Damage: 21481048.70 (Delta: +0.00)
+2026-05-25T11:50:36.086+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [42/100], Step [160] | Temp: 0.1197 | Accepted Damage: 22348893.20 (Delta: +867844.50)
+2026-05-25T11:50:43.097+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [43/100], Step [162] | Temp: 0.1078 | Accepted Damage: 22348893.20 (Delta: +0.00)
+2026-05-25T11:51:43.165+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [44/100], Step [178] | Temp: 0.0970 | Accepted Damage: 22657738.73 (Delta: +308845.53)
+2026-05-25T11:52:10.829+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [45/100], Step [186] | Temp: 0.0873 | Accepted Damage: 22657738.73 (Delta: +0.00)
+2026-05-25T11:52:36.919+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [46/100], Step [193] | Temp: 0.0786 | Accepted Damage: 22657426.23 (Delta: -312.50)
+2026-05-25T11:53:02.749+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [47/100], Step [200] | Temp: 0.0786 | [Skipped] Current Baseline: 22657426.23
+2026-05-25T11:54:11.650+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [47/100], Step [219] | Temp: 0.0707 | Accepted Damage: 22657342.99 (Delta: -83.24)
+2026-05-25T11:54:26.143+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [48/100], Step [223] | Temp: 0.0636 | Accepted Damage: 22657426.23 (Delta: +83.24)
+2026-05-25T11:54:56.356+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [49/100], Step [231] | Temp: 0.0573 | Accepted Damage: 22657509.47 (Delta: +83.24)
+2026-05-25T11:55:00.213+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [50/100], Step [232] | Temp: 0.0515 | Accepted Damage: 22657509.47 (Delta: +0.00)
+2026-05-25T11:55:07.395+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [51/100], Step [234] | Temp: 0.0464 | Accepted Damage: 22657185.77 (Delta: -323.70)
+2026-05-25T11:55:13.056+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [52/100], Step [235] | Temp: 0.0417 | Accepted Damage: 22763669.10 (Delta: +106483.34)
+2026-05-25T11:55:21.807+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [53/100], Step [237] | Temp: 0.0376 | Accepted Damage: 22763669.10 (Delta: +0.00)
+2026-05-25T11:55:27.946+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [54/100], Step [238] | Temp: 0.0338 | Accepted Damage: 22763669.10 (Delta: -0.00)
+Server rejected request: Internal Server Error
+2026-05-25T11:56:52.213+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T11:57:03.298+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [55/100], Step [259] | Temp: 0.0304 | Accepted Damage: 22763669.10 (Delta: +0.00)
+2026-05-25T11:57:50.024+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [56/100], Step [270] | Temp: 0.0274 | Accepted Damage: 22803991.18 (Delta: +40322.08)
+2026-05-25T11:57:53.390+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [57/100], Step [271] | Temp: 0.0247 | Accepted Damage: 22803991.18 (Delta: +0.00)
+Server rejected request: Internal Server Error
+2026-05-25T11:58:15.668+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T11:58:40.355+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [58/100], Step [280] | Temp: 0.0222 | Accepted Damage: 22803991.18 (Delta: +0.00)
+2026-05-25T11:59:38.385+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [59/100], Step [293] | Temp: 0.0200 | Accepted Damage: 22803991.18 (Delta: -0.00)
+2026-05-25T12:00:07.552+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [60/100], Step [300] | Temp: 0.0200 | [Skipped] Current Baseline: 22803991.18
+2026-05-25T12:00:22.529+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [60/100], Step [303] | Temp: 0.0180 | Accepted Damage: 22803991.18 (Delta: +0.00)
+2026-05-25T12:00:33.516+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [61/100], Step [306] | Temp: 0.0162 | Accepted Damage: 22807863.61 (Delta: +3872.43)
+2026-05-25T12:01:20.195+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [62/100], Step [318] | Temp: 0.0146 | Accepted Damage: 22807720.01 (Delta: -143.61)
+2026-05-25T12:01:27.409+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [63/100], Step [320] | Temp: 0.0131 | Accepted Damage: 22807720.01 (Delta: +0.00)
+2026-05-25T12:01:34.525+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [64/100], Step [322] | Temp: 0.0118 | Accepted Damage: 22812292.49 (Delta: +4572.48)
+Server rejected request: Internal Server Error
+2026-05-25T12:02:07.131+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T12:02:15.174+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [65/100], Step [332] | Temp: 0.0106 | Accepted Damage: 22812553.88 (Delta: +261.39)
+2026-05-25T12:02:22.940+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [66/100], Step [333] | Temp: 0.0096 | Accepted Damage: 22812292.49 (Delta: -261.39)
+2026-05-25T12:02:37.836+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [67/100], Step [337] | Temp: 0.0086 | Accepted Damage: 22812292.49 (Delta: +0.00)
+2026-05-25T12:02:48.034+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [68/100], Step [339] | Temp: 0.0077 | Accepted Damage: 22812292.49 (Delta: +0.00)
+2026-05-25T12:03:13.040+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [69/100], Step [344] | Temp: 0.0070 | Accepted Damage: 22901161.45 (Delta: +88868.96)
+Server rejected request: Internal Server Error
+2026-05-25T12:03:27.662+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T12:03:45.535+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [70/100], Step [351] | Temp: 0.0063 | Accepted Damage: 22901422.84 (Delta: +261.39)
+Server rejected request: Internal Server Error
+2026-05-25T12:04:11.203+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T12:04:22.868+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [71/100], Step [357] | Temp: 0.0056 | Accepted Damage: 22901422.84 (Delta: +0.00)
+2026-05-25T12:05:15.132+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [72/100], Step [366] | Temp: 0.0051 | Accepted Damage: 22902186.37 (Delta: +763.53)
+2026-05-25T12:05:18.665+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [73/100], Step [367] | Temp: 0.0046 | Accepted Damage: 22902186.37 (Delta: +0.00)
+Server rejected request: <!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en-US"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en-US"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en-US"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en-US"> <!--<![endif]-->
+<head>
+
+<title>asagi-game.com | 504: Gateway time-out</title>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="stylesheet" id="cf_styles-css" href="/cdn-cgi/styles/main.css" />
+</head>
+<body>
+<div id="cf-wrapper">
+    <div id="cf-error-details" class="p-0">
+        <header class="mx-auto pt-10 lg:pt-6 lg:px-8 w-240 lg:w-full mb-8">
+            <h1 class="inline-block sm:block sm:mb-2 font-light text-60 lg:text-4xl text-black-dark leading-tight mr-2">
+                <span class="inline-block">Gateway time-out</span>
+                <span class="code-label">Error code 504</span>
+            </h1>
+            <div>
+                Visit <a href="https://www.cloudflare.com/5xx-error-landing?utm_source=errorcode_504&utm_campaign=honkai.asagi-game.com" target="_blank" rel="noopener noreferrer">cloudflare.com</a> for more information.
+            </div>
+            <div class="mt-3">2026-05-25 04:05:35 UTC</div>
+        </header>
+        <div class="my-8 bg-gradient-gray">
+            <div class="w-240 lg:w-full mx-auto">
+                <div class="clearfix md:px-8">
+                    <div id="cf-browser-status" class=" relative w-1/3 md:w-full py-15 md:p-0 md:py-8 md:text-left md:border-solid md:border-0 md:border-b md:border-gray-400 overflow-hidden float-left md:float-none text-center">
+  <div class="relative mb-10 md:m-0">
+    
+    <span class="cf-icon-browser block md:hidden h-20 bg-center bg-no-repeat"></span>
+    <span class="cf-icon-ok w-12 h-12 absolute left-1/2 md:left-auto md:right-0 md:top-0 -ml-6 -bottom-4"></span>
+    
+  </div>
+  <span class="md:block w-full truncate">You</span>
+  <h3 class="md:inline-block mt-3 md:mt-0 text-2xl text-gray-600 font-light leading-1.3">
+  
+    Browser
+  
+  </h3>
+  
+  <span class="leading-1.3 text-2xl text-green-success">Working</span>
+  
+</div>
+                    <div id="cf-cloudflare-status" class=" relative w-1/3 md:w-full py-15 md:p-0 md:py-8 md:text-left md:border-solid md:border-0 md:border-b md:border-gray-400 overflow-hidden float-left md:float-none text-center">
+  <div class="relative mb-10 md:m-0">
+    <a href="https://www.cloudflare.com/5xx-error-landing?utm_source=errorcode_504&#38;utm_campaign=honkai.asagi-game.com" target="_blank" rel="noopener noreferrer">
+    <span class="cf-icon-cloud block md:hidden h-20 bg-center bg-no-repeat"></span>
+    <span class="cf-icon-ok w-12 h-12 absolute left-1/2 md:left-auto md:right-0 md:top-0 -ml-6 -bottom-4"></span>
+    </a>
+  </div>
+  <span class="md:block w-full truncate">Singapore</span>
+  <h3 class="md:inline-block mt-3 md:mt-0 text-2xl text-gray-600 font-light leading-1.3">
+  <a href="https://www.cloudflare.com/5xx-error-landing?utm_source=errorcode_504&utm_campaign=honkai.asagi-game.com" target="_blank" rel="noopener noreferrer">
+    Cloudflare
+  </a>
+  </h3>
+  
+  <span class="leading-1.3 text-2xl text-green-success">Working</span>
+  
+</div>
+                    <div id="cf-host-status" class="cf-error-source relative w-1/3 md:w-full py-15 md:p-0 md:py-8 md:text-left md:border-solid md:border-0 md:border-b md:border-gray-400 overflow-hidden float-left md:float-none text-center">
+  <div class="relative mb-10 md:m-0">
+    
+    <span class="cf-icon-server block md:hidden h-20 bg-center bg-no-repeat"></span>
+    <span class="cf-icon-error w-12 h-12 absolute left-1/2 md:left-auto md:right-0 md:top-0 -ml-6 -bottom-4"></span>
+    
+  </div>
+  <span class="md:block w-full truncate">honkai.asagi-game.com</span>
+  <h3 class="md:inline-block mt-3 md:mt-0 text-2xl text-gray-600 font-light leading-1.3">
+  
+    Host
+  
+  </h3>
+  
+  <span class="leading-1.3 text-2xl text-red-error">Error</span>
+  
+</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-240 lg:w-full mx-auto mb-8 lg:px-8">
+            <div class="clearfix">
+                <div class="w-1/2 md:w-full float-left pr-6 md:pb-10 md:pr-0 leading-relaxed">
+                    <h2 class="text-3xl font-normal leading-1.3 mb-4">What happened?</h2>
+                    <p>The web server reported a gateway time-out error.</p>
+                </div>
+                <div class="w-1/2 md:w-full float-left leading-relaxed">
+                    <h2 class="text-3xl font-normal leading-1.3 mb-4">What can I do?</h2>
+                    <p class="mb-6">Please try again in a few minutes.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="cf-error-footer cf-wrapper w-240 lg:w-full py-10 sm:py-4 sm:px-8 mx-auto text-center sm:text-left border-solid border-0 border-t border-gray-300">
+    <p class="text-13">
+      <span class="cf-footer-item sm:block sm:mb-1">Cloudflare Ray ID: <strong class="font-semibold">a011a95d5971ce0e</strong></span>
+      <span class="cf-footer-separator sm:hidden">&bull;</span>
+      <span id="cf-footer-item-ip" class="cf-footer-item hidden sm:block sm:mb-1">
+        Your IP:
+        <button type="button" id="cf-footer-ip-reveal" class="cf-footer-ip-reveal-btn">Click to reveal</button>
+        <span class="hidden" id="cf-footer-ip">175.136.46.108</span>
+        <span class="cf-footer-separator sm:hidden">&bull;</span>
+      </span>
+      <span class="cf-footer-item sm:block sm:mb-1"><span>Performance &amp; security by</span> <a rel="noopener noreferrer" href="https://www.cloudflare.com/5xx-error-landing?utm_source=errorcode_504&#38;utm_campaign=honkai.asagi-game.com" id="brand_link" target="_blank">Cloudflare</a></span>
+      
+    </p>
+    <script>(function(){function d(){var b=a.getElementById("cf-footer-item-ip"),c=a.getElementById("cf-footer-ip-reveal");b&&"classList"in b&&(b.classList.remove("hidden"),c.addEventListener("click",function(){c.classList.add("hidden");a.getElementById("cf-footer-ip").classList.remove("hidden")}))}var a=document;document.addEventListener&&a.addEventListener("DOMContentLoaded",d)})();</script>
+  </div><!-- /.error-footer -->
+
+    </div>
+</div>
+</body>
+</html>
+2026-05-25T12:05:35.071+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: <!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en-US"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en-US"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en-US"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en-US"> <!--<![endif]-->
+<head>
+
+<title>asagi-game.com | 504: Gateway time-out</title>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="stylesheet" id="cf_styles-css" href="/cdn-cgi/styles/main.css" />
+</head>
+<body>
+<div id="cf-wrapper">
+    <div id="cf-error-details" class="p-0">
+        <header class="mx-auto pt-10 lg:pt-6 lg:px-8 w-240 lg:w-full mb-8">
+            <h1 class="inline-block sm:block sm:mb-2 font-light text-60 lg:text-4xl text-black-dark leading-tight mr-2">
+                <span class="inline-block">Gateway time-out</span>
+                <span class="code-label">Error code 504</span>
+            </h1>
+            <div>
+                Visit <a href="https://www.cloudflare.com/5xx-error-landing?utm_source=errorcode_504&utm_campaign=honkai.asagi-game.com" target="_blank" rel="noopener noreferrer">cloudflare.com</a> for more information.
+            </div>
+            <div class="mt-3">2026-05-25 04:05:35 UTC</div>
+        </header>
+        <div class="my-8 bg-gradient-gray">
+            <div class="w-240 lg:w-full mx-auto">
+                <div class="clearfix md:px-8">
+                    <div id="cf-browser-status" class=" relative w-1/3 md:w-full py-15 md:p-0 md:py-8 md:text-left md:border-solid md:border-0 md:border-b md:border-gray-400 overflow-hidden float-left md:float-none text-center">
+  <div class="relative mb-10 md:m-0">
+    
+    <span class="cf-icon-browser block md:hidden h-20 bg-center bg-no-repeat"></span>
+    <span class="cf-icon-ok w-12 h-12 absolute left-1/2 md:left-auto md:right-0 md:top-0 -ml-6 -bottom-4"></span>
+    
+  </div>
+  <span class="md:block w-full truncate">You</span>
+  <h3 class="md:inline-block mt-3 md:mt-0 text-2xl text-gray-600 font-light leading-1.3">
+  
+    Browser
+  
+  </h3>
+  
+  <span class="leading-1.3 text-2xl text-green-success">Working</span>
+  
+</div>
+                    <div id="cf-cloudflare-status" class=" relative w-1/3 md:w-full py-15 md:p-0 md:py-8 md:text-left md:border-solid md:border-0 md:border-b md:border-gray-400 overflow-hidden float-left md:float-none text-center">
+  <div class="relative mb-10 md:m-0">
+    <a href="https://www.cloudflare.com/5xx-error-landing?utm_source=errorcode_504&#38;utm_campaign=honkai.asagi-game.com" target="_blank" rel="noopener noreferrer">
+    <span class="cf-icon-cloud block md:hidden h-20 bg-center bg-no-repeat"></span>
+    <span class="cf-icon-ok w-12 h-12 absolute left-1/2 md:left-auto md:right-0 md:top-0 -ml-6 -bottom-4"></span>
+    </a>
+  </div>
+  <span class="md:block w-full truncate">Singapore</span>
+  <h3 class="md:inline-block mt-3 md:mt-0 text-2xl text-gray-600 font-light leading-1.3">
+  <a href="https://www.cloudflare.com/5xx-error-landing?utm_source=errorcode_504&utm_campaign=honkai.asagi-game.com" target="_blank" rel="noopener noreferrer">
+    Cloudflare
+  </a>
+  </h3>
+  
+  <span class="leading-1.3 text-2xl text-green-success">Working</span>
+  
+</div>
+                    <div id="cf-host-status" class="cf-error-source relative w-1/3 md:w-full py-15 md:p-0 md:py-8 md:text-left md:border-solid md:border-0 md:border-b md:border-gray-400 overflow-hidden float-left md:float-none text-center">
+  <div class="relative mb-10 md:m-0">
+    
+    <span class="cf-icon-server block md:hidden h-20 bg-center bg-no-repeat"></span>
+    <span class="cf-icon-error w-12 h-12 absolute left-1/2 md:left-auto md:right-0 md:top-0 -ml-6 -bottom-4"></span>
+    
+  </div>
+  <span class="md:block w-full truncate">honkai.asagi-game.com</span>
+  <h3 class="md:inline-block mt-3 md:mt-0 text-2xl text-gray-600 font-light leading-1.3">
+  
+    Host
+  
+  </h3>
+  
+  <span class="leading-1.3 text-2xl text-red-error">Error</span>
+  
+</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-240 lg:w-full mx-auto mb-8 lg:px-8">
+            <div class="clearfix">
+                <div class="w-1/2 md:w-full float-left pr-6 md:pb-10 md:pr-0 leading-relaxed">
+                    <h2 class="text-3xl font-normal leading-1.3 mb-4">What happened?</h2>
+                    <p>The web server reported a gateway time-out error.</p>
+                </div>
+                <div class="w-1/2 md:w-full float-left leading-relaxed">
+                    <h2 class="text-3xl font-normal leading-1.3 mb-4">What can I do?</h2>
+                    <p class="mb-6">Please try again in a few minutes.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="cf-error-footer cf-wrapper w-240 lg:w-full py-10 sm:py-4 sm:px-8 mx-auto text-center sm:text-left border-solid border-0 border-t border-gray-300">
+    <p class="text-13">
+      <span class="cf-footer-item sm:block sm:mb-1">Cloudflare Ray ID: <strong class="font-semibold">a011a95d5971ce0e</strong></span>
+      <span class="cf-footer-separator sm:hidden">&bull;</span>
+      <span id="cf-footer-item-ip" class="cf-footer-item hidden sm:block sm:mb-1">
+        Your IP:
+        <button type="button" id="cf-footer-ip-reveal" class="cf-footer-ip-reveal-btn">Click to reveal</button>
+        <span class="hidden" id="cf-footer-ip">175.136.46.108</span>
+        <span class="cf-footer-separator sm:hidden">&bull;</span>
+      </span>
+      <span class="cf-footer-item sm:block sm:mb-1"><span>Performance &amp; security by</span> <a rel="noopener noreferrer" href="https://www.cloudflare.com/5xx-error-landing?utm_source=errorcode_504&#38;utm_campaign=honkai.asagi-game.com" id="brand_link" target="_blank">Cloudflare</a></span>
+      
+    </p>
+    <script>(function(){function d(){var b=a.getElementById("cf-footer-item-ip"),c=a.getElementById("cf-footer-ip-reveal");b&&"classList"in b&&(b.classList.remove("hidden"),c.addEventListener("click",function(){c.classList.add("hidden");a.getElementById("cf-footer-ip").classList.remove("hidden")}))}var a=document;document.addEventListener&&a.addEventListener("DOMContentLoaded",d)})();</script>
+  </div><!-- /.error-footer -->
+
+    </div>
+</div>
+</body>
+</html>. Consecutive failures: 1
+2026-05-25T12:06:01.035+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [74/100], Step [372] | Temp: 0.0041 | Accepted Damage: 22902186.37 (Delta: +0.00)
+Server rejected request: Internal Server Error
+2026-05-25T12:06:15.372+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T12:06:36.749+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [75/100], Step [378] | Temp: 0.0037 | Accepted Damage: 22902186.37 (Delta: +0.00)
+2026-05-25T12:07:27.422+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [76/100], Step [390] | Temp: 0.0033 | Accepted Damage: 22902186.37 (Delta: +0.00)
+2026-05-25T12:08:07.298+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [77/100], Step [400] | Temp: 0.0033 | [Skipped] Current Baseline: 22902186.37
+2026-05-25T12:08:21.849+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [77/100], Step [403] | Temp: 0.0030 | Accepted Damage: 22902186.37 (Delta: +0.00)
+2026-05-25T12:08:32.988+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [78/100], Step [406] | Temp: 0.0027 | Accepted Damage: 22902226.66 (Delta: +40.29)
+2026-05-25T12:08:55.042+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [79/100], Step [411] | Temp: 0.0024 | Accepted Damage: 22902453.84 (Delta: +227.18)
+Server rejected request: Internal Server Error
+2026-05-25T12:10:01.711+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+Server rejected request: Internal Server Error
+2026-05-25T12:10:20.142+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 2
+2026-05-25T12:10:47.017+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [80/100], Step [438] | Temp: 0.0022 | Accepted Damage: 22903774.31 (Delta: +1320.47)
+2026-05-25T12:11:07.744+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [81/100], Step [443] | Temp: 0.0020 | Accepted Damage: 22903774.31 (Delta: +0.00)
+2026-05-25T12:11:59.998+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [82/100], Step [457] | Temp: 0.0018 | Accepted Damage: 22903774.31 (Delta: +0.00)
+Server rejected request: Internal Server Error
+2026-05-25T12:12:49.849+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T12:13:11.936+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [83/100], Step [473] | Temp: 0.0016 | Accepted Damage: 22903774.31 (Delta: +0.00)
+2026-05-25T12:13:16.325+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [84/100], Step [474] | Temp: 0.0014 | Accepted Damage: 22903774.31 (Delta: +0.00)
+2026-05-25T12:13:20.362+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [85/100], Step [475] | Temp: 0.0013 | Accepted Damage: 22903774.31 (Delta: +0.00)
+2026-05-25T12:13:39.580+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [86/100], Step [480] | Temp: 0.0012 | Accepted Damage: 22903774.31 (Delta: +0.00)
+2026-05-25T12:13:56.657+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [87/100], Step [484] | Temp: 0.0010 | Accepted Damage: 22904877.64 (Delta: +1103.34)
+2026-05-25T12:14:22.630+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [88/100], Step [491] | Temp: 0.0009 | Accepted Damage: 22904877.64 (Delta: +0.00)
+2026-05-25T12:14:46.374+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [89/100], Step [497] | Temp: 0.0008 | Accepted Damage: 22904877.64 (Delta: +0.00)
+Server rejected request: Internal Server Error
+2026-05-25T12:15:00.234+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+Server rejected request: Internal Server Error
+2026-05-25T12:17:49.170+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 2
+2026-05-25T12:19:14.514+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [90/100], Step [558] | Temp: 0.0008 | Accepted Damage: 22904877.64 (Delta: +0.00)
+2026-05-25T12:19:56.299+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [91/100], Step [568] | Temp: 0.0007 | Accepted Damage: 22904877.64 (Delta: +0.00)
+2026-05-25T12:20:08.313+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [92/100], Step [571] | Temp: 0.0006 | Accepted Damage: 22904877.64 (Delta: +0.00)
+2026-05-25T12:20:37.985+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [93/100], Step [578] | Temp: 0.0006 | Accepted Damage: 22904877.64 (Delta: +0.00)
+Server rejected request: Internal Server Error
+2026-05-25T12:21:17.545+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+2026-05-25T12:22:19.381+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [94/100], Step [600] | Temp: 0.0006 | [Skipped] Current Baseline: 22904877.64
+2026-05-25T12:23:45.663+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [94/100], Step [621] | Temp: 0.0005 | Accepted Damage: 22904877.64 (Delta: +0.00)
+2026-05-25T12:23:55.731+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [95/100], Step [624] | Temp: 0.0004 | Accepted Damage: 22904877.64 (Delta: +0.00)
+2026-05-25T12:24:12.457+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [96/100], Step [628] | Temp: 0.0004 | Accepted Damage: 22904877.64 (Delta: +0.00)
+2026-05-25T12:24:21.486+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [97/100], Step [630] | Temp: 0.0004 | Accepted Damage: 22904877.64 (Delta: +0.00)
+2026-05-25T12:25:04.823+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [98/100], Step [640] | Temp: 0.0003 | Accepted Damage: 22905343.02 (Delta: +465.37)
+Server rejected request: Internal Server Error
+2026-05-25T12:25:33.106+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 1
+Server rejected request: Internal Server Error
+2026-05-25T12:25:34.479+08:00  WARN 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Simulation step dropped due to error: API Error: Internal Server Error. Consecutive failures: 2
+2026-05-25T12:26:51.544+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [99/100], Step [663] | Temp: 0.0003 | Accepted Damage: 22905343.02 (Delta: +0.00)
+2026-05-25T12:27:38.895+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Epoch [100/100], Step [674] | Temp: 0.0003 | Accepted Damage: 22905343.02 (Delta: -0.00)
+2026-05-25T12:27:38.895+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : ================================================================
+2026-05-25T12:27:38.895+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : Optimization Completed! Final Damage: 22905343.02 after 674 total mutations.
+2026-05-25T12:27:38.895+08:00  INFO 4648 --- [hsrOptimiser] [nio-8080-exec-3] c.h.engine.SimulatedAnnealing            : ================================================================

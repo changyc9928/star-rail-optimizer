@@ -1,0 +1,965 @@
+{
+    "totalDamage": 2.125397468326721E7,
+    "characterDamage": [
+        {
+            "totalDamage": 1.4197777718353542E7,
+            "relics": [
+                {
+                    "set_id": "129",
+                    "name": "Ever-Glorious Magical Girl",
+                    "slot": "Head",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "HP",
+                    "substats": [
+                        {
+                            "key": "ATK",
+                            "value": 40.22067,
+                            "count": 2,
+                            "step": 3
+                        },
+                        {
+                            "key": "CRIT Rate_",
+                            "value": 6.48,
+                            "count": 2,
+                            "step": 4
+                        },
+                        {
+                            "key": "CRIT DMG_",
+                            "value": 17.495998,
+                            "count": 3,
+                            "step": 3
+                        },
+                        {
+                            "key": "Effect Hit Rate_",
+                            "value": 7.344001,
+                            "count": 2,
+                            "step": 1
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1505",
+                    "lock": true,
+                    "discard": false,
+                    "uid": "18188"
+                },
+                {
+                    "set_id": "129",
+                    "name": "Ever-Glorious Magical Girl",
+                    "slot": "Body",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "CRIT DMG",
+                    "substats": [
+                        {
+                            "key": "HP",
+                            "value": 114.311386,
+                            "count": 3,
+                            "step": 3
+                        },
+                        {
+                            "key": "ATK",
+                            "value": 38.10379,
+                            "count": 2,
+                            "step": 2
+                        },
+                        {
+                            "key": "ATK_",
+                            "value": 7.7760005,
+                            "count": 2,
+                            "step": 2
+                        },
+                        {
+                            "key": "CRIT Rate_",
+                            "value": 6.48,
+                            "count": 2,
+                            "step": 4
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1505",
+                    "lock": true,
+                    "discard": false,
+                    "uid": "18189"
+                },
+                {
+                    "set_id": "129",
+                    "name": "Ever-Glorious Magical Girl",
+                    "slot": "Hands",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "ATK",
+                    "substats": [
+                        {
+                            "key": "HP",
+                            "value": 80.441345,
+                            "count": 2,
+                            "step": 3
+                        },
+                        {
+                            "key": "ATK_",
+                            "value": 20.736,
+                            "count": 5,
+                            "step": 8
+                        },
+                        {
+                            "key": "Effect RES_",
+                            "value": 3.8880002,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "Break Effect_",
+                            "value": 6.48,
+                            "count": 1,
+                            "step": 2
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1505",
+                    "lock": true,
+                    "discard": false,
+                    "uid": "18190"
+                },
+                {
+                    "set_id": "129",
+                    "name": "Ever-Glorious Magical Girl",
+                    "slot": "Feet",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "SPD",
+                    "substats": [
+                        {
+                            "key": "ATK",
+                            "value": 76.20758,
+                            "count": 4,
+                            "step": 4
+                        },
+                        {
+                            "key": "ATK_",
+                            "value": 3.4560003,
+                            "count": 1,
+                            "step": 0
+                        },
+                        {
+                            "key": "CRIT Rate_",
+                            "value": 8.099999,
+                            "count": 3,
+                            "step": 1
+                        },
+                        {
+                            "key": "Break Effect_",
+                            "value": 6.48,
+                            "count": 1,
+                            "step": 2
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1505",
+                    "lock": true,
+                    "discard": false,
+                    "uid": "18191"
+                },
+                {
+                    "set_id": "325",
+                    "name": "Punklorde Stage Zero",
+                    "slot": "PlanarSphere",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "ATK",
+                    "substats": [
+                        {
+                            "key": "DEF",
+                            "value": 74.090706,
+                            "count": 4,
+                            "step": 3
+                        },
+                        {
+                            "key": "HP_",
+                            "value": 3.4560003,
+                            "count": 1,
+                            "step": 0
+                        },
+                        {
+                            "key": "CRIT Rate_",
+                            "value": 6.48,
+                            "count": 2,
+                            "step": 4
+                        },
+                        {
+                            "key": "CRIT DMG_",
+                            "value": 10.368,
+                            "count": 2,
+                            "step": 0
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1505",
+                    "lock": true,
+                    "discard": false,
+                    "uid": "18192"
+                },
+                {
+                    "set_id": "325",
+                    "name": "Punklorde Stage Zero",
+                    "slot": "LinkRope",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "Energy Regeneration Rate",
+                    "substats": [
+                        {
+                            "key": "DEF",
+                            "value": 57.155685,
+                            "count": 3,
+                            "step": 3
+                        },
+                        {
+                            "key": "HP_",
+                            "value": 8.208,
+                            "count": 2,
+                            "step": 3
+                        },
+                        {
+                            "key": "CRIT DMG_",
+                            "value": 6.48,
+                            "count": 1,
+                            "step": 2
+                        },
+                        {
+                            "key": "DEF_",
+                            "value": 8.64,
+                            "count": 2,
+                            "step": 0
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1505",
+                    "lock": false,
+                    "discard": false,
+                    "uid": "18547"
+                }
+            ]
+        },
+        {
+            "totalDamage": 4900968.014812368,
+            "relics": [
+                {
+                    "set_id": "317",
+                    "name": "Lushaka, the Sunken Seas",
+                    "slot": "PlanarSphere",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "HP",
+                    "substats": [
+                        {
+                            "key": "DEF",
+                            "value": 35.986916,
+                            "count": 2,
+                            "step": 1
+                        },
+                        {
+                            "key": "ATK_",
+                            "value": 7.7760005,
+                            "count": 2,
+                            "step": 2
+                        },
+                        {
+                            "key": "SPD",
+                            "value": 7.5,
+                            "count": 3,
+                            "step": 5
+                        },
+                        {
+                            "key": "Effect RES_",
+                            "value": 4.32,
+                            "count": 1,
+                            "step": 2
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1502",
+                    "lock": true,
+                    "discard": false,
+                    "uid": "10968"
+                },
+                {
+                    "set_id": "130",
+                    "name": "Diviner of Distant Reach",
+                    "slot": "Hands",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "ATK",
+                    "substats": [
+                        {
+                            "key": "ATK_",
+                            "value": 6.9120007,
+                            "count": 2,
+                            "step": 0
+                        },
+                        {
+                            "key": "CRIT Rate_",
+                            "value": 3.24,
+                            "count": 1,
+                            "step": 2
+                        },
+                        {
+                            "key": "Effect RES_",
+                            "value": 11.6640005,
+                            "count": 3,
+                            "step": 3
+                        },
+                        {
+                            "key": "SPD",
+                            "value": 4.9,
+                            "count": 2,
+                            "step": 3
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1502",
+                    "lock": false,
+                    "discard": false,
+                    "uid": "17702"
+                },
+                {
+                    "set_id": "130",
+                    "name": "Diviner of Distant Reach",
+                    "slot": "Feet",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "SPD",
+                    "substats": [
+                        {
+                            "key": "HP",
+                            "value": 33.87004,
+                            "count": 1,
+                            "step": 0
+                        },
+                        {
+                            "key": "ATK_",
+                            "value": 8.208,
+                            "count": 2,
+                            "step": 3
+                        },
+                        {
+                            "key": "Effect Hit Rate_",
+                            "value": 11.6640005,
+                            "count": 3,
+                            "step": 3
+                        },
+                        {
+                            "key": "HP_",
+                            "value": 7.7760005,
+                            "count": 2,
+                            "step": 2
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1502",
+                    "lock": false,
+                    "discard": false,
+                    "uid": "17745"
+                },
+                {
+                    "set_id": "130",
+                    "name": "Diviner of Distant Reach",
+                    "slot": "Body",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "CRIT DMG",
+                    "substats": [
+                        {
+                            "key": "DEF_",
+                            "value": 8.64,
+                            "count": 2,
+                            "step": 0
+                        },
+                        {
+                            "key": "Effect RES_",
+                            "value": 10.368001,
+                            "count": 3,
+                            "step": 0
+                        },
+                        {
+                            "key": "Break Effect_",
+                            "value": 10.368,
+                            "count": 2,
+                            "step": 0
+                        },
+                        {
+                            "key": "ATK_",
+                            "value": 3.4560003,
+                            "count": 1,
+                            "step": 0
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1502",
+                    "lock": false,
+                    "discard": false,
+                    "uid": "17796"
+                },
+                {
+                    "set_id": "317",
+                    "name": "Lushaka, the Sunken Seas",
+                    "slot": "LinkRope",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "Energy Regeneration Rate",
+                    "substats": [
+                        {
+                            "key": "ATK",
+                            "value": 38.10379,
+                            "count": 2,
+                            "step": 2
+                        },
+                        {
+                            "key": "HP_",
+                            "value": 3.4560003,
+                            "count": 1,
+                            "step": 0
+                        },
+                        {
+                            "key": "Break Effect_",
+                            "value": 11.6640005,
+                            "count": 2,
+                            "step": 2
+                        },
+                        {
+                            "key": "SPD",
+                            "value": 6.9,
+                            "count": 3,
+                            "step": 3
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1502",
+                    "lock": false,
+                    "discard": false,
+                    "uid": "18055"
+                },
+                {
+                    "set_id": "130",
+                    "name": "Diviner of Distant Reach",
+                    "slot": "Head",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "HP",
+                    "substats": [
+                        {
+                            "key": "DEF",
+                            "value": 19.051895,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "CRIT Rate_",
+                            "value": 11.6640005,
+                            "count": 4,
+                            "step": 4
+                        },
+                        {
+                            "key": "CRIT DMG_",
+                            "value": 6.48,
+                            "count": 1,
+                            "step": 2
+                        },
+                        {
+                            "key": "Effect Hit Rate_",
+                            "value": 8.208,
+                            "count": 2,
+                            "step": 3
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1502",
+                    "lock": false,
+                    "discard": false,
+                    "uid": "18097"
+                }
+            ]
+        },
+        {
+            "totalDamage": 2137112.445851651,
+            "relics": [
+                {
+                    "set_id": "127",
+                    "name": "World-Remaking Deliverer",
+                    "slot": "Body",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "CRIT DMG",
+                    "substats": [
+                        {
+                            "key": "ATK",
+                            "value": 59.27256,
+                            "count": 3,
+                            "step": 4
+                        },
+                        {
+                            "key": "HP_",
+                            "value": 3.8880002,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "SPD",
+                            "value": 2.3,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "CRIT Rate_",
+                            "value": 9.396,
+                            "count": 3,
+                            "step": 5
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "8010",
+                    "lock": false,
+                    "discard": false,
+                    "uid": "15581"
+                },
+                {
+                    "set_id": "127",
+                    "name": "World-Remaking Deliverer",
+                    "slot": "Head",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "HP",
+                    "substats": [
+                        {
+                            "key": "HP_",
+                            "value": 11.232,
+                            "count": 3,
+                            "step": 2
+                        },
+                        {
+                            "key": "CRIT Rate_",
+                            "value": 8.424,
+                            "count": 3,
+                            "step": 2
+                        },
+                        {
+                            "key": "Effect RES_",
+                            "value": 8.64,
+                            "count": 2,
+                            "step": 4
+                        },
+                        {
+                            "key": "Break Effect_",
+                            "value": 6.48,
+                            "count": 1,
+                            "step": 2
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "8010",
+                    "lock": true,
+                    "discard": false,
+                    "uid": "16492"
+                },
+                {
+                    "set_id": "124",
+                    "name": "Poet of Mourning Collapse",
+                    "slot": "Feet",
+                    "rarity": 5,
+                    "level": 0,
+                    "mainstat": "DEF",
+                    "substats": [
+                        {
+                            "key": "HP",
+                            "value": 33.87004,
+                            "count": 1,
+                            "step": 0
+                        },
+                        {
+                            "key": "ATK",
+                            "value": 16.935019,
+                            "count": 1,
+                            "step": 0
+                        },
+                        {
+                            "key": "ATK_",
+                            "value": 3.4560003,
+                            "count": 1,
+                            "step": 0
+                        }
+                    ],
+                    "preview_substats": [
+                        {
+                            "key": "CRIT DMG_",
+                            "value": 6.48,
+                            "count": 1,
+                            "step": 2
+                        }
+                    ],
+                    "location": "8010",
+                    "lock": false,
+                    "discard": false,
+                    "uid": "17049"
+                },
+                {
+                    "set_id": "124",
+                    "name": "Poet of Mourning Collapse",
+                    "slot": "Hands",
+                    "rarity": 5,
+                    "level": 0,
+                    "mainstat": "ATK",
+                    "substats": [
+                        {
+                            "key": "ATK_",
+                            "value": 3.8880002,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "DEF_",
+                            "value": 4.86,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "SPD",
+                            "value": 2.3,
+                            "count": 1,
+                            "step": 1
+                        }
+                    ],
+                    "preview_substats": [
+                        {
+                            "key": "DEF",
+                            "value": 21.168774,
+                            "count": 1,
+                            "step": 2
+                        }
+                    ],
+                    "location": "8010",
+                    "lock": false,
+                    "discard": false,
+                    "uid": "18168"
+                },
+                {
+                    "set_id": "326",
+                    "name": "City of Converging Stars",
+                    "slot": "LinkRope",
+                    "rarity": 5,
+                    "level": 0,
+                    "mainstat": "ATK",
+                    "substats": [
+                        {
+                            "key": "DEF_",
+                            "value": 5.4,
+                            "count": 1,
+                            "step": 2
+                        },
+                        {
+                            "key": "CRIT Rate_",
+                            "value": 2.592,
+                            "count": 1,
+                            "step": 0
+                        },
+                        {
+                            "key": "CRIT DMG_",
+                            "value": 6.48,
+                            "count": 1,
+                            "step": 2
+                        }
+                    ],
+                    "preview_substats": [
+                        {
+                            "key": "HP_",
+                            "value": 3.4560003,
+                            "count": 1,
+                            "step": 0
+                        }
+                    ],
+                    "location": "8010",
+                    "lock": false,
+                    "discard": false,
+                    "uid": "18339"
+                },
+                {
+                    "set_id": "326",
+                    "name": "City of Converging Stars",
+                    "slot": "PlanarSphere",
+                    "rarity": 5,
+                    "level": 0,
+                    "mainstat": "ATK",
+                    "substats": [
+                        {
+                            "key": "HP",
+                            "value": 38.103798,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "DEF_",
+                            "value": 4.86,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "SPD",
+                            "value": 2.6,
+                            "count": 1,
+                            "step": 2
+                        },
+                        {
+                            "key": "CRIT DMG_",
+                            "value": 6.48,
+                            "count": 1,
+                            "step": 2
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "8010",
+                    "lock": false,
+                    "discard": false,
+                    "uid": "18461"
+                }
+            ]
+        },
+        {
+            "totalDamage": 18116.50424964943,
+            "relics": [
+                {
+                    "set_id": "103",
+                    "name": "Knight of Purity Palace",
+                    "slot": "Feet",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "SPD",
+                    "substats": [
+                        {
+                            "key": "ATK",
+                            "value": 19.051895,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "HP_",
+                            "value": 7.344001,
+                            "count": 2,
+                            "step": 1
+                        },
+                        {
+                            "key": "ATK_",
+                            "value": 4.32,
+                            "count": 1,
+                            "step": 2
+                        },
+                        {
+                            "key": "Effect Hit Rate_",
+                            "value": 16.416,
+                            "count": 4,
+                            "step": 6
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1217",
+                    "lock": true,
+                    "discard": false,
+                    "uid": "1391"
+                },
+                {
+                    "set_id": "103",
+                    "name": "Knight of Purity Palace",
+                    "slot": "Hands",
+                    "rarity": 5,
+                    "level": 0,
+                    "mainstat": "ATK",
+                    "substats": [
+                        {
+                            "key": "HP",
+                            "value": 38.103798,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "DEF_",
+                            "value": 4.32,
+                            "count": 1,
+                            "step": 0
+                        },
+                        {
+                            "key": "SPD",
+                            "value": 2.3,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "CRIT DMG_",
+                            "value": 5.8320003,
+                            "count": 1,
+                            "step": 1
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1217",
+                    "lock": true,
+                    "discard": false,
+                    "uid": "2430"
+                },
+                {
+                    "set_id": "310",
+                    "name": "Broken Keel",
+                    "slot": "LinkRope",
+                    "rarity": 5,
+                    "level": 15,
+                    "mainstat": "Energy Regeneration Rate",
+                    "substats": [
+                        {
+                            "key": "HP_",
+                            "value": 7.7760005,
+                            "count": 2,
+                            "step": 2
+                        },
+                        {
+                            "key": "ATK_",
+                            "value": 7.344001,
+                            "count": 2,
+                            "step": 1
+                        },
+                        {
+                            "key": "SPD",
+                            "value": 4.0,
+                            "count": 2,
+                            "step": 0
+                        },
+                        {
+                            "key": "CRIT Rate_",
+                            "value": 9.072,
+                            "count": 3,
+                            "step": 4
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1217",
+                    "lock": true,
+                    "discard": false,
+                    "uid": "3270"
+                },
+                {
+                    "set_id": "104",
+                    "name": "Hunter of Glacial Forest",
+                    "slot": "Body",
+                    "rarity": 5,
+                    "level": 3,
+                    "mainstat": "CRIT Rate",
+                    "substats": [
+                        {
+                            "key": "ATK",
+                            "value": 16.935019,
+                            "count": 1,
+                            "step": 0
+                        },
+                        {
+                            "key": "HP_",
+                            "value": 3.4560003,
+                            "count": 1,
+                            "step": 0
+                        },
+                        {
+                            "key": "ATK_",
+                            "value": 3.8880002,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "Break Effect_",
+                            "value": 6.48,
+                            "count": 1,
+                            "step": 2
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1217",
+                    "lock": true,
+                    "discard": false,
+                    "uid": "5993"
+                },
+                {
+                    "set_id": "310",
+                    "name": "Broken Keel",
+                    "slot": "PlanarSphere",
+                    "rarity": 5,
+                    "level": 0,
+                    "mainstat": "ATK",
+                    "substats": [
+                        {
+                            "key": "HP_",
+                            "value": 3.8880002,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "SPD",
+                            "value": 2.6,
+                            "count": 1,
+                            "step": 2
+                        },
+                        {
+                            "key": "Effect Hit Rate_",
+                            "value": 3.4560003,
+                            "count": 1,
+                            "step": 0
+                        }
+                    ],
+                    "preview_substats": [
+                        {
+                            "key": "ATK",
+                            "value": 21.168774,
+                            "count": 1,
+                            "step": 2
+                        }
+                    ],
+                    "location": "1217",
+                    "lock": true,
+                    "discard": false,
+                    "uid": "6517"
+                },
+                {
+                    "set_id": "104",
+                    "name": "Hunter of Glacial Forest",
+                    "slot": "Head",
+                    "rarity": 5,
+                    "level": 0,
+                    "mainstat": "HP",
+                    "substats": [
+                        {
+                            "key": "DEF_",
+                            "value": 4.86,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "CRIT Rate_",
+                            "value": 2.9160001,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "CRIT DMG_",
+                            "value": 5.8320003,
+                            "count": 1,
+                            "step": 1
+                        },
+                        {
+                            "key": "Break Effect_",
+                            "value": 5.8320003,
+                            "count": 1,
+                            "step": 1
+                        }
+                    ],
+                    "preview_substats": null,
+                    "location": "1217",
+                    "lock": true,
+                    "discard": false,
+                    "uid": "11207"
+                }
+            ]
+        }
+    ]
+}
